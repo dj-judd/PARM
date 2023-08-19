@@ -31,15 +31,11 @@ def openingText():
 
 def isValidCSV(filename):
     if filename.endswith(".csv"):
-        if len(filename) > 4:
-            return True
-        else: 
+        if len(filename) == 4: 
             print(f"\n({RED_BOLD}ERROR{RESET}): No file name detected.\n")
             return False
-    else:
-        return False
-
-    # return filename.endswith(".csv")
+        return True
+    return False
 
 def isValidFile(filepath):
     return os.path.exists(filepath)
@@ -54,17 +50,20 @@ openingText()
 
 if len(argv) > 1:
     file_import = argv[1]
-
+    
 else:
     print(f"Enter a valid .csv file. Ex: {GREEN}numbers.csv{RESET}")
     file_import = input("Enter the .csv file or filepath here: ")
 
+while not isValidCSV(file_import) or not isValidFile(file_import):
 
-while not isValidCSV(file_import):
+    if not isValidCSV(file_import):
+        print(f"{RED_BOLD}That is not a valid .csv file.{RESET}")
 
-    print(f"{RED_BOLD}That is not a valid .csv file.{RESET}")
+    else:
+        print(f"{RED_BOLD}The file does not exist.{RESET}")
+
     file_import = input("Please re-enter the .csv file or filepath: \n")
-
 
 
 print(f"\n{GREEN_BOLD}File detected{RESET} for import. Processing {GREEN_BOLD}{file_import}{RESET}: ")
