@@ -117,7 +117,7 @@ def connect_to_db(flask_app, db_uri="postgresql:///parm_assets", echo=True):
     flask_app.config["SQLALCHEMY_ECHO"] = echo
     flask_app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    db.app = flask_app
+    db.app = flask_appmonicle
     db.init_app(flask_app)
 
     print("Connected to the db!")
