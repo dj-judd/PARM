@@ -8,12 +8,14 @@ version_number = 0.2
 program_name = "Image Resizer"
 
 size_map = {
+    "original": None,  # No resizing to keep original
     "x-small": 64,
     "small": 256,
     "medium": 512,
     "large": 1024,
     "x-large": 2048
 }
+
 
 def isValidImage(filename):
     valid_extensions = ['.jpg', '.jpeg', '.png']
@@ -28,30 +30,36 @@ def isValidFile(filepath):
     return os.path.exists(filepath)
 
 def resize_image(input_path, output_dir, size_label):
-    spinner = Spinner()
-    spinner.start()
 
     with Image.open(input_path) as img:
-        width, height = img.size
-        max_size = size_map[size_label]
-
-        if width > height:
-            new_width = max_size
-            new_height = int((height / width) * max_size)
+        if size_label == "original":
+            os.makedirs(output_dir, exist_ok=True)
+            base_name = os.path.basename(input_path)
+            name, ext = os.path.splitext(base_name)
+            output_path = os.path.join(output_dir, f"{name}_original{ext}")
+            img.save(output_path)
         else:
-            new_height = max_size
-            new_width = int((width / height) * max_size)
+            width, height = img.size
+            max_size = size_map[size_label]
 
-        resized_img = img.resize((new_width, new_height), Image.ANTIALIAS)
-        os.makedirs(output_dir, exist_ok=True)
+            if width > height:
+                new_width = max_size
+                new_height = int((height / width) * max_size)
+            else:
+                new_height = max_size
+                new_width = int((width / height) * max_size)
 
-        base_name = os.path.basename(input_path)
-        name, ext = os.path.splitext(base_name)
-        output_path = os.path.join(output_dir, f"{name}_{size_label}{ext}")
+            resized_img = img.resize((new_width, new_height), Image.ANTIALIAS)
+            os.makedirs(output_dir, exist_ok=True)
 
-        resized_img.save(output_path, "JPEG")
+            base_name = os.path.basename(input_path)
+            name, ext = os.path.splitext(base_name)
+            output_path = os.path.join(output_dir, f"{name}_{size_label}{ext}")
+
+            resized_img.save(output_path, "JPEG")
 
     spinner.stop()
+
 
 signal.signal(signal.SIGINT, signal_handler)
 
