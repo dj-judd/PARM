@@ -1,79 +1,62 @@
 import sys
 import os
 from PIL import Image
-from utils import openingText, Spinner, signal_handler, RED, RED_BOLD, GREEN, GREEN_BOLD, RESET
+from utils import Spinner, signal_handler, RED, RED_BOLD, GREEN, GREEN_BOLD, RESET
 import signal
 
-version_number = 0.2
+version_number = 0.3
 program_name = "Image Resizer"
 
 size_map = {
-    "original": None,  # No resizing to keep original
-    "x-small": 64,
-    "small": 256,
-    "medium": 512,
-    "large": 1024,
-    "x-large": 2048
+    "0-original": None,  # No resizing for original
+    "1-x-small": 64,
+    "2-small": 128,
+    "3-medium": 256,
+    "4-large": 512,
+    "5-x-large": 1024,
+    "6-mongo": 2048
 }
 
-
 def isValidImage(filename):
-    valid_extensions = ['.jpg', '.jpeg', '.png']
-    if any(filename.endswith(ext) for ext in valid_extensions):
-        if len(filename) <= 4:
-            print(f"\n({RED_BOLD}ERROR{RESET}): No file name detected.\n")
-            return False
-        return True
-    return False
+    valid_exts = [".jpg", ".jpeg"]
+    _, ext = os.path.splitext(filename)
+    return ext.lower() in valid_exts
 
 def isValidFile(filepath):
     return os.path.exists(filepath)
 
-def resize_image(input_path, output_dir, size_label):
+def resize_image(file_path, output_dir, label):
+    with Image.open(file_path) as img:
+        width, height = img.size
+        output_filename = os.path.basename(file_path).split(".")[0] + "_" + label + ".jpg"
+        output_path = os.path.join(output_dir, output_filename)
 
-    with Image.open(input_path) as img:
-        if size_label == "original":
-            os.makedirs(output_dir, exist_ok=True)
-            base_name = os.path.basename(input_path)
-            name, ext = os.path.splitext(base_name)
-            output_path = os.path.join(output_dir, f"{name}_original{ext}")
-            img.save(output_path)
+        if label == "0-original":
+            img.save(output_path, "JPEG", quality=90)
+            print(f"Processed image size: {GREEN_BOLD}{label}{RESET}")
+            return
+
+        if width > height:
+            new_width = size_map[label]
+            new_height = int((height / width) * size_map[label])
         else:
-            width, height = img.size
-            max_size = size_map[size_label]
+            new_height = size_map[label]
+            new_width = int((width / height) * size_map[label])
 
-            if width > height:
-                new_width = max_size
-                new_height = int((height / width) * max_size)
-            else:
-                new_height = max_size
-                new_width = int((width / height) * max_size)
+        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+        resized_img.save(output_path, "JPEG", quality=90)
+        print(f"Processed image size: {GREEN_BOLD}{label}{RESET}")
 
-            resized_img = img.resize((new_width, new_height), Image.ANTIALIAS)
-            os.makedirs(output_dir, exist_ok=True)
-
-            base_name = os.path.basename(input_path)
-            name, ext = os.path.splitext(base_name)
-            output_path = os.path.join(output_dir, f"{name}_{size_label}{ext}")
-
-            resized_img.save(output_path, "JPEG")
-
-    spinner.stop()
-
-
+# From utils.py. Handles CTRL + C for graceful stopping.
 signal.signal(signal.SIGINT, signal_handler)
 
 def main():
-    openingText(program_name, version_number)
-
-    if len(sys.argv) > 1:
+    if len(sys.argv) > 2:
         file_import = sys.argv[1]
-        output_dir = sys.argv[2] if len(sys.argv) > 2 else "."
-
+        output_dir = sys.argv[2]
     else:
-        print(f"Enter a valid image file. Ex: {GREEN}sample.jpg{RESET}")
         file_import = input("Enter the image file or filepath here: ")
-        output_dir = input("Enter the output directory or leave empty for current directory: ") or "."
+        output_dir = input("Enter the output directory: ")
 
     while not isValidImage(file_import) or not isValidFile(file_import):
         if not isValidImage(file_import):
@@ -82,11 +65,15 @@ def main():
             print(f"{RED_BOLD}The file does not exist.{RESET}")
         file_import = input("Please re-enter the image file or filepath: \n")
 
+    spinner = Spinner()
+    spinner.start()
+
     print(f"{GREEN_BOLD}File detected{RESET} for processing. Resizing {GREEN_BOLD}{file_import}{RESET}: ")
 
-    for label in size_map.keys():
+    for label in size_map.items():
         resize_image(file_import, output_dir, label)
-        print(f"Processed image size: {GREEN_BOLD}{label}{RESET}")
+
+    spinner.stop()
 
     print(f"\n{GREEN_BOLD}Resizing completed!{RESET} Images saved in {GREEN_BOLD}{output_dir}{RESET}")
 
