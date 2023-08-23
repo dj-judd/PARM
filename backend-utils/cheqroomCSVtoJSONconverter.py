@@ -5,7 +5,7 @@ import os
 from utils import openingText, Spinner, signal_handler, RED, RED_BOLD, YELLOW, YELLOW_BOLD, GREEN, GREEN_BOLD, RESET
 import signal
 
-version_number = 0.2
+version_number = 0.3
 program_name = "CSV -> JSON Converter"
 
 
@@ -31,7 +31,7 @@ def csv_to_json(csv_filename):
     # Open CSV file for reading
     with open(csv_filename, 'r') as csvfile:
         # Specify delimiter as ';'
-        csvreader = csv.DictReader(csvfile, delimiter=';')
+        csvreader = csv.DictReader(csvfile, delimiter=',')
         
         # Convert each row into a dictionary, replace empty strings with None, and add to list
         for row in csvreader:

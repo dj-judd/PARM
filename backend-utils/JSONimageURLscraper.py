@@ -2,12 +2,29 @@ import requests
 import os
 import sys
 import json
-from utils import Spinner, signal_handler, UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RESET
+import re
 import signal
+from utils import openingText, Spinner, signal_handler, UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RESET
 
-version_number = 0.2
+version_number = 0.3
 program_name = "JSON Image Scraper"
 
+def sanitize_filename(filename):
+    # Replace apostrophes (') with "ft"
+    filename = filename.replace('\'', 'ft')
+    
+    # Replace double quotes (") with "in"
+    filename = filename.replace('"', 'in')
+    
+    # Remove invalid characters
+    filename = re.sub(r'[\\/*?:<>|]', '_', filename)  
+    
+    # Replace spaces with underscores
+    filename = filename.replace(' ', '_')
+    
+    # Remove leading or trailing whitespace
+    filename = filename.strip()
+    return filename
 
 def download_image(url, save_directory, filename):
     response = requests.get(url, stream=True)
@@ -19,7 +36,9 @@ def download_image(url, save_directory, filename):
             file.write(chunk)
 
 
+
 def main():
+    openingText(program_name, version_number)
     global spinner
 
     # Ensure we have the correct arguments
@@ -37,7 +56,7 @@ def main():
     with open(json_file_path, 'r') as file:
         data = json.load(file)
 
-    save_directory = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend-utils/database/data/images"
+    save_directory = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend-utils/database/data/raw_images"
 
     # Ensure the save directory exists
     if not os.path.exists(save_directory):
@@ -54,7 +73,13 @@ def main():
 
     # Download images
     for entry in data:
-        image_name = entry.get("Name")
+        # Sanitize the image name
+        sanitized_image_name = sanitize_filename(entry.get("Name"))
+
+        # Add the sanitized name to the entry with a new key "Sanitized_Name"
+        entry["Sanitized_ImageFile_Name"] = sanitized_image_name
+
+        image_name = sanitized_image_name
         image_url = entry.get("Image Url")
         
         if image_name and image_url:
@@ -65,8 +90,19 @@ def main():
             else:
                 print(f"Image for {UNDERLINED}{image_name}{RESET} has been {YELLOW_BOLD}skipped{RESET}.")
 
+
+    # Derive the new filename with the "_modified" suffix
+    base, ext = os.path.splitext(json_file_path)
+    new_filename = f"{base}_images_downloaded{ext}"
+
+    # Write the modified data back to the new JSON file
+    with open(new_filename, 'w') as file:
+        json.dump(data, file, indent=4)
+
+    
     spinner.stop()
-    print("\nImages processed successfully!")
+
+    print(f"\n{GREEN_BOLD}Images Downloaded successfully!{RESET}\n\n")
 
 if __name__ == "__main__":
     main()
