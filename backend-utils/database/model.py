@@ -5,13 +5,20 @@ from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Enum
 from datetime import datetime
 from enum import Enum as PyEnum
 from sqlalchemy.dialects.postgresql import ENUM
+from sqlalchemy.ext.declarative import declarative_base
 
 db = SQLAlchemy()
 
 
+class OperationType(PyEnum):  # Use the PyEnum alias here
+    CREATE = 'create'
+    UPDATE = 'update'
+    DELETE = 'delete'
+    ARCHIVE = 'archive'
+
 # PostgreSQL ENUMs:
 operation_type_enum = ENUM(
-    'create', 'update', 'delete', 'archive',
+    *[e.value for e in OperationType],   # Use the Enum values to define the PostgreSQL ENUM
     name='operation_type'
 )
 
@@ -415,12 +422,6 @@ if __name__ == "__main__":
 #     UNITED_STATES = "USD"
 #     CANADA =        "CAD"
 #     MEXICO =        "MXN"
-
-# class OperationType(PyEnum):
-#     CREATE =    "CREATE"
-#     UPDATE =    "UPDATE"
-#     DELETE =    "DELETE"
-#     ARCHIVE =   "ARCHIVE"
 
 # class ReservationStatus(PyEnum):
 #     PENDING =       "PENDING"

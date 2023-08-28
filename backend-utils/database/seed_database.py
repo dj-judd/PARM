@@ -54,22 +54,29 @@ model.db.create_all()
 
 for n in range(10):
 
-    password_hash = 'test'
-    first_name = 'bob'
-    last_name = 'theBuilder'
-    # email = f'{first_name}{n}@builder.net'  # Voila! A unique email!
+    try:
+        # Begin the transaction
+        model.db.session.begin()
 
-    db_user = crud.create_user(password_hash, first_name, last_name)
-    model.db.session.add(db_user)
+        password_hash = 'test'
+        first_name = 'bob'
+        last_name = 'theBuilder'
 
-    # # TODO: Create 10 Reservations for each user
-    # for n in range(10):
+        # TODO: Generate an email, phone number, and select user roles
 
-    #     temp_movie = choice(movies_in_db)
-    #     temp_rating = randint(1,5)
+        random_creator = randint(1,5)
+        db_user, db_audit_entry = crud.create_user(password_hash, first_name, last_name, random_creator, commit=False)
+        model.db.session.add(db_user)
+        model.db.session.add(db_audit_entry)
 
-    #     db_rating = crud.create_rating(db_user, temp_movie, temp_rating)
+        # TODO: Create 10 Reservations for each user
+        # for n in range(10):
 
-    #     model.db.session.add(db_rating)
-        
-    model.db.session.commit()
+        # Commit all at once
+        model.db.session.commit()
+
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"Error occurred: {e}")
