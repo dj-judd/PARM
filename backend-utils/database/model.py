@@ -116,7 +116,7 @@ class GlobalSetting(db.Model):
     time_format_is_24h = db.Column(db.Boolean, nullable=False)
     audit_info_id = db.Column(db.Integer, db.ForeignKey('audit_info.id'))
 
-    audit_info = db.relationship('AuditInfo', backref='global_settings')
+    audit_info_entries = db.relationship('AuditInfo', backref='global_settings')
 
 
     def __repr__(self):
@@ -124,10 +124,10 @@ class GlobalSetting(db.Model):
     
 
 
-class AuditInfo(db.Model):
+class AuditInfoEntry(db.Model):
     """Audit info for changes."""
 
-    __tablename__ = "audit_info"
+    __tablename__ = "audit_info_entries"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     operation_type = db.Column(operation_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
@@ -142,6 +142,28 @@ class AuditInfo(db.Model):
     def __repr__(self):
         return f"<AuditInfo id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
 
+
+class Reservation(db.Model):
+    """Reservations."""
+
+    __tablename__ = "reservations"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    reserved_for = db.Column(db.Integer, db.ForeignKey('users.id'))
+    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'))
+    planned_checkout_time = db.Column(db.DateTime, nullable=True)
+    planned_checkin_time = db.Column(db.DateTime, nullable=True)
+    checkout_time = db.Column(db.DateTime, nullable=True)
+    checkin_time = db.Column(db.DateTime, nullable=True)
+    is_indefinite = db.Column(Boolean, nullable=False, default=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='reservations')
+
+    def __repr__(self):
+        return f"<Reservation id={self.id} reserved_for={self.reserved_for} area_id={self.area_id}>"
+
+
 class User(db.Model):
     """A user."""
 
@@ -155,9 +177,9 @@ class User(db.Model):
     nickname = db.Column(db.String, nullable=True)
     nickname_preferred = db.Column(db.Boolean, nullable=True)
     last_login = db.Column(db.DateTime, nullable=True)
-    audit_info_id = db.Column(db.Integer, db.ForeignKey('audit_info.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info = db.relationship('AuditInfo', backref='users')
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='users')
 
 
     def __repr__(self):
@@ -190,12 +212,12 @@ class Asset(db.Model):
     online_item_page = db.Column(db.String, nullable=True)
     warranty_starts = db.Column(db.DateTime, nullable=True)
     warranty_ends = db.Column(db.DateTime, nullable=True)
-    audit_info_id = db.Column(db.Integer, db.ForeignKey('audit_info.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
     financial_entry = db.relationship('FinancialEntry', backref= 'assets')
-    audit_info = db.relationship('AuditInfo', backref= 'assets')
+    audit_info_entries = db.relationship('AuditInfoEntry', backref= 'assets')
 
     def __repr__(self):
         return f'<Asset id={self.id} model_name={self.model_name}>'
@@ -210,12 +232,6 @@ class Category(db.Model):
 
 
 
-class Reservation(db.Model):
-    """Areas."""
-
-    __tablename__ = "reservations"
-
-    #TODO: Add fields here
 
 class Area(db.Model):
     """Areas."""
