@@ -119,7 +119,7 @@ class GlobalSetting(db.Model):
     id = db.Column(db.String(64), primary_key=True, nullable=False)
     default_currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
     time_format_is_24h = db.Column(db.Boolean, nullable=False)
-    audit_info_id = db.Column(db.Integer, db.ForeignKey('audit_info.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
     audit_info_entries = db.relationship('AuditInfo', backref='global_settings')
 
@@ -272,8 +272,8 @@ class Area(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
     name = db.Column(db.String, nullable=False)
-    latitude = db.Column(db.Decimal(9, 6), nullable=True)
-    longitude = db.Column(db.Decimal(9, 6), nullable=True)
+    latitude = db.Column(db.Numeric(9, 6), nullable=True)
+    longitude = db.Column(db.Numeric(9, 6), nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
@@ -357,7 +357,7 @@ class Country(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     code = db.Column(country_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
     name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    intl_phone_code = db.Column(db.Integer(6), nullable=False)
+    intl_phone_code = db.Column(db.SmallInteger, nullable=False) # You'll have to implement length restrictions in the app
 
     def __repr__(self):
         return f'<Country id={self.id} name={self.name} code={self.code}>'
@@ -376,12 +376,12 @@ class Timezone(db.Model):
 
     
 
-class FinancialEntry(db.Model):
-    """Financial Entries."""
+# class FinancialEntry(db.Model):
+#     """Financial Entries."""
 
-    __tablename__ = "financial_entries"
+#     __tablename__ = "financial_entries"
 
-    #TODO: Add fields here
+#     #TODO: Add fields here
 
 
 
@@ -392,7 +392,7 @@ def connect_to_db(flask_app, db_uri="postgresql:///parm", echo=True):
     flask_app.config["SQLALCHEMY_ECHO"] = echo
     flask_app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    db.app = flask_appmonicle
+    db.app = flask_app
     db.init_app(flask_app)
 
     print("Connected to the db!")
