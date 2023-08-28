@@ -9,16 +9,14 @@ import crud
 import model
 import server
 
-os.system("dropdb ratings")
-# More code will go here
 
-os.system('dropdb ratings')
-os.system('createdb ratings')
+os.system('dropdb parm')
+os.system('createdb parm')
 
 model.connect_to_db(server.app)
 model.db.create_all()
 
-with open('data/movies.json') as f:
+with open('backend-utils/database/data/Cheqroom_Item_Export-2023-08-12 21_06_57_images_downloaded.json') as f:
     movie_data = json.loads(f.read())
 
 # Create movies, store them in list so we can use them
@@ -55,13 +53,16 @@ model.db.session.commit()
 
 
 for n in range(10):
-    email = f'user{n}@test.com'  # Voila! A unique email!
-    password = 'test'
 
-    db_user = crud.create_user(email, password)
+    password_hash = 'test'
+    first_name = 'bob'
+    last_name = 'theBuilder'
+    email = f'{first_name}{n}@builder.net'  # Voila! A unique email!
+
+    db_user = crud.create_user(password_hash, first_name, last_name, email)
     model.db.session.add(db_user)
 
-    # TODO: create 10 ratings for the user
+    # TODO: Create 10 Reservations for each user
     for n in range(10):
 
         temp_movie = choice(movies_in_db)

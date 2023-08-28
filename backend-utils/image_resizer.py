@@ -28,7 +28,7 @@ def isValidFile(filepath):
 def resize_image(file_path, output_dir, label):
     with Image.open(file_path) as img:
         width, height = img.size
-        output_filename = os.path.basename(file_path).split(".")[0] + "_" + label + ".jpg"
+        output_filename = "_".join(os.path.basename(file_path).split(".")[:-1]) + "_" + label + ".jpg"
         output_path = os.path.join(output_dir, output_filename)
 
         if label == "0-original":
@@ -70,12 +70,12 @@ def main():
 
     print(f"{GREEN_BOLD}File detected{RESET} for processing. Resizing {GREEN_BOLD}{file_import}{RESET}: ")
 
-    for label in size_map.items():
+    for label, max_size in size_map.items():
         resize_image(file_import, output_dir, label)
 
     spinner.stop()
 
-    print(f"\n{GREEN_BOLD}Resizing completed!{RESET} Images saved in {GREEN_BOLD}{output_dir}{RESET}")
+    print(f"\n{GREEN_BOLD}Resizing completed!{RESET} Images saved in {GREEN}{output_dir}{RESET}\n\n")
 
 if __name__ == "__main__":
     main()
