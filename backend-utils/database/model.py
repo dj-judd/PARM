@@ -16,12 +16,17 @@ operation_type_enum = ENUM(
 )
 
 currency_iso_code_enum = ENUM(
-    'usd', 'cad', 'mxn',
+    'USD', 'CAD', 'MXN',
     name='currency_iso_code'
 )
 
 country_iso_code_enum = ENUM(
-    'us', 'ca', 'mx',
+    'US', 'CA', 'MX',
+    name='country_iso_code'
+)
+
+country_names_enum = ENUM(
+    'United States', 'Canada', 'Mexico',
     name='country_iso_code'
 )
 
@@ -164,12 +169,28 @@ class Reservation(db.Model):
         return f"<Reservation id={self.id} reserved_for={self.reserved_for} area_id={self.area_id}>"
 
 
+class ReservationAsset(db.Model):
+    """Reservation Assets."""
+
+    __tablename__ = "reservation_assets"
+
+    reservation_id = db.Column(db.Integer, db.ForeignKey('reservations.id'), primary_key=True, nullable=False)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    reservation = db.relationship('Reservation', backref='asset_relationships')
+    asset = db.relationship('Asset', backref='reservation_relationships')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='reservation_asset')
+
+    def __repr__(self):
+        return f"<ReservationAsset reservation_id={self.reservation_id} asset_id={self.asset_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
 class User(db.Model):
     """A user."""
 
     __tablename__ = "users"
 
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     password_hash = db.Column(db.String, nullable=False)
     first_name = db.Column(db.String, nullable=False)
     middle_name = db.Column(db.String, nullable=True)
@@ -192,7 +213,7 @@ class Asset(db.Model):
 
     __tablename__ = "assets"
 
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     manufacturer = db.Column(db.String, nullable=False)
     model_number = db.Column(db.String, nullable=True)
     model_name = db.Column(db.String, nullable=False)
@@ -228,8 +249,18 @@ class Category(db.Model):
 
     __tablename__ = "categories"
 
-    #TODO: Add fields here
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    parent_category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    name = db.Column(db.String, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
+    # Relationship to represent the parent category.
+    parent = db.relationship('Category', remote_side=[id], backref=db.backref('subcategories', lazy='dynamic'))
+
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='associated_categories')
+    
+    def __repr__(self):
+        return f'<Category id={self.id} name={self.name}>'
 
 
 
@@ -238,7 +269,109 @@ class Area(db.Model):
 
     __tablename__ = "areas"
 
-    #TODO: Add fields here
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    parent_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
+    name = db.Column(db.String, nullable=False)
+    latitude = db.Column(db.Decimal(9, 6), nullable=True)
+    longitude = db.Column(db.Decimal(9, 6), nullable=True)
+    address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    # Relationship to represent the parent area.
+    parent = db.relationship('Area', remote_side=[id], backref=db.backref('nested_areas', lazy='dynamic'))
+
+    address = db.relationship('Address', backref='addresses')
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='associated_areas')
+    
+    def __repr__(self):
+        return f'<Area id={self.id} name={self.name}>'
+    
+
+class AreaFileAttachment(db.Model):
+    """File attachments associated with areas. Ex: photos, location releases"""
+
+    __tablename__ = "area_file_attachments"
+
+    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    area = db.relationship('Area', backref='file_attachments')
+    attachment = db.relationship('Attachment', backref='associated_areas')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='area_attachment')
+
+    def __repr__(self):
+        return f"<AreaFileAttachment area_id={self.area_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
+    
+
+class Address(db.Model):
+    """A street address."""
+    
+    __tablename__ = "addresses"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String, nullable=False) # The name of the address for the User. IE "Empire State Building"
+    type = db.Column(address_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    street = db.Column(db.String, nullable=False)
+    city = db.Column(db.String, nullable=False)
+    state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=True)
+    zip = db.Column(db.String(10), nullable=False)
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+
+    state = db.relationship('State', backref='addresses')
+    country = db.relationship('Country', backref='addresses')
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='addresses')
+
+    def __repr__(self):
+        return f'<Address id={self.id} name={self.name} type={self.type}>'
+
+
+
+class State(db.Model):
+    """A state from the United States."""
+    
+    __tablename__ = "states"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    code = db.Column(state_codes_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    name = db.Column(state_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    timezone_id = db.Column(db.Integer, db.ForeignKey('timezones.id'))
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'))
+
+
+    timezone = db.relationship('Timezone', backref='states')
+    country = db.relationship('Country', backref='states')
+
+    def __repr__(self):
+        return f'<State id={self.id} name={self.name} code={self.code}>'
+    
+
+class Country(db.Model):
+    """A country from the globe."""
+    
+    __tablename__ = "countries"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    code = db.Column(country_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    intl_phone_code = db.Column(db.Integer(6), nullable=False)
+
+    def __repr__(self):
+        return f'<Country id={self.id} name={self.name} code={self.code}>'
+
+class Timezone(db.Model):
+    """A timezone as represented by enums."""
+    
+    __tablename__ = "timezones"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    identifier = db.Column(timezone_enum, nullable=False)  # Using the PostgreSQL ENUM type
+
+    def __repr__(self):
+        return f'<Timezone id={self.id} identifier={self.identifier}>'
 
 
     

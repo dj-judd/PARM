@@ -9,11 +9,11 @@ program_name = "Image Resizer"
 
 size_map = {
     "0-original": None,  # No resizing for original
-    "1-x-small": 64,
+    "1-xsmall": 64,
     "2-small": 128,
     "3-medium": 256,
     "4-large": 512,
-    "5-x-large": 1024,
+    "5-xlarge": 1024,
     "6-mongo": 2048
 }
 
