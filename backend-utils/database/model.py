@@ -560,8 +560,8 @@ class Area(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
     name = db.Column(db.String, nullable=False)
-    latitude = db.Column(db.Numeric(9, 6), nullable=True)
-    longitude = db.Column(db.Numeric(9, 6), nullable=True)
+    latitude = db.Column(db.Decimal(9, 6), nullable=True)
+    longitude = db.Column(db.Decimal(9, 6), nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
@@ -666,7 +666,8 @@ class Timezone(db.Model):
 
 
 class Currency(db.Model):
-    """A timezone as represented by enums."""
+    """A currency model representing different global currencies."""
+
     
     __tablename__ = "currencies"
 
@@ -674,7 +675,7 @@ class Currency(db.Model):
     name = db.Column(db.String(50), nullable=False)  # Name of the currency
     symbol = db.Column(db.String(5), nullable=False)  # Symbol of the currency
     iso_code = db.Column(currency_iso_code_enum, nullable=False)
-    exchange_rate = db.Column(db.Numeric(precision=10, scale=5), nullable=False)
+    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
 
     def __repr__(self):
         return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
