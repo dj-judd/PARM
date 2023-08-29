@@ -11,106 +11,365 @@ db = SQLAlchemy()
 
 
 class OperationType(PyEnum):  # Use the PyEnum alias here
-    CREATE = 'create'
-    UPDATE = 'update'
-    DELETE = 'delete'
-    ARCHIVE = 'archive'
+    CREATE =    "CREATE"
+    UPDATE =    "UPDATE"
+    DELETE =    "DELETE"
+    ARCHIVE =   "ARCHIVE"
 
 # PostgreSQL ENUMs:
 operation_type_enum = ENUM(
-    *[e.value for e in OperationType],   # Use the Enum values to define the PostgreSQL ENUM
+    *[e.value for e in OperationType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='operation_type'
 )
 
+
+
+class CurrencyIsoCode(PyEnum):
+    UNITED_STATES = "USD"
+    CANADA =        "CAD"
+    MEXICO =        "MXN"
+
 currency_iso_code_enum = ENUM(
-    'USD', 'CAD', 'MXN',
+    *[e.value for e in CurrencyIsoCode],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='currency_iso_code'
 )
 
+
+
+class CountryIsoCode(PyEnum):
+    UNITED_STATES = "US"
+    CANADA =        "CA"
+    MEXICO =        "MX"
+
 country_iso_code_enum = ENUM(
-    'US', 'CA', 'MX',
+    *[e.value for e in CountryIsoCode],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='country_iso_code'
 )
+
+
+
+class CountryName(PyEnum):
+    UNITED_STATES = "United States"
+    CANADA =        "Canada"
+    MEXICO =        "Mexico"
 
 country_names_enum = ENUM(
-    'United States', 'Canada', 'Mexico',
+    *[e.value for e in CountryName],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='country_iso_code'
 )
 
+
+
+# TODO: Look at this. Should it be split out to a separate list "approvals"?
+class ReservationStatus(PyEnum):
+    PENDING =       "PENDING"
+    APPROVED =      "APPROVED"
+    CHECKED_OUT =   "CHECKED_OUT"
+    COMPLETED =     "COMPLETED"
+    CANCELLED =     "CANCELLED"
+    DENIED =        "DENIED"
+
 reservation_status_enum = ENUM(
-    'pending', 'approved', 'checked_out', 'completed', 'cancelled', 'denied',
+    *[e.value for e in ReservationStatus],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='reservation_status'
 )
 
+
+
+class ScanCodeType(PyEnum):
+    BARCODE =   "BARCODE"
+    QR =        "QR"
+    NFC =       "NFC"
+    BLUETOOTH = "BLUETOOTH"
+
 scan_code_type_enum = ENUM(
-    'barcode', 'qr', 'nfc', 'bluetooth',
+    *[e.value for e in ScanCodeType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='scan_code_type'
 )
 
+
+
+class CustomPropertyDataType(PyEnum):
+    VARCHAR =   "VARCHAR"
+    INTEGER =   "INTEGER"
+    DECIMAL =   "DECIMAL"
+    REAL =      "REAL"
+    BOOLEAN =   "BOOLEAN"
+    TIMESTAMP = "TIMESTAMP"
+    DATE =      "DATE"
+
 custom_property_data_type_enum = ENUM(
-    'varchar', 'integer', 'decimal', 'real', 'boolean', 'timestamp', 'date',
+    *[e.value for e in CustomPropertyDataType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='custom_property_data_type'
 )
 
+
+
+class FileCategory(PyEnum):
+    ARCHIVE =       "ARCHIVE"
+    DOCUMENT =      "DOCUMENT"
+    SPREADSHEET =   "SPREADSHEET"
+    PRESENTATION =  "PRESENTATION"
+    IMAGE =         "IMAGE"
+    VIDEO =         "VIDEO"
+    AUDIO =         "AUDIO"
+
 file_category_enum = ENUM(
-    'archive', 'document', 'spreadsheet', 'presentation', 'image', 'video', 'audio',
+    *[e.value for e in FileCategory],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='file_category'
 )
 
+
+
+class FileType(PyEnum):
+    JPEG =      "JPEG"
+    PNG =       "PNG"
+    GIF =       "GIF"
+    BMP =       "BMP"
+    TIFF =      "TIFF"
+    SVG =       "SVG"
+    PDF =       "PDF"
+    DOC =       "DOC"
+    DOCX =      "DOCX"
+    TXT =       "TXT"
+    RTF =       "RTF"
+    CSV =       "CSV"
+    XLS =       "XLS"
+    XLSX =      "XLSX"
+    PPT =       "PPT"
+    PPTX =      "PPTX"
+    ZIP =       "ZIP"
+    RAR =       "RAR"
+    SEVENZIP =  "SEVENZIP"
+    MP3 =       "MP3"
+    WAV =       "WAV"
+    MP4 =       "MP4"
+    AVI =       "AVI"
+    MKV =       "MKV"
+
 file_type_enum = ENUM(
-    'jpeg', 'png', 'gif', 'bmp', 'tiff', 'pdf', 'doc', 'docx', 'txt', 'rtf', 'csv', 'xls', 'xlsx',
-    'ppt', 'pptx', 'zip', 'rar', 'sevenzip', 'mp3', 'wav', 'mp4', 'avi', 'mkv', 'svg',
+    *[e.value for e in FileType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='file_type'
 )
 
-email_type_enum = ENUM(
-    'work', 'personal', 'business',
-    name='email_type'
-)
 
-phone_type_enum = ENUM(
-    'mobile', 'work', 'home',
-    name='phone_type'
-)
 
-address_type_enum = ENUM(
-    'home', 'work', 'other',
-    name='address_type'
-)
+class AttachmentType(PyEnum):
+    PROFILE_PIC =       "PROFILE_PIC"
+    HERO_PIC =          "HERO_PIC"
+    THUMBNAIL =         "THUMBNAIL"
+    DOCUMENT_COVER =    "DOCUMENT_COVER"
+    AVATAR =            "AVATAR"
+    BANNER =            "BANNER"
+    LOGO =              "LOGO"
+    BACKGROUND =        "BACKGROUND"
+    ICON =              "ICON"
+    MISCELLANEOUS =     "MISCELLANEOUS"
 
 attachment_type_enum = ENUM(
-    'profile_pic', 'hero_pic', 'thumbnail', 'document_cover', 'avatar', 'banner',
-    'logo', 'background', 'icon', 'miscellaneous',
+    *[e.value for e in AttachmentType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='attachment_type'
 )
 
+
+
+class ImageSize(PyEnum):
+
+    ORIGINAL =  "0-original"
+    XSMALL =    "1-xsmall"
+    SMALL =     "2-small"
+    MEDIUM =    "3-medium"
+    LARGE =     "4-large"
+    XLARGE =    "5-xlarge"
+    MONGO =     "6-mongo"
+
 image_size_enum = ENUM(
-    '0-original', '1-xsmall', '2-small', '3-medium', '4-large', '5-xlarge', '6-mongo',
+    *[e.value for e in ImageSize],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='image_size'
 )
 
-timezone_enum = ENUM(
-    'america/new_york', 'america/chicago', 'america/denver', 'america/los_angeles', 'america/phoenix',
-    'america/anchorage', 'america/juneau', 'america/honolulu',
-    name='timezone'
+
+
+class EmailType(PyEnum):
+    PERSONAL =  "PERSONAL"
+    WORK =      "WORK"
+    BUSINESS =  "BUSINESS"
+
+email_type_enum = ENUM(
+    *[e.value for e in EmailType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='email_type'
 )
 
+
+
+class PhoneType(PyEnum):
+    PERSONAL =  "PERSONAL"
+    WORK =      "WORK"
+    OTHER =     "OTHER"
+
+phone_type_enum = ENUM(
+    *[e.value for e in PhoneType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='phone_type'
+)
+
+
+
+class AddressType(PyEnum):
+    RESIDENTIAL =   "RESIDENTIAL"
+    BUSINESS =      "BUSINESS"
+    OTHER =         "OTHER"
+
+address_type_enum = ENUM(
+    *[e.value for e in AddressType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='address_type'
+)
+
+
+
+class TimezoneIdentifier(PyEnum):
+    UTC =           "Universal Coordinated Time"
+    NEW_YORK =      "America/New_York"
+    CHICAGO =       "America/Chicago"
+    DENVER =        "America/Denver"
+    LOS_ANGELES =   "America/Los_Angeles"
+    PHOENIX =       "America/Phoenix"
+    ANCHORAGE =     "America/Anchorage"
+    JUNEAU =        "America/Juneau"
+    HONOLULU =      "America/Honolulu"
+
+timezone_identifier_enum = ENUM(
+    *[e.value for e in TimezoneIdentifier],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='timezone_identifier'
+)
+
+
+class TimezoneAbbreviation(PyEnum):
+    UTC =       "UTC"
+    EASTERN =   "EST"
+    CENTRAL =   "CST"
+    MOUNTAIN =  "MST"
+    PACIFIC =   "PST"
+    ALASKAN =   "AKST"
+    HAWIIAN =   "HST"
+
+timezone_abbreviation_enum = ENUM(
+    *[e.value for e in TimezoneAbbreviation],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='timezone_abbreviation'
+)
+
+class StateCodes(PyEnum):
+    AL = "AL"
+    AK = "AK"
+    AZ = "AZ"
+    AR = "AR"
+    CA = "CA"
+    CO = "CO"
+    CT = "CT"
+    DE = "DE"
+    FL = "FL"
+    GA = "GA"
+    HI = "HI"
+    ID = "ID"
+    IL = "IL"
+    IN = "IN"
+    IA = "IA"
+    KS = "KS"
+    KY = "KY"
+    LA = "LA"
+    ME = "ME"
+    MD = "MD"
+    MA = "MA"
+    MI = "MI"
+    MN = "MN"
+    MS = "MS"
+    MO = "MO"
+    MT = "MT"
+    NE = "NE"
+    NV = "NV"
+    NH = "NH"
+    NJ = "NJ"
+    NM = "NM"
+    NY = "NY"
+    NC = "NC"
+    ND = "ND"
+    OH = "OH"
+    OK = "OK"
+    OR = "OR"
+    PA = "PA"
+    RI = "RI"
+    SC = "SC"
+    SD = "SD"
+    TN = "TN"
+    TX = "TX"
+    UT = "UT"
+    VT = "VT"
+    VA = "VA"
+    WA = "WA"
+    WV = "WV"
+    WI = "WI"
+    WY = "WY"
+
 state_codes_enum = ENUM(
-    'al', 'ak', 'az', 'ar', 'ca', 'co', 'ct', 'de', 'fl', 'ga', 'hi', 'id', 'il', 'in', 'ia', 'ks',
-    'ky', 'la', 'me', 'md', 'ma', 'mi', 'mn', 'ms', 'mo', 'mt', 'ne', 'nv', 'nh', 'nj', 'nm', 'ny',
-    'nc', 'nd', 'oh', 'ok', 'or', 'pa', 'ri', 'sc', 'sd', 'tn', 'tx', 'ut', 'vt', 'va', 'wa', 'wv',
-    'wi', 'wy',
+    *[e.value for e in StateCodes],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='state_codes'
 )
 
+
+
+class StateNames(PyEnum):
+    ALABAMA =           "Alabama"
+    ALASKA =            "Alaska"
+    ARIZONA =           "Arizona"
+    ARKANSAS =          "Arkansas"
+    CALIFORNIA =        "California"
+    COLORADO =          "Colorado"
+    CONNECTICUT =       "Connecticut"
+    DELAWARE =          "Delaware"
+    FLORIDA =           "Florida"
+    GEORGIA =           "Georgia"
+    HAWAII =            "Hawaii"
+    IDAHO =             "Idaho"
+    ILLINOIS =          "Illinois"
+    INDIANA =           "Indiana"
+    IOWA =              "Iowa"
+    KANSAS =            "Kansas"
+    KENTUCKY =          "Kentucky"
+    LOUISIANA =         "Louisiana"
+    MAINE =             "Maine"
+    MARYLAND =          "Maryland"
+    MASSACHUSETTS =     "Massachusetts"
+    MICHIGAN =          "Michigan"
+    MINNESOTA =         "Minnesota"
+    MISSISSIPPI =       "Mississippi"
+    MISSOURI =          "Missouri"
+    MONTANA =           "Montana"
+    NEBRASKA =          "Nebraska"
+    NEVADA =            "Nevada"
+    NEW_HAMPSHIRE =     "New Hampshire"
+    NEW_JERSEY =        "New Jersey"
+    NEW_MEXICO =        "New Mexico"
+    NEW_YORK =          "New York"
+    NORTH_CAROLINA =    "North Carolina"
+    NORTH_DAKOTA =      "North Dakota"
+    OHIO =              "Ohio"
+    OKLAHOMA =          "Oklahoma"
+    OREGON =            "Oregon"
+    PENNSYLVANIA =      "Pennsylvania"
+    RHODE_ISLAND =      "Rhode Island"
+    SOUTH_CAROLINA =    "South Carolina"
+    SOUTH_DAKOTA =      "South Dakota"
+    TENNESSEE =         "Tennessee"
+    TEXAS =             "Texas"
+    UTAH =              "Utah"
+    VERMONT =           "Vermont"
+    VIRGINIA =          "Virginia"
+    WASHINGTON =        "Washington"
+    WEST_VIRGINIA =     "West Virginia"
+    WISCONSIN =         "Wisconsin"
+    WYOMING =           "Wyoming"
+
 state_names_enum = ENUM(
-    'alabama', 'alaska', 'arizona', 'arkansas', 'california', 'colorado', 'connecticut', 'delaware',
-    'florida', 'georgia', 'hawaii', 'idaho', 'illinois', 'indiana', 'iowa', 'kansas', 'kentucky',
-    'louisiana', 'maine', 'maryland', 'massachusetts', 'michigan', 'minnesota', 'mississippi',
-    'missouri', 'montana', 'nebraska', 'nevada', 'new_hampshire', 'new_jersey', 'new_mexico',
-    'new_york', 'north_carolina', 'north_dakota', 'ohio', 'oklahoma', 'oregon', 'pennsylvania',
-    'rhode_island', 'south_carolina', 'south_dakota', 'tennessee', 'texas', 'utah', 'vermont',
-    'virginia', 'washington', 'west_virginia', 'wisconsin', 'wyoming',
+    *[e.value for e in StateNames],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='state_names'
 )
 
@@ -133,6 +392,26 @@ class GlobalSetting(db.Model):
 
     def __repr__(self):
         return f'<id={self.id} currency_settings={self.default_currency_id} time_format_is_24h={self.time_format_is_24h}>'
+    
+
+
+class UserSetting(db.Model):
+    """Settings and Defaults for the entire app."""
+
+    __tablename__ = "user_settings"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
+    currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    time_format_is_24h = db.Column(db.Boolean, nullable=False, default=True)
+    is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    audit_info_entries = db.relationship('AuditInfo', backref='user_settings')
+
+
+    def __repr__(self):
+        return f'<UserSetting id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
+    
     
 
 
@@ -204,6 +483,7 @@ class User(db.Model):
     last_name = db.Column(db.String, nullable=False)
     nickname = db.Column(db.String, nullable=True)
     nickname_preferred = db.Column(db.Boolean, nullable=True)
+    user_settings_id = db.Column(db.Integer, db.ForeignKey('user_settings.id'))
     last_login = db.Column(db.DateTime, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
@@ -268,6 +548,7 @@ class Category(db.Model):
     
     def __repr__(self):
         return f'<Category id={self.id} name={self.name}>'
+
 
 
 
@@ -375,12 +656,28 @@ class Timezone(db.Model):
     __tablename__ = "timezones"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    identifier = db.Column(timezone_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    identifier = db.Column(timezone_identifier_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    abbreviation = db.Column(timezone_abbreviation_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    utc_offset_minutes = db.Column(db.SmallInteger, nullable=False)
+    has_dst = db.Column(db.Boolean, nullable=False)
 
     def __repr__(self):
         return f'<Timezone id={self.id} identifier={self.identifier}>'
 
 
+class Currency(db.Model):
+    """A timezone as represented by enums."""
+    
+    __tablename__ = "currencies"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(50), nullable=False)  # Name of the currency
+    symbol = db.Column(db.String(5), nullable=False)  # Symbol of the currency
+    iso_code = db.Column(currency_iso_code_enum, nullable=False)
+    exchange_rate = db.Column(db.Numeric(precision=10, scale=5), nullable=False)
+
+    def __repr__(self):
+        return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
     
 
 # class FinancialEntry(db.Model):
@@ -413,244 +710,3 @@ if __name__ == "__main__":
     # query it executes.
 
     connect_to_db(app)
-
-
-
-
-
-# class CurrencyIsoCode(PyEnum):
-#     UNITED_STATES = "USD"
-#     CANADA =        "CAD"
-#     MEXICO =        "MXN"
-
-# class ReservationStatus(PyEnum):
-#     PENDING =       "PENDING"
-#     APPROVED =      "APPROVED"
-#     CHECKED_OUT =   "CHECKED_OUT"
-#     COMPLETED =     "COMPLETED"
-#     CANCELLED =     "CANCELLED"
-#     DENIED =        "DENIED"
-
-# class ScanCodeType(PyEnum):
-#     BARCODE =   "BARCODE"
-#     QR =        "QR"
-#     NFC =       "NFC"
-#     BLUETOOTH = "BLUETOOTH"
-
-
-# class CustomPropertyDataType(PyEnum):
-#     VARCHAR =   "VARCHAR"
-#     INTEGER =   "INTEGER"
-#     DECIMAL =   "DECIMAL"
-#     REAL =      "REAL"
-#     BOOLEAN =   "BOOLEAN"
-#     TIMESTAMP = "TIMESTAMP"
-#     DATE =      "DATE"
-
-
-# class ScanCodeType(PyEnum):
-#     BARCODE =   "BARCODE"
-#     QR =        "QR"
-#     NFC =       "NFC"
-#     BLUETOOTH = "BLUETOOTH"
-
-
-# class FileCategory(PyEnum):
-#     ARCHIVE =       "ARCHIVE"
-#     DOCUMENT =      "DOCUMENT"
-#     SPREADSHEET =   "SPREADSHEET"
-#     PRESENTATION =  "PRESENTATION"
-#     IMAGE =         "IMAGE"
-#     VIDEO =         "VIDEO"
-#     AUDIO =         "AUDIO"
-
-
-# class FileType(PyEnum):
-#     JPEG =      "JPEG"
-#     PNG =       "PNG"
-#     GIF =       "GIF"
-#     BMP =       "BMP"
-#     TIFF =      "TIFF"
-#     PDF =       "PDF"
-#     DOC =       "DOC"
-#     DOCX =      "DOCX"
-#     TXT =       "TXT"
-#     RTF =       "RTF"
-#     CSV =       "CSV"
-#     XLS =       "XLS"
-#     XLSX =      "XLSX"
-#     PPT =       "PPT"
-#     PPTX =      "PPTX"
-#     ZIP =       "ZIP"
-#     RAR =       "RAR"
-#     SEVENZIP =  "SEVENZIP"
-#     MP3 =       "MP3"
-#     WAV =       "WAV"
-#     MP4 =       "MP4"
-#     AVI =       "AVI"
-#     MKV =       "MKV"
-#     SVG =       "SVG"
-
-
-# class EmailType(PyEnum):
-#     WORK =      "WORK"
-#     PERSONAL =  "PERSONAL"
-#     BUSINESS =  "BUSINESS"
-
-
-# class PhoneType(PyEnum):
-#     MOBILE =    "MOBILE"
-#     WORK =      "WORK"
-#     HOME =      "HOME"
-
-
-# class AddressType(PyEnum):
-#     HOME =      "HOME"
-#     WORK =      "WORK"
-#     OTHER =    "OTHER"
-
-
-# class AttachmentType(PyEnum):
-#     PROFILE_PIC =       "PROFILE_PIC"
-#     HERO_PIC =          "HERO_PIC"
-#     THUMBNAIL =         "THUMBNAIL"
-#     DOCUMENT_COVER =    "DOCUMENT_COVER"
-#     AVATAR =            "AVATAR"
-#     BANNER =            "BANNER"
-#     LOGO =              "LOGO"
-#     BACKGROUND =        "BACKGROUND"
-#     ICON =              "ICON"
-#     MISCELLANEOUS =     "MISCELLANEOUS"
-
-
-# class ImageSize(PyEnum):
-
-#     ORIGINAL =  "0-original"
-#     XSMALL =    "1-xsmall"
-#     SMALL =     "2-small"
-#     MEDIUM =    "3-medium"
-#     LARGE =     "4-large"
-#     XLARGE =    "5-xlarge"
-#     MONGO =     "6-mongo"
-
-
-# class CountryIsoCode(PyEnum):
-#     UNITED_STATES = "US"
-#     CANADA =        "CA"
-#     MEXICO =        "MX"
-
-
-# class Timezone(PyEnum):
-#     NEW_YORK =      "America/New_York"
-#     CHICAGO =       "America/Chicago"
-#     DENVER =        "America/Denver"
-#     LOS_ANGELES =   "America/Los_Angeles"
-#     PHOENIX =       "America/Phoenix"
-#     ANCHORAGE =     "America/Anchorage"
-#     JENEAU =        "America/Juneau"
-#     HONOLULU =      "America/Honolulu"
-
-
-# class StateCodes(PyEnum):
-#     AL = "AL"
-#     AK = "AK"
-#     AZ = "AZ"
-#     AR = "AR"
-#     CA = "CA"
-#     CO = "CO"
-#     CT = "CT"
-#     DE = "DE"
-#     FL = "FL"
-#     GA = "GA"
-#     HI = "HI"
-#     ID = "ID"
-#     IL = "IL"
-#     IN = "IN"
-#     IA = "IA"
-#     KS = "KS"
-#     KY = "KY"
-#     LA = "LA"
-#     ME = "ME"
-#     MD = "MD"
-#     MA = "MA"
-#     MI = "MI"
-#     MN = "MN"
-#     MS = "MS"
-#     MO = "MO"
-#     MT = "MT"
-#     NE = "NE"
-#     NV = "NV"
-#     NH = "NH"
-#     NJ = "NJ"
-#     NM = "NM"
-#     NY = "NY"
-#     NC = "NC"
-#     ND = "ND"
-#     OH = "OH"
-#     OK = "OK"
-#     OR = "OR"
-#     PA = "PA"
-#     RI = "RI"
-#     SC = "SC"
-#     SD = "SD"
-#     TN = "TN"
-#     TX = "TX"
-#     UT = "UT"
-#     VT = "VT"
-#     VA = "VA"
-#     WA = "WA"
-#     WV = "WV"
-#     WI = "WI"
-#     WY = "WY"
-
-# class StateNames(PyEnum):
-#     ALABAMA =           "Alabama"
-#     ALASKA =            "Alaska"
-#     ARIZONA =           "Arizona"
-#     ARKANSAS =          "Arkansas"
-#     CALIFORNIA =        "California"
-#     COLORADO =          "Colorado"
-#     CONNECTICUT =       "Connecticut"
-#     DELAWARE =          "Delaware"
-#     FLORIDA =           "Florida"
-#     GEORGIA =           "Georgia"
-#     HAWAII =            "Hawaii"
-#     IDAHO =             "Idaho"
-#     ILLINOIS =          "Illinois"
-#     INDIANA =           "Indiana"
-#     IOWA =              "Iowa"
-#     KANSAS =            "Kansas"
-#     KENTUCKY =          "Kentucky"
-#     LOUISIANA =         "Louisiana"
-#     MAINE =             "Maine"
-#     MARYLAND =          "Maryland"
-#     MASSACHUSETTS =     "Massachusetts"
-#     MICHIGAN =          "Michigan"
-#     MINNESOTA =         "Minnesota"
-#     MISSISSIPPI =       "Mississippi"
-#     MISSOURI =          "Missouri"
-#     MONTANA =           "Montana"
-#     NEBRASKA =          "Nebraska"
-#     NEVADA =            "Nevada"
-#     NEW_HAMPSHIRE =     "New Hampshire"
-#     NEW_JERSEY =        "New Jersey"
-#     NEW_MEXICO =        "New Mexico"
-#     NEW_YORK =          "New York"
-#     NORTH_CAROLINA =    "North Carolina"
-#     NORTH_DAKOTA =      "North Dakota"
-#     OHIO =              "Ohio"
-#     OKLAHOMA =          "Oklahoma"
-#     OREGON =            "Oregon"
-#     PENNSYLVANIA =      "Pennsylvania"
-#     RHODE_ISLAND =      "Rhode Island"
-#     SOUTH_CAROLINA =    "South Carolina"
-#     SOUTH_DAKOTA =      "South Dakota"
-#     TENNESSEE =         "Tennessee"
-#     TEXAS =             "Texas"
-#     UTAH =              "Utah"
-#     VERMONT =           "Vermont"
-#     VIRGINIA =          "Virginia"
-#     WASHINGTON =        "Washington"
-#     WEST_VIRGINIA =     "West Virginia"
-#     WISCONSIN =         "Wisconsin"
-#     WYOMING =           "Wyoming"
