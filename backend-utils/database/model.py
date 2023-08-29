@@ -395,22 +395,6 @@ class GlobalSetting(db.Model):
     
 
 
-class UserSetting(db.Model):
-    """Settings and Defaults for the entire app."""
-
-    __tablename__ = "user_settings"
-
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True)
-    currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    time_format_is_24h = db.Column(db.Boolean, nullable=False, default=True)
-    is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
-    audit_info_entries = db.relationship('AuditInfo', backref='user_settings')
-
-
-    def __repr__(self):
-        return f'<UserSetting id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
     
     
 
@@ -471,27 +455,31 @@ class ReservationAsset(db.Model):
     def __repr__(self):
         return f"<ReservationAsset reservation_id={self.reservation_id} asset_id={self.asset_id} audit_info_entry_id={self.audit_info_entry_id}>"
 
-class User(db.Model):
-    """A user."""
 
-    __tablename__ = "users"
+
+
+class Currency(db.Model):
+    """A currency model representing different global currencies."""
+
+    
+    __tablename__ = "currencies"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
-    first_name = db.Column(db.String, nullable=False)
-    middle_name = db.Column(db.String, nullable=True)
-    last_name = db.Column(db.String, nullable=False)
-    nickname = db.Column(db.String, nullable=True)
-    nickname_preferred = db.Column(db.Boolean, nullable=True)
-    user_settings_id = db.Column(db.Integer, db.ForeignKey('user_settings.id'))
-    last_login = db.Column(db.DateTime, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='users')
-
+    name = db.Column(db.String(50), nullable=False)  # Name of the currency
+    symbol = db.Column(db.String(5), nullable=False)  # Symbol of the currency
+    iso_code = db.Column(currency_iso_code_enum, nullable=False)
+    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
 
     def __repr__(self):
-        return f'<User id={self.id} first_name={self.first_name} last_name={self.last_name}>'
+        return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
+    
+
+# class FinancialEntry(db.Model):
+#     """Financial Entries."""
+
+#     __tablename__ = "financial_entries"
+
+#     #TODO: Add fields here
 
 
 
@@ -520,7 +508,7 @@ class Asset(db.Model):
     online_item_page = db.Column(db.String, nullable=True)
     warranty_starts = db.Column(db.DateTime, nullable=True)
     warranty_ends = db.Column(db.DateTime, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
@@ -551,6 +539,220 @@ class Category(db.Model):
 
 
 
+class UserEmailAddress(db.Model):
+    """Join Table. Email addresses associated with users."""
+
+    __tablename__ = "user_email_addresses"
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
+    email_address_id = db.Column(db.Integer, db.ForeignKey('email_addresses.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    user = db.relationship('User', backref='associated_email_addresses')
+    email_address = db.relationship('EmailAddress', backref='associated_users')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_email_addresses')
+
+    def __repr__(self):
+        return f"<UserEmailAddress user_id={self.user_id} email_address_id={self.email_address_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class EmailAddress(db.Model):
+    """Email Address."""
+
+    __tablename__ = "email_addresses"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    email_type = email_type_enum(nullable=False)
+    email_address = db.Column(db.String(64), unique=True, nullable=False)
+    is_verified = db.Column(Boolean, nullable=False, default=False)
+    is_primary = db.Column(Boolean, nullable=True)
+    is_shared = db.Column(Boolean, nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='email_addresses')
+
+    def __repr__(self):
+        return f"<EmailAddress id={self.id} email_type={self.email_type} email_address={self.email_address}>"
+
+
+
+class UserPhoneNumber(db.Model):
+    """Join Table. Phone numbers associated with users."""
+
+    __tablename__ = "user_phone_numbers"
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
+    phone_number_id = db.Column(db.Integer, db.ForeignKey('phone_numbers.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    user = db.relationship('User', backref='associated_phone_numbers')
+    phone_number = db.relationship('PhoneNumber', backref='associated_users')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_phone_numbers')
+
+    def __repr__(self):
+        return f"<UserPhoneNumber user_id={self.user_id} phone_number_id={self.phone_number_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class PhoneNumber(db.Model):
+    """Phone Number."""
+
+    __tablename__ = "phone_numbers"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    phone_type = phone_type_enum(nullable=False)
+    is_cell = db.Column(Boolean, nullable=False)
+    country_code = db.Column(db.SmallInteger, nullable=False)
+    area_code = db.Column(db.SmallInteger, nullable=False)
+    phone_number = db.Column(db.Integer, nullable=False)
+    extension = db.Column(db.SmallInteger, nullable=True)
+    is_verified = db.Column(Boolean, nullable=False, default=False)
+    is_primary = db.Column(Boolean, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='phone_numbers')
+
+    def __repr__(self):
+        return f"<PhoneNumber id={self.id} phone_type={self.phone_type} phone_number={self.phone_number}>"
+
+
+
+class UserSetting(db.Model):
+    """Settings and Defaults for the entire app."""
+
+    __tablename__ = "user_settings"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    time_format_is_24h = db.Column(db.Boolean, nullable=False, default=True)
+    is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    audit_info_entries = db.relationship('AuditInfo', backref='user_settings')
+
+
+    def __repr__(self):
+        return f'<UserSetting id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
+
+
+
+class User(db.Model):
+    """A user."""
+
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    password_hash = db.Column(db.String, nullable=False)
+    first_name = db.Column(db.String, nullable=False)
+    middle_name = db.Column(db.String, nullable=True)
+    last_name = db.Column(db.String, nullable=False)
+    nickname = db.Column(db.String, nullable=True)
+    nickname_preferred = db.Column(db.Boolean, nullable=True)
+    user_settings_id = db.Column(db.Integer, db.ForeignKey('user_settings.id'))
+    last_login = db.Column(db.DateTime, nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    audit_info_entries = db.relationship('AuditInfoEntry', backref='users')
+
+
+    def __repr__(self):
+        return f'<User id={self.id} first_name={self.first_name} last_name={self.last_name}>'
+
+
+
+class UserFileAttachment(db.Model):
+    """File attachments associated with users. Ex: photos, location releases"""
+
+    __tablename__ = "user_file_attachments"
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    user = db.relationship('User', backref='file_attachments')
+    attachment = db.relationship('Attachment', backref='associated_users')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_attachment')
+
+    def __repr__(self):
+        return f"<UserFileAttachment user_id={self.user_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class UserRole(db.Model):
+    """Track when a user was assigned a specific role."""
+
+    
+    __tablename__ = "user_roles"
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+    
+    user = db.relationship('User', backref='role_relationships')
+    role = db.relationship('Role', backref='user_relationships')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'user_roles')
+
+    def __repr__(self):
+        return f'<UserRole user_id={self.user_id} role_id={self.role_id} audit_info_entry_id={self.audit_info_entry_id}>'
+
+
+
+class Role(db.Model):
+    """Role for user assignment."""
+
+    __tablename__ = "roles"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.String(500), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='roles')
+    
+    def __repr__(self):
+        return f'<Role id={self.id} name={self.name}>'
+
+
+
+class Permission(db.Model):
+    """Permissions for app access and control."""
+
+    __tablename__ = "permissions"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False, unique=True)
+    description = db.Column(db.String(500), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='permissions')
+    
+    def __repr__(self):
+        return f'<Permission id={self.id} name={self.name}>'
+
+
+
+class RolePermission(db.Model):
+    """Track when a role was granted a particular permission."""
+
+    
+    __tablename__ = "role_permissions"
+
+    role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), primary_key=True, nullable=False)
+    permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+    
+    role = db.relationship('Role', backref='permission_relationships')
+    permission = db.relationship('Permission', backref='role_relationships')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'role_permissions')
+
+    def __repr__(self):
+        return f'<RolePermission role_id={self.role_id} permission_id={self.permission_id} audit_info_entry_id={self.audit_info_entry_id}>'
+
+
 
 class Area(db.Model):
     """Areas."""
@@ -562,8 +764,8 @@ class Area(db.Model):
     name = db.Column(db.String, nullable=False)
     latitude = db.Column(db.Decimal(9, 6), nullable=True)
     longitude = db.Column(db.Decimal(9, 6), nullable=True)
-    address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'))
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+    address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     # Relationship to represent the parent area.
     parent = db.relationship('Area', remote_side=[id], backref=db.backref('nested_areas', lazy='dynamic'))
@@ -593,6 +795,7 @@ class AreaFileAttachment(db.Model):
         return f"<AreaFileAttachment area_id={self.area_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
     
 
+
 class Address(db.Model):
     """A street address."""
     
@@ -603,10 +806,10 @@ class Address(db.Model):
     type = db.Column(address_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     street = db.Column(db.String, nullable=False)
     city = db.Column(db.String, nullable=False)
-    state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=True)
+    state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
     zip = db.Column(db.String(10), nullable=False)
     country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
 
     state = db.relationship('State', backref='addresses')
@@ -617,25 +820,6 @@ class Address(db.Model):
         return f'<Address id={self.id} name={self.name} type={self.type}>'
 
 
-
-class State(db.Model):
-    """A state from the United States."""
-    
-    __tablename__ = "states"
-
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    code = db.Column(state_codes_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    name = db.Column(state_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    timezone_id = db.Column(db.Integer, db.ForeignKey('timezones.id'))
-    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'))
-
-
-    timezone = db.relationship('Timezone', backref='states')
-    country = db.relationship('Country', backref='states')
-
-    def __repr__(self):
-        return f'<State id={self.id} name={self.name} code={self.code}>'
-    
 
 class Country(db.Model):
     """A country from the globe."""
@@ -649,6 +833,8 @@ class Country(db.Model):
 
     def __repr__(self):
         return f'<Country id={self.id} name={self.name} code={self.code}>'
+
+
 
 class Timezone(db.Model):
     """A timezone as represented by enums."""
@@ -665,29 +851,24 @@ class Timezone(db.Model):
         return f'<Timezone id={self.id} identifier={self.identifier}>'
 
 
-class Currency(db.Model):
-    """A currency model representing different global currencies."""
 
+class State(db.Model):
+    """A state from the United States."""
     
-    __tablename__ = "currencies"
+    __tablename__ = "states"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    name = db.Column(db.String(50), nullable=False)  # Name of the currency
-    symbol = db.Column(db.String(5), nullable=False)  # Symbol of the currency
-    iso_code = db.Column(currency_iso_code_enum, nullable=False)
-    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
+    code = db.Column(state_codes_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    name = db.Column(state_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    timezone_id = db.Column(db.Integer, db.ForeignKey('timezones.id'), nullable=False)
+    country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
+
+
+    timezone = db.relationship('Timezone', backref='states')
+    country = db.relationship('Country', backref='states')
 
     def __repr__(self):
-        return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
-    
-
-# class FinancialEntry(db.Model):
-#     """Financial Entries."""
-
-#     __tablename__ = "financial_entries"
-
-#     #TODO: Add fields here
-
+        return f'<State id={self.id} name={self.name} code={self.code}>'
 
 
 
