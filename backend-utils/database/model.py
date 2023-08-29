@@ -1,7 +1,7 @@
 """Models for PARM database."""
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import String, Integer, DateTime, Boolean, ForeignKey
 from datetime import datetime
 from enum import Enum as PyEnum
 from sqlalchemy.dialects.postgresql import ENUM
@@ -92,7 +92,7 @@ scan_code_type_enum = ENUM(
 class CustomPropertyDataType(PyEnum):
     VARCHAR =   "VARCHAR"
     INTEGER =   "INTEGER"
-    DECIMAL =   "DECIMAL"
+    NUMERIC =   "NUMERIC"
     REAL =      "REAL"
     BOOLEAN =   "BOOLEAN"
     TIMESTAMP = "TIMESTAMP"
@@ -523,7 +523,7 @@ class Currency(db.Model):
     name = db.Column(db.String(64), nullable=False)  # Name of the currency
     symbol = db.Column(db.String(8), nullable=False)  # Symbol of the currency
     iso_code = db.Column(currency_iso_code_enum, nullable=False)
-    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
+    exchange_rate = db.Column(db.Numeric( 10, 5 ), nullable=False)
 
     def __repr__(self):
         return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
@@ -537,7 +537,7 @@ class FinancialEntry(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
-    amount = db.Column(db.Decimal( 10, 2 ), nullable=False)
+    amount = db.Column(db.Numeric( 10, 2 ), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     currency = db.relationship('Currency', backref='financial_entries')
@@ -555,8 +555,8 @@ class AssetLocationLog(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
-    latitude = db.Column(db.Decimal(9, 6), nullable=True)
-    longitude = db.Column(db.Decimal(9, 6), nullable=True)
+    latitude = db.Column(db.Numeric(9, 6), nullable=True)
+    longitude = db.Column(db.Numeric(9, 6), nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     asset = db.relationship('Asset', backref='location_logs')
@@ -593,9 +593,9 @@ class FileAttachment(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     file_path = db.Column(db.String, unique=True, nullable=False)  # Path or URL to the actual file
-    file_type = file_type_enum(nullable=False)
-    file_category = file_category_enum(nullable=False)
-    image_size = image_size_enum(nullable=True)
+    file_type = db.Column(file_type_enum, nullable=False)
+    file_category = db.Column(file_category_enum, nullable=False)
+    image_size = db.Column(image_size_enum, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     audit_info_entry = db.relationship('AuditInfoEntry', backref='file_attachments')
@@ -629,7 +629,7 @@ class EmailAddress(db.Model):
     __tablename__ = "email_addresses"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    email_type = email_type_enum(nullable=False)
+    email_type = db.Column(email_type_enum, nullable=False)
     email_address = db.Column(db.String(64), unique=True, nullable=False)
     is_verified = db.Column(Boolean, nullable=False, default=False)
     is_primary = db.Column(Boolean, nullable=True)
@@ -667,7 +667,7 @@ class PhoneNumber(db.Model):
     __tablename__ = "phone_numbers"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    phone_type = phone_type_enum(nullable=False)
+    phone_type = db.Column(phone_type_enum, nullable=False)
     is_cell = db.Column(Boolean, nullable=False)
     country_code = db.Column(db.SmallInteger, nullable=False)
     area_code = db.Column(db.SmallInteger, nullable=False)
@@ -828,8 +828,8 @@ class Area(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
     name = db.Column(db.String(64), nullable=False)
-    latitude = db.Column(db.Decimal(9, 6), nullable=True)
-    longitude = db.Column(db.Decimal(9, 6), nullable=True)
+    latitude = db.Column(db.Numeric(9, 6), nullable=True)
+    longitude = db.Column(db.Numeric(9, 6), nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
