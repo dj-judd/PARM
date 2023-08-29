@@ -376,7 +376,6 @@ state_names_enum = ENUM(
 
 
 
-
 class GlobalSetting(db.Model):
     """Settings and Defaults for the entire app."""
 
@@ -392,10 +391,6 @@ class GlobalSetting(db.Model):
 
     def __repr__(self):
         return f'<id={self.id} currency_settings={self.default_currency_id} time_format_is_24h={self.time_format_is_24h}>'
-    
-
-
-    
     
 
 
@@ -416,6 +411,7 @@ class AuditInfoEntry(db.Model):
 
     def __repr__(self):
         return f"<AuditInfo id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
+
 
 
 class Reservation(db.Model):
@@ -439,6 +435,7 @@ class Reservation(db.Model):
         return f"<Reservation id={self.id} reserved_for={self.reserved_for} area_id={self.area_id}>"
 
 
+
 class ReservationAsset(db.Model):
     """Reservation Assets."""
 
@@ -457,42 +454,17 @@ class ReservationAsset(db.Model):
 
 
 
-
-class Currency(db.Model):
-    """A currency model representing different global currencies."""
-
-    
-    __tablename__ = "currencies"
-
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    name = db.Column(db.String(50), nullable=False)  # Name of the currency
-    symbol = db.Column(db.String(5), nullable=False)  # Symbol of the currency
-    iso_code = db.Column(currency_iso_code_enum, nullable=False)
-    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
-
-    def __repr__(self):
-        return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
-    
-
-# class FinancialEntry(db.Model):
-#     """Financial Entries."""
-
-#     __tablename__ = "financial_entries"
-
-#     #TODO: Add fields here
-
-
-
 class Asset(db.Model):
     """An asset."""
 
     __tablename__ = "assets"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    manufacturer = db.Column(db.String, nullable=False)
-    model_number = db.Column(db.String, nullable=True)
-    model_name = db.Column(db.String, nullable=False)
-    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable= True)
+    # manufacturer = db.Column(db.String, nullable=False)
+    brand_id = db.Column(db.SmallInteger, db.ForeignKey('brands.id'), nullable= False)
+    model_number = db.Column(db.String(64), nullable=True)
+    model_name = db.Column(db.String(64), nullable=False)
+    category_id = db.Column(db.SmallInteger, db.ForeignKey('categories.id'), nullable= True)
     storage_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable= True)
     purchase_date = db.Column(db.DateTime, nullable=True)
     purchase_price_id = db.Column(db.Integer, db.ForeignKey('financial_entries.id'), nullable= True)
@@ -501,15 +473,16 @@ class Asset(db.Model):
     parent_asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable= True)
     is_kit_root = db.Column(Boolean, nullable=False, default=False)
     is_attachment = db.Column(Boolean, nullable=False, default=False)
-    serial_number = db.Column(db.String, nullable=True)
-    inventory_number = db.Column(db.String, nullable=True)
-    description = db.Column(db.String, nullable=True)
+    serial_number = db.Column(db.String(256), nullable=True)
+    inventory_number = db.Column(db.SmallInteger, nullable=False) # Unique number for each item within the same brand and model.
+    description = db.Column(db.String(512), nullable=True)
     is_available = db.Column(Boolean, nullable=False, default=True)
     online_item_page = db.Column(db.String, nullable=True)
     warranty_starts = db.Column(db.DateTime, nullable=True)
     warranty_ends = db.Column(db.DateTime, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
+    brand = db.relationship('Brand', backref= 'assets')
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
     financial_entry = db.relationship('FinancialEntry', backref= 'assets')
@@ -519,6 +492,7 @@ class Asset(db.Model):
         return f'<Asset id={self.id} model_name={self.model_name}>'
 
 
+
 class Category(db.Model):
     """A category for assets."""
 
@@ -526,7 +500,7 @@ class Category(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
-    name = db.Column(db.String, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
     # Relationship to represent the parent category.
@@ -536,6 +510,98 @@ class Category(db.Model):
     
     def __repr__(self):
         return f'<Category id={self.id} name={self.name}>'
+
+
+
+class Currency(db.Model):
+    """A currency model representing different global currencies."""
+
+    
+    __tablename__ = "currencies"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False)  # Name of the currency
+    symbol = db.Column(db.String(8), nullable=False)  # Symbol of the currency
+    iso_code = db.Column(currency_iso_code_enum, nullable=False)
+    exchange_rate = db.Column(db.Decimal( 10, 5 ), nullable=False)
+
+    def __repr__(self):
+        return f'<Currency id={self.id} name={self.name} symbol={self.symbol}>'
+    
+
+
+class FinancialEntry(db.Model):
+    """Track financial entries across the database."""
+
+    __tablename__ = "financial_entries"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
+    amount = db.Column(db.Decimal( 10, 2 ), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    currency = db.relationship('Currency', backref='financial_entries')
+    audit_info_entries = db.relationship('AuditInfo', backref='financial_entries')
+
+    def __repr__(self):
+        return f'<FinancialEntry id={self.id} currency_id={self.currency_id} amount={self.amount} audit_id={self.audit_info_entry_id}>'
+
+
+
+class AssetLocationLog(db.Model):
+    """Logs to keep track everytime an asset is scanned."""
+
+    __tablename__ = "asset_location_logs"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
+    latitude = db.Column(db.Decimal(9, 6), nullable=True)
+    longitude = db.Column(db.Decimal(9, 6), nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    asset = db.relationship('Asset', backref='location_logs')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_location_logs')
+    
+    def __repr__(self):
+        return f'<AssetLocationLog id={self.id} asset_id={self.asset_id} lat={self.latitude} long={self.longitude}>'
+
+
+
+class AssetFileAttachment(db.Model):
+    """File attachments associated with assets. Ex: photos, location releases"""
+
+    __tablename__ = "asset_file_attachments"
+
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    asset = db.relationship('Asset', backref='file_attachments')
+    attachment = db.relationship('Attachment', backref='associated_assets')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_attachment')
+
+    def __repr__(self):
+        return f"<AssetFileAttachment asset_id={self.asset_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class FileAttachment(db.Model):
+    """Files. Can be images, video, or documents."""
+
+    __tablename__ = "file_attachments"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    file_path = db.Column(db.String, unique=True, nullable=False)  # Path or URL to the actual file
+    file_type = file_type_enum(nullable=False)
+    file_category = file_category_enum(nullable=False)
+    image_size = image_size_enum(nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='file_attachments')
+
+    def __repr__(self):
+        return f"<FileAttachment id={self.id} file_type={self.file_type} audit_info_entry_id={self.audit_info_entry_id}>"
 
 
 
@@ -643,11 +709,11 @@ class User(db.Model):
     __tablename__ = "users"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    password_hash = db.Column(db.String, nullable=False)
-    first_name = db.Column(db.String, nullable=False)
-    middle_name = db.Column(db.String, nullable=True)
-    last_name = db.Column(db.String, nullable=False)
-    nickname = db.Column(db.String, nullable=True)
+    password_hash = db.Column(db.String(64), nullable=False)
+    first_name = db.Column(db.String(64), nullable=False)
+    middle_name = db.Column(db.String(64), nullable=True)
+    last_name = db.Column(db.String(64), nullable=False)
+    nickname = db.Column(db.String(64), nullable=True)
     nickname_preferred = db.Column(db.Boolean, nullable=True)
     user_settings_id = db.Column(db.Integer, db.ForeignKey('user_settings.id'))
     last_login = db.Column(db.DateTime, nullable=True)
@@ -705,8 +771,8 @@ class Role(db.Model):
     __tablename__ = "roles"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    description = db.Column(db.String(500), nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(512), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
 
@@ -723,8 +789,8 @@ class Permission(db.Model):
     __tablename__ = "permissions"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    name = db.Column(db.String(100), nullable=False, unique=True)
-    description = db.Column(db.String(500), nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(512), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
 
@@ -761,7 +827,7 @@ class Area(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
-    name = db.Column(db.String, nullable=False)
+    name = db.Column(db.String(64), nullable=False)
     latitude = db.Column(db.Decimal(9, 6), nullable=True)
     longitude = db.Column(db.Decimal(9, 6), nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
@@ -802,12 +868,12 @@ class Address(db.Model):
     __tablename__ = "addresses"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    name = db.Column(db.String, nullable=False) # The name of the address for the User. IE "Empire State Building"
+    name = db.Column(db.String(64), nullable=False) # The name of the address for the User. IE "Empire State Building"
     type = db.Column(address_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     street = db.Column(db.String, nullable=False)
     city = db.Column(db.String, nullable=False)
     state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
-    zip = db.Column(db.String(10), nullable=False)
+    zip = db.Column(db.String(16), nullable=False)
     country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
@@ -828,8 +894,8 @@ class Country(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     code = db.Column(country_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
     intl_phone_code = db.Column(db.SmallInteger, nullable=False) # You'll have to implement length restrictions in the app
+    name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
 
     def __repr__(self):
         return f'<Country id={self.id} name={self.name} code={self.code}>'
