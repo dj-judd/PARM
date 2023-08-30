@@ -120,9 +120,14 @@ def create_user(password_hash,
                 commit = True):
     """Create and return a new user."""
 
+    # user_audit_entry = create_audit_entry("CREATE",
+    #                                  details,
+    #                                  created_by_user_id)
+    
     user_audit_entry = create_audit_entry("CREATE",
-                                     details,
-                                     created_by_user_id)
+                                 created_by_user_id,
+                                 details)
+
     
     user_setting, user_setting_audit_entry = create_user_setting(currency_id,
                                                                   time_format_is_24,

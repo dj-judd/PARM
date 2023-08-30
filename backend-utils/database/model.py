@@ -411,7 +411,7 @@ class GlobalSetting(db.Model):
     time_format_is_24h = db.Column(db.Boolean, nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entry = db.relationship('AuditInfo', backref='global_settings')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='global_settings')
 
 
     def __repr__(self):
@@ -434,8 +434,12 @@ class AuditInfoEntry(db.Model):
     is_archived = db.Column(db.Boolean, nullable=False, default=False)
     archived_at = db.Column(db.DateTime, nullable=True)
 
+    creator = db.relationship('User', foreign_keys=[created_by])
+    edited_by_user = db.relationship('User', foreign_keys=[last_edited_by])
+
+
     def __repr__(self):
-        return f"<AuditInfo id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
+        return f"<AuditInfoEntry id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
 
 
 
@@ -611,7 +615,7 @@ class AssetCustomProperty(db.Model):
 
     asset = db.relationship('Asset', backref='associated_custom_properties')
     custom_property = db.relationship('CustomProperty', backref='associated_assets')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='custom_properties')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_custom_properties')
 
     def __repr__(self):
         return f"<AssetCustomProperty asset_id={self.asset_id} custom_property_id={self.custom_property_id} audit_info_entry_id={self.audit_info_entry_id}>"
@@ -650,7 +654,9 @@ class Asset(db.Model):
     brand = db.relationship('Brand', backref= 'assets')
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
-    financial_entry = db.relationship('FinancialEntry', backref= 'assets')
+    purchase_price_entry = db.relationship('FinancialEntry', foreign_keys=[purchase_price_id], backref='purchase_price_assets')
+    msrp_entry = db.relationship('FinancialEntry', foreign_keys=[msrp_id], backref='msrp_assets')
+    residual_value_entry = db.relationship('FinancialEntry', foreign_keys=[residual_value_id], backref='residual_value_assets')
     audit_info_entry = db.relationship('AuditInfoEntry', backref= 'assets')
 
     def __repr__(self):
@@ -665,12 +671,12 @@ class BrandFileAttachment(db.Model):
     __tablename__ = "brand_file_attachments"
 
     brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
     attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     brand = db.relationship('Brand', backref='file_attachments')
-    attachment = db.relationship('Attachment', backref='associated_brands')
+    attachment = db.relationship('FileAttachment', backref='associated_brands')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_attachment')
 
     def __repr__(self):
@@ -800,7 +806,7 @@ class FinancialEntry(db.Model):
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     currency = db.relationship('Currency', backref='financial_entries')
-    audit_info_entry = db.relationship('AuditInfo', backref='financial_entries')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='financial_entries')
 
     def __repr__(self):
         return f'<FinancialEntry id={self.id} currency_id={self.currency_id} amount={self.amount} audit_id={self.audit_info_entry_id}>'
@@ -832,12 +838,12 @@ class AssetFileAttachment(db.Model):
     __tablename__ = "asset_file_attachments"
 
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
     attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     asset = db.relationship('Asset', backref='file_attachments')
-    attachment = db.relationship('Attachment', backref='associated_assets')
+    attachment = db.relationship('FileAttachment', backref='associated_assets')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_attachment')
 
     def __repr__(self):
@@ -954,7 +960,7 @@ class UserSetting(db.Model):
     is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entry = db.relationship('AuditInfo', backref='user_settings')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_settings')
 
 
     def __repr__(self):
@@ -978,7 +984,8 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='users')
+    user_settings = db.relationship('UserSetting', backref='user')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='created_by_user', foreign_keys=[audit_info_entry_id])
 
 
     def __repr__(self):
@@ -992,12 +999,12 @@ class UserFileAttachment(db.Model):
     __tablename__ = "user_file_attachments"
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
     attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     user = db.relationship('User', backref='file_attachments')
-    attachment = db.relationship('Attachment', backref='associated_users')
+    attachment = db.relationship('FileAttachment', backref='associated_users')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='user_attachment')
 
     def __repr__(self):
@@ -1108,12 +1115,12 @@ class AreaFileAttachment(db.Model):
     __tablename__ = "area_file_attachments"
 
     area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
     attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     area = db.relationship('Area', backref='file_attachments')
-    attachment = db.relationship('Attachment', backref='associated_areas')
+    attachment = db.relationship('FileAttachment', backref='associated_areas')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='area_attachment')
 
     def __repr__(self):
