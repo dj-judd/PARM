@@ -401,13 +401,13 @@ class AuditInfoEntry(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     operation_type = db.Column(operation_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    details = db.Column(String, nullable=True)
-    created_by = db.Column(Integer, ForeignKey('users.id'))
-    created_at = db.Column(DateTime, default=datetime.utcnow)
-    last_edited_by = db.Column(Integer, ForeignKey('users.id'), nullable=True)
-    last_edited_at = db.Column(DateTime, default=datetime.utcnow)
-    is_archived = db.Column(Boolean, nullable=False, default=False)
-    archived_at = db.Column(DateTime, nullable=True)
+    details = db.Column(db.String, nullable=True)
+    created_by = db.Column(db.Integer, ForeignKey('users.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_edited_by = db.Column(db.Integer, ForeignKey('users.id'), nullable=True)
+    last_edited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_archived = db.Column(db.Boolean, nullable=False, default=False)
+    archived_at = db.Column(db.DateTime, nullable=True)
 
     def __repr__(self):
         return f"<AuditInfo id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
@@ -426,7 +426,7 @@ class Reservation(db.Model):
     planned_checkin_time = db.Column(db.DateTime, nullable=True)
     checkout_time = db.Column(db.DateTime, nullable=True)
     checkin_time = db.Column(db.DateTime, nullable=True)
-    is_indefinite = db.Column(Boolean, nullable=False, default=False)
+    is_indefinite = db.Column(db.Boolean, nullable=False, default=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
     audit_info_entries = db.relationship('AuditInfoEntry', backref='reservations')
@@ -471,12 +471,12 @@ class Asset(db.Model):
     msrp_id = db.Column(db.Integer, db.ForeignKey('financial_entries.id'), nullable= True)
     residual_value_id = db.Column(db.Integer, db.ForeignKey('financial_entries.id'), nullable= True)
     parent_asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable= True)
-    is_kit_root = db.Column(Boolean, nullable=False, default=False)
-    is_attachment = db.Column(Boolean, nullable=False, default=False)
+    is_kit_root = db.Column(db.Boolean, nullable=False, default=False)
+    is_attachment = db.Column(db.Boolean, nullable=False, default=False)
     serial_number = db.Column(db.String(256), nullable=True)
     inventory_number = db.Column(db.SmallInteger, nullable=False) # Unique number for each item within the same brand and model.
     description = db.Column(db.String(512), nullable=True)
-    is_available = db.Column(Boolean, nullable=False, default=True)
+    is_available = db.Column(db.Boolean, nullable=False, default=True)
     online_item_page = db.Column(db.String, nullable=True)
     warranty_starts = db.Column(db.DateTime, nullable=True)
     warranty_ends = db.Column(db.DateTime, nullable=True)
@@ -510,6 +510,120 @@ class Category(db.Model):
     
     def __repr__(self):
         return f'<Category id={self.id} name={self.name}>'
+    
+
+
+
+class BrandFileAttachment(db.Model):
+    """File attachments associated with brands. Ex: photos, location releases"""
+
+    __tablename__ = "brand_file_attachments"
+
+    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
+    attachment_id = db.Column(db.Integer, db.ForeignKey('attachments.id'), primary_key=True, nullable=False)
+    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    brand = db.relationship('Brand', backref='file_attachments')
+    attachment = db.relationship('Attachment', backref='associated_brands')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_attachment')
+
+    def __repr__(self):
+        return f"<BrandFileAttachment brand_id={self.brand_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+
+class BrandEmailAddress(db.Model):
+    """Join Table. Email addresses associated with brands."""
+
+    __tablename__ = "brand_email_addresses"
+
+    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
+    email_address_id = db.Column(db.Integer, db.ForeignKey('email_addresses.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    brand = db.relationship('Brand', backref='associated_email_addresses')
+    email_address = db.relationship('EmailAddress', backref='associated_brands')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_email_addresses')
+
+    def __repr__(self):
+        return f"<BrandEmailAddress brand_id={self.brand_id} email_address_id={self.email_address_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class BrandPhoneNumber(db.Model):
+    """Join Table. Phone numbers associated with brands."""
+
+    __tablename__ = "brand_phone_numbers"
+
+    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
+    phone_number_id = db.Column(db.Integer, db.ForeignKey('phone_numbers.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    brand = db.relationship('Brand', backref='associated_phone_numbers')
+    phone_number = db.relationship('PhoneNumber', backref='associated_brands')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_phone_numbers')
+
+    def __repr__(self):
+        return f"<BrandPhoneNumber brand_id={self.brand_id} phone_number_id={self.phone_number_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+
+class Brand(db.Model):
+    """Brand/Manufacturer/Company"""
+
+    __tablename__ = "brands"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    website = db.Column(db.String(512), nullable=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='brands')
+    
+    def __repr__(self):
+        return f'<Brand id={self.id} name={self.name}>'
+
+
+
+class AssetFlag(db.Model):
+    """Join Table. The connection between a flag and an asset."""
+
+    __tablename__ = "asset_flags"
+
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
+    flag_id = db.Column(db.Integer, db.ForeignKey('flags.id'), primary_key=True, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    asset = db.relationship('Asset', backref='associated_flags')
+    flag = db.relationship('Flag', backref='associated_assets')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_flags')
+
+    def __repr__(self):
+        return f"<AssetFlag asset_id={self.asset_id} flag_id={self.flag_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+
+class Flag(db.Model):
+    """Flags to callout something about an entity."""
+
+    __tablename__ = "flags"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(512), nullable=False)
+    color_id = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
+    makes_unavailable = db.Column(db.Boolean, nullable=False, default=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    color = db.relationship('Color', backref='flags')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='flags')
+    
+    def __repr__(self):
+        return f'<Flag id={self.id} name={self.name} makes_unavailable={self.makes_unavailable}>'
 
 
 
@@ -631,9 +745,9 @@ class EmailAddress(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     email_type = db.Column(email_type_enum, nullable=False)
     email_address = db.Column(db.String(64), unique=True, nullable=False)
-    is_verified = db.Column(Boolean, nullable=False, default=False)
-    is_primary = db.Column(Boolean, nullable=True)
-    is_shared = db.Column(Boolean, nullable=True)
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
+    is_primary = db.Column(db.Boolean, nullable=True)
+    is_shared = db.Column(db.Boolean, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     audit_info_entries = db.relationship('AuditInfoEntry', backref='email_addresses')
@@ -668,13 +782,13 @@ class PhoneNumber(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     phone_type = db.Column(phone_type_enum, nullable=False)
-    is_cell = db.Column(Boolean, nullable=False)
+    is_cell = db.Column(db.Boolean, nullable=False)
     country_code = db.Column(db.SmallInteger, nullable=False)
     area_code = db.Column(db.SmallInteger, nullable=False)
     phone_number = db.Column(db.Integer, nullable=False)
     extension = db.Column(db.SmallInteger, nullable=True)
-    is_verified = db.Column(Boolean, nullable=False, default=False)
-    is_primary = db.Column(Boolean, nullable=False)
+    is_verified = db.Column(db.Boolean, nullable=False, default=False)
+    is_primary = db.Column(db.Boolean, nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     audit_info_entries = db.relationship('AuditInfoEntry', backref='phone_numbers')
