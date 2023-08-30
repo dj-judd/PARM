@@ -82,9 +82,9 @@ class ScanCodeType(PyEnum):
     NFC =       "NFC"
     BLUETOOTH = "BLUETOOTH"
 
-scan_code_type_enum = ENUM(
+asset_code_type_enum = ENUM(
     *[e.value for e in ScanCodeType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
-    name='scan_code_type'
+    name='asset_code_type'
 )
 
 
@@ -222,6 +222,31 @@ class AddressType(PyEnum):
 address_type_enum = ENUM(
     *[e.value for e in AddressType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='address_type'
+)
+
+
+
+class RelatedEntityType(PyEnum):
+    COMMENT =       "COMMENT"
+    ASSET =         "ASSET"
+    RESERVATION =   "RESERVATION"
+    AREA =          "AREA"
+
+related_entity_type_enum = ENUM(
+    *[e.value for e in RelatedEntityType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='related_entity_type'
+)
+
+
+
+class ReactionType(PyEnum):
+    THUMBS_UP = "👍️"
+    MAD =       "🤬"
+    DEAD =      "💀"
+
+reaction_type_enum = ENUM(
+    *[e.value for e in ReactionType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='reaction_type'
 )
 
 
@@ -386,7 +411,7 @@ class GlobalSetting(db.Model):
     time_format_is_24h = db.Column(db.Boolean, nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entries = db.relationship('AuditInfo', backref='global_settings')
+    audit_info_entry = db.relationship('AuditInfo', backref='global_settings')
 
 
     def __repr__(self):
@@ -429,7 +454,7 @@ class Reservation(db.Model):
     is_indefinite = db.Column(db.Boolean, nullable=False, default=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='reservations')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='reservations')
 
     def __repr__(self):
         return f"<Reservation id={self.id} reserved_for={self.reserved_for} area_id={self.area_id}>"
@@ -451,6 +476,146 @@ class ReservationAsset(db.Model):
 
     def __repr__(self):
         return f"<ReservationAsset reservation_id={self.reservation_id} asset_id={self.asset_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+class AssetTag(db.Model):
+    """Some form of scannable tag that is attached to an asset."""
+
+    __tablename__ = "asset_tags"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
+    code_type = db.Column(asset_code_type_enum, nullable=False)
+    data = db.Column(db.String(3072), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+
+
+    asset = db.relationship('Asset', backref='tags')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_tags')
+    
+    def __repr__(self):
+        return f'<AssetTag id={self.id} asset_id={self.asset_id} code_type={self.code_type}>'
+
+
+
+class Comment(db.Model):
+    """Comments."""
+
+    __tablename__ = "comments"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    parent_comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True)
+    related_entity_type = db.Column(related_entity_type_enum, nullable=False)
+    related_entity_id = db.Column(db.Integer, nullable=False)
+    comment_data = db.Column(db.String(2048), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    # Relationship to represent the parent comment.
+    parent = db.relationship('Comment', remote_side=[id], backref=db.backref('nested_comments', lazy='dynamic'))
+
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_comments')
+    
+    def __repr__(self):
+        return f'<Comment id={self.id} related_entity_type={self.related_entity_type} related_entity_id={self.related_entity_id}>'
+
+
+class Reaction(db.Model):
+    """Join Table. Something like an emoji reaction to a comment."""
+
+    __tablename__ = "reactions"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=False)
+    reaction_type = db.Column(reaction_type_enum, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    user = db.relationship('User', backref='reactions')
+    comment = db.relationship('Comment', backref='reactions')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='reactions')
+
+    def __repr__(self):
+        return f"<Reaction user_id={self.user_id} comment_id={self.comment_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
+
+
+
+class Category(db.Model):
+    """A category for assets."""
+
+    __tablename__ = "categories"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    parent_category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
+    name = db.Column(db.String(64), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    # Relationship to represent the parent category.
+    parent = db.relationship('Category', remote_side=[id], backref=db.backref('subcategories', lazy='dynamic'))
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_categories')
+    
+    def __repr__(self):
+        return f'<Category id={self.id} name={self.name}>'
+
+
+
+class Color(db.Model):
+    """Custom property / field to be added ale-cart to assets."""
+
+    __tablename__ = "colors"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    hex_value = db.Column(db.String(7), nullable=False, unique=True)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='colors')
+    
+    def __repr__(self):
+        return f'<Color id={self.id} name={self.name} hex_value={self.hex_value}>'
+
+
+
+class CustomProperty(db.Model):
+    """Custom property / field to be added ale-cart to assets."""
+
+    __tablename__ = "custom_properties"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    prefix = db.Column(db.String(8), nullable=True)
+    suffix = db.Column(db.String(8), nullable=True)
+    data_type = db.Column(custom_property_data_type_enum, nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='custom_properties')
+    
+    def __repr__(self):
+        return f'<CustomProperty id={self.id} name={self.name} data_type={self.data_type}>'
+
+
+
+class AssetCustomProperty(db.Model):
+    """Join Table. Custom properties associated with assets."""
+
+    __tablename__ = "asset_custom_properties"
+
+    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
+    custom_property_id = db.Column(db.Integer, db.ForeignKey('custom_properties.id'), primary_key=True, nullable=False)
+    data_value = db.Column(db.String(512), nullable=False)  # The actually value being stored as a String. Will have to work out on the app side what to do with it.
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
+
+    asset = db.relationship('Asset', backref='associated_custom_properties')
+    custom_property = db.relationship('CustomProperty', backref='associated_assets')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='custom_properties')
+
+    def __repr__(self):
+        return f"<AssetCustomProperty asset_id={self.asset_id} custom_property_id={self.custom_property_id} audit_info_entry_id={self.audit_info_entry_id}>"
+
 
 
 
@@ -486,36 +651,16 @@ class Asset(db.Model):
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
     financial_entry = db.relationship('FinancialEntry', backref= 'assets')
-    audit_info_entries = db.relationship('AuditInfoEntry', backref= 'assets')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'assets')
 
     def __repr__(self):
         return f'<Asset id={self.id} model_name={self.model_name}>'
-
-
-
-class Category(db.Model):
-    """A category for assets."""
-
-    __tablename__ = "categories"
-
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    parent_category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
-    name = db.Column(db.String(64), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
-    # Relationship to represent the parent category.
-    parent = db.relationship('Category', remote_side=[id], backref=db.backref('subcategories', lazy='dynamic'))
-
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='associated_categories')
-    
-    def __repr__(self):
-        return f'<Category id={self.id} name={self.name}>'
     
 
 
 
 class BrandFileAttachment(db.Model):
-    """File attachments associated with brands. Ex: photos, location releases"""
+    """Join Table. File attachments associated with brands. Ex: photos, location releases"""
 
     __tablename__ = "brand_file_attachments"
 
@@ -655,7 +800,7 @@ class FinancialEntry(db.Model):
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     currency = db.relationship('Currency', backref='financial_entries')
-    audit_info_entries = db.relationship('AuditInfo', backref='financial_entries')
+    audit_info_entry = db.relationship('AuditInfo', backref='financial_entries')
 
     def __repr__(self):
         return f'<FinancialEntry id={self.id} currency_id={self.currency_id} amount={self.amount} audit_id={self.audit_info_entry_id}>'
@@ -750,7 +895,7 @@ class EmailAddress(db.Model):
     is_shared = db.Column(db.Boolean, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='email_addresses')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='email_addresses')
 
     def __repr__(self):
         return f"<EmailAddress id={self.id} email_type={self.email_type} email_address={self.email_address}>"
@@ -791,7 +936,7 @@ class PhoneNumber(db.Model):
     is_primary = db.Column(db.Boolean, nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='phone_numbers')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='phone_numbers')
 
     def __repr__(self):
         return f"<PhoneNumber id={self.id} phone_type={self.phone_type} phone_number={self.phone_number}>"
@@ -809,7 +954,7 @@ class UserSetting(db.Model):
     is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entries = db.relationship('AuditInfo', backref='user_settings')
+    audit_info_entry = db.relationship('AuditInfo', backref='user_settings')
 
 
     def __repr__(self):
@@ -833,7 +978,7 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='users')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='users')
 
 
     def __repr__(self):
@@ -951,7 +1096,7 @@ class Area(db.Model):
     parent = db.relationship('Area', remote_side=[id], backref=db.backref('nested_areas', lazy='dynamic'))
 
     address = db.relationship('Address', backref='addresses')
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='associated_areas')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_areas')
     
     def __repr__(self):
         return f'<Area id={self.id} name={self.name}>'
@@ -994,7 +1139,7 @@ class Address(db.Model):
 
     state = db.relationship('State', backref='addresses')
     country = db.relationship('Country', backref='addresses')
-    audit_info_entries = db.relationship('AuditInfoEntry', backref='addresses')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='addresses')
 
     def __repr__(self):
         return f'<Address id={self.id} name={self.name} type={self.type}>'
