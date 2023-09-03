@@ -1,0 +1,302 @@
+[
+    {
+        "code": "AL",
+        "name": "Alabama",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "AK",
+        "name": "Alaska",
+        "timezone_id": 2,
+        "country_id": 0
+    },
+    {
+        "code": "AZ",
+        "name": "Arizona",
+        "timezone_id": 5,
+        "country_id": 0
+    },
+    {
+        "code": "AR",
+        "name": "Arkansas",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "CA",
+        "name": "California",
+        "timezone_id": 3,
+        "country_id": 0
+    },
+    {
+        "code": "CO",
+        "name": "Colorado",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "CT",
+        "name": "Connecticut",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "DE",
+        "name": "Delaware",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "FL",
+        "name": "Florida",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "GA",
+        "name": "Georgia",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "HI",
+        "name": "Hawaii",
+        "timezone_id": 1,
+        "country_id": 0
+    },
+    {
+        "code": "ID",
+        "name": "Idaho",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "IL",
+        "name": "Illinois",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "IN",
+        "name": "Indiana",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "IA",
+        "name": "Iowa",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "KS",
+        "name": "Kansas",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "KY",
+        "name": "Kentucky",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "LA",
+        "name": "Louisiana",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "ME",
+        "name": "Maine",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "MD",
+        "name": "Maryland",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "MA",
+        "name": "Massachusetts",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "MI",
+        "name": "Michigan",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "MN",
+        "name": "Minnesota",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "MS",
+        "name": "Mississippi",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "MO",
+        "name": "Missouri",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "MT",
+        "name": "Montana",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "NE",
+        "name": "Nebraska",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "NV",
+        "name": "Nevada",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "NH",
+        "name": "New Hampshire",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "NJ",
+        "name": "New Jersey",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "NM",
+        "name": "New Mexico",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "NY",
+        "name": "New York",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "NC",
+        "name": "North Carolina",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "ND",
+        "name": "North Dakota",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "OH",
+        "name": "Ohio",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "OK",
+        "name": "Oklahoma",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "OR",
+        "name": "Oregon",
+        "timezone_id": 3,
+        "country_id": 0
+    },
+    {
+        "code": "PA",
+        "name": "Pennsylvania",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "RI",
+        "name": "Rhode Island",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "SC",
+        "name": "South Carolina",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "SD",
+        "name": "South Dakota",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "TN",
+        "name": "Tennessee",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "TX",
+        "name": "Texas",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "UT",
+        "name": "Utah",
+        "timezone_id": 4,
+        "country_id": 0
+    },
+    {
+        "code": "VT",
+        "name": "Vermont",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "VA",
+        "name": "Virginia",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "WA",
+        "name": "Washington",
+        "timezone_id": 3,
+        "country_id": 0
+    },
+    {
+        "code": "WV",
+        "name": "West Virginia",
+        "timezone_id": 7,
+        "country_id": 0
+    },
+    {
+        "code": "WI",
+        "name": "Wisconsin",
+        "timezone_id": 6,
+        "country_id": 0
+    },
+    {
+        "code": "WY",
+        "name": "Wyoming",
+        "timezone_id": 4,
+        "country_id": 0
+    }
+]

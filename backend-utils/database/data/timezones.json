@@ -1,0 +1,58 @@
+[
+    {
+        "id": 0,
+        "identifier": "Universal Coordinated Time",
+        "abbreviation": "UTC",
+        "utc_offset_minutes": 0,
+        "has_dst": false
+    },
+    {
+        "id": 1,
+        "identifier": "America/Honolulu",
+        "abbreviation": "HST",
+        "utc_offset_minutes": -600,
+        "has_dst": false
+    },
+    {
+        "id": 2,
+        "identifier": "America/Anchorage",
+        "abbreviation": "AKST",
+        "utc_offset_minutes": -540,
+        "has_dst": true
+    },
+    {
+        "id": 3,
+        "identifier": "America/Los_Angeles",
+        "abbreviation": "PST",
+        "utc_offset_minutes": -480,
+        "has_dst": true
+    },
+    {
+        "id": 4,
+        "identifier": "America/Denver",
+        "abbreviation": "MST",
+        "utc_offset_minutes": -420,
+        "has_dst": true
+    },
+    {
+        "id": 5,
+        "identifier": "America/Phoenix",
+        "abbreviation": "MST",
+        "utc_offset_minutes": -420,
+        "has_dst": false
+    },
+    {
+        "id": 6,
+        "identifier": "America/Chicago",
+        "abbreviation": "CST",
+        "utc_offset_minutes": -360,
+        "has_dst": true
+    },
+    {
+        "id": 7,
+        "identifier": "America/New_York",
+        "abbreviation": "EST",
+        "utc_offset_minutes": -300,
+        "has_dst": true
+    }
+]

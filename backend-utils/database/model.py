@@ -1160,8 +1160,8 @@ class Country(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     code = db.Column(country_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    intl_phone_code = db.Column(db.SmallInteger, nullable=False) # You'll have to implement length restrictions in the app
     name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    intl_phone_code = db.Column(db.SmallInteger, nullable=False) # You'll have to implement length restrictions in the app
 
     def __repr__(self):
         return f'<Country id={self.id} name={self.name} code={self.code}>'

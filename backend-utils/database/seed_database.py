@@ -5,6 +5,7 @@ import json
 import sys
 from random import choice, randint
 from datetime import datetime
+from sqlalchemy import text
 
 import crud
 import model
@@ -19,6 +20,8 @@ from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 version_number = 0.2
 program_name = "PARM Database Seeder 3,000,000"
 
+init_message = "This was generated automatically when database was seeded."
+
 
 # Drop and create database
 os.system('dropdb parm')
@@ -31,7 +34,153 @@ os.system('psql -d parm < PARM-Schema.sql')
 model.connect_to_db(server.app)
 model.db.create_all()
 
-seeded_message = "This was generated automatically when database was seeded."
+
+
+from model import db
+
+
+def insert_bootstrap_user(password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id):
+    # Alter table to set column as nullable
+    alter_sql_1 = """ALTER TABLE users ALTER COLUMN audit_info_entry_id DROP NOT NULL;"""
+    db.session.execute(alter_sql_1)
+    db.session.commit()
+
+    # Inserting the bootstrap user
+    insert_sql = text("""
+        INSERT INTO users 
+        (password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
+        VALUES (:password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
+        """)
+
+    db.session.execute(insert_sql, {
+        "password_hash": password_hash,
+        "first_name": first_name,
+        "last_name": last_name,
+        "user_settings_id": user_settings_id,
+        "last_login": last_login,
+        "audit_info_entry_id": audit_info_entry_id
+    })
+
+    db.session.commit()
+
+    # Alter table to set column as NOT NULL again
+    alter_sql_2 = """ALTER TABLE users ALTER COLUMN audit_info_entry_id SET NOT NULL;"""
+    db.session.execute(alter_sql_2)
+    db.session.commit()
+
+
+
+def populate_timezones():
+    try:
+        # Open and load the JSON file
+        with open('data/timezones.json', 'r') as file:
+            timezones = json.load(file)
+        
+        model.db.session.begin()
+        
+        # Iterate over each timezone in the JSON file
+        for timezone in timezones:
+            tz = crud.create_timezone_entry(
+                id=timezone['id'],
+                identifier=timezone['identifier'],
+                abbreviation=timezone['abbreviation'],
+                utc_offset_minutes=timezone['utc_offset_minutes'],
+                has_dst=timezone['has_dst'],
+                commit=False
+            )
+            model.db.session.add(tz)
+        
+        model.db.session.commit()
+        
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 73{RESET}\n{e}")
+
+
+
+def populate_countries():
+    try:
+        # Open and load the JSON file
+        with open('countries.json', 'r') as file:
+            countries = json.load(file)
+        
+        model.db.session.begin()
+        
+        # Iterate over each country in the JSON file
+        for country in countries:
+            entry = crud.create_country_entry(
+                id=country['id'],
+                code=country['code'],
+                intl_phone_code=country['intl_phone_code'],
+                name=country['name'],
+                commit=False
+            )
+            model.db.session.add(entry)
+        
+        model.db.session.commit()
+        
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 102{RESET}\n{e}")
+
+
+
+def populate_states():
+    # Read the JSON data
+    with open('data/states.json', 'r') as file:
+        states_data = json.load(file)
+
+    try:
+        model.db.session.begin()
+        
+        for state in states_data:
+            state_entry = crud.create_state_entry(
+                code=state["code"],
+                name=state["name"],
+                timezone_id=state["timezone_id"],
+                country_id=state["country_id"],
+                commit=False
+            )
+            model.db.session.add(state_entry)
+
+        model.db.session.commit()
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 167{RESET}\n{e}")
+
+
+
+
+def populate_currencies():
+    try:
+        # Open and load the JSON file
+        with open('currencies.json', 'r') as file:
+            currencies = json.load(file)
+        
+        model.db.session.begin()
+        
+        # Iterate over each currency in the JSON file
+        for currency in currencies:
+            entry = crud.create_currency_entry(
+                id=currency['id'],
+                name=currency['name'],
+                symbol=currency['symbol'],
+                iso_code=currency['iso_code'],
+                exchange_rate=currency['exchange_rate'],
+                commit=False
+            )
+            model.db.session.add(entry)
+        
+        model.db.session.commit()
+        
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 158{RESET}\n{e}")
 
 
 
@@ -75,167 +224,18 @@ def main():
     # model.db.session.commit()
 
 
-    # Setup Timezones
-    try:
-        model.db.session.begin()
-        # UTC
-        utc = crud.create_timezone_entry(
-            id = 0,
-            identifier = model.TimezoneIdentifier.UTC.value,
-            abbreviation = model.TimezoneAbbreviation.UTC.value,
-            utc_offset_minutes = (0 * 60),
-            has_dst = False,
-            commit=False
-            )
-        # Hawaii
-        hawaii = crud.create_timezone_entry(
-            id = 1,
-            identifier = model.TimezoneIdentifier.HONOLULU.value,
-            abbreviation = model.TimezoneAbbreviation.HAWIIAN.value,
-            utc_offset_minutes = (-10 * 60),
-            has_dst = False,
-            commit=False
-            )
-        # Alaska
-        alaska = crud.create_timezone_entry(
-            id = 2,
-            identifier = model.TimezoneIdentifier.ANCHORAGE.value,
-            abbreviation = model.TimezoneAbbreviation.ALASKAN.value,
-            utc_offset_minutes = (-9 * 60),
-            has_dst = True,
-            commit=False
-            )
-        # Pacific
-        pacific = crud.create_timezone_entry(
-            id = 3,
-            identifier = model.TimezoneIdentifier.LOS_ANGELES.value,
-            abbreviation = model.TimezoneAbbreviation.PACIFIC.value,
-            utc_offset_minutes = (-8 * 60),
-            has_dst = True,
-            commit=False
-            )
-        # Mountain
-        mountain = crud.create_timezone_entry(
-            id = 4,
-            identifier = model.TimezoneIdentifier.DENVER.value,
-            abbreviation = model.TimezoneAbbreviation.MOUNTAIN.value,
-            utc_offset_minutes = (-7 * 60),
-            has_dst = True,
-            commit=False
-            )
-        # Phoenix
-        phoenix = crud.create_timezone_entry(
-            id = 5,
-            identifier = model.TimezoneIdentifier.PHOENIX.value,
-            abbreviation = model.TimezoneAbbreviation.MOUNTAIN.value,
-            utc_offset_minutes = (-7 * 60),
-            has_dst = False,
-            commit=False
-            )
-        # Central
-        central = crud.create_timezone_entry(
-            id = 6,
-            identifier = model.TimezoneIdentifier.CHICAGO.value,
-            abbreviation = model.TimezoneAbbreviation.CENTRAL.value,
-            utc_offset_minutes = (-6 * 60),
-            has_dst = True,
-            commit=False
-            )
-        # Eastern
-        eastern = crud.create_timezone_entry(
-            id = 7,
-            identifier = model.TimezoneIdentifier.NEW_YORK.value,
-            abbreviation = model.TimezoneAbbreviation.EASTERN.value,
-            utc_offset_minutes = (-5 * 60),
-            has_dst = True,
-            commit=False
-            )
-        
-        model.db.session.add(utc)
-        model.db.session.add(hawaii)
-        model.db.session.add(alaska)
-        model.db.session.add(pacific)
-        model.db.session.add(mountain)
-        model.db.session.add(phoenix)
-        model.db.session.add(central)
-        model.db.session.add(eastern)
 
-        model.db.session.commit()
-        
-    except Exception as e:
-        # If any error occurs, rollback the changes
-        model.db.session.rollback()
-        print(f"\nError occurred!\nseed_database.py\nLine 152\n{e}")
-
-
-
-
-    # Setup Currencies
-    try:
-        model.db.session.begin()
-        # United States
-        usa = crud.create_currency_entry(
-            id = 0,
-            name = "United States Dollar",
-            symbol = "$",
-            iso_code = model.CurrencyIsoCode.UNITED_STATES.value,
-            exchange_rate = 1,
-            commit=False
-            )
-        # Canada
-        canada = crud.create_currency_entry(
-            id = 1,
-            name = "Canadian Dollar",
-            symbol = "Can$",
-            iso_code = model.CurrencyIsoCode.CANADA.value,
-            exchange_rate = 1.360252, 
-            commit=False
-            )
-        # Mexico
-        mexico = crud.create_currency_entry(
-            id = 2,
-            name = "Mexican Peso",
-            symbol = "Mex$",
-            iso_code = model.CurrencyIsoCode.MEXICO.value,
-            exchange_rate = 16.78694,
-            commit=False
-            )
-
-        
-        model.db.session.add(usa)
-        model.db.session.add(canada)
-        model.db.session.add(mexico)
-
-        model.db.session.commit()
-        
-    except Exception as e:
-        # If any error occurs, rollback the changes
-        model.db.session.rollback()
-        print(f"\nError occurred!\nseed_database.py\nLine 198\n{e}")
-
-
-
-    # crud.create_user(password_hash="admin",
-    #                     first_name="admin",
-    #                     last_name="admin",
-    #                     currency_id=0,
-    #                     time_format_is_24=True,  # or False, based on your needs
-    #                     created_by_user_id=0,
-    #                     details=seeded_message,
-    #                     commit=True)
     
+    populate_timezones()
 
+    populate_countries()
 
-    # Create the bootstrap user without referencing the AuditInfoEntry
-    bootstrap_user = model.User(
-        password_hash="admin",
-        first_name="admin",
-        last_name="admin",
-        currency_id=0,
-        # ... other fields, but NOT the audit_info_entry_id
-    )
-    model.db.session.add(bootstrap_user)
-    model.db.session.commit()
+    populate_states()
+    
+    populate_currencies()
+
+    # Initial creation of user to create all other data and users
+    insert_bootstrap_user('fire', 'Prometheus', 'Admin', 1, datetime.utcnow(), 1)
 
 
     created_by_user_id = bootstrap_user.id
@@ -245,7 +245,7 @@ def main():
                     currency_id=1,
                     time_format_is_24=True,
                     created_by_user_id=created_by_user_id,
-                    details=seeded_message,
+                    details=init_message,
                     commit=True)
 
     # Generate 10 Users
@@ -280,7 +280,7 @@ def main():
                                                                                               currency_id=0,
                                                                                               time_format_is_24=True,  # or False, based on your needs
                                                                                               created_by_user_id=random_creator_user,
-                                                                                              details=seeded_message,
+                                                                                              details=init_message,
                                                                                               commit=False)
 
 

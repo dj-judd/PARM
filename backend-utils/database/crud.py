@@ -30,6 +30,55 @@ def create_timezone_entry(id, identifier, abbreviation, utc_offset_minutes, has_
 
 
 
+def create_country_entry(id, code, name, intl_phone_code, commit=True):
+    
+    # Check to make sure that the value is in the Enum list
+    if code not in [e.value for e in model.CountryIsoCode]:
+        raise ValueError(f"Invalid operation type: {code}")
+    
+    # # Check to make sure that the value is in the Enum list
+    # if name not in [e.value for e in model.CountryNames]:
+    #     raise ValueError(f"Invalid operation type: {name}")
+
+    country_entry = model.State(
+        id = id,
+        code = code,
+        name = name,
+        intl_phone_code = intl_phone_code,
+    )
+
+    if commit:
+        model.db.session.add(country_entry)
+        model.db.session.commit()
+
+    return country_entry
+
+
+
+def create_state_entry(id, code, name, timezone_id, country_id, commit=True):
+    
+    # Check to make sure that the value is in the Enum list
+    if code not in [e.value for e in model.StateCodes]:
+        raise ValueError(f"Invalid operation type: {code}")
+    
+    # Check to make sure that the value is in the Enum list
+    if name not in [e.value for e in model.StateNames]:
+        raise ValueError(f"Invalid operation type: {name}")
+
+    state_entry = model.State(
+        id = id,
+        code = code,
+        name = name,
+        timezone_id = timezone_id,
+        country_id = country_id
+    )
+
+    if commit:
+        model.db.session.add(state_entry)
+        model.db.session.commit()
+
+    return state_entry
+
 
 def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True):
     
