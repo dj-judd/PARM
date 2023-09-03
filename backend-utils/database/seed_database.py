@@ -61,12 +61,16 @@ def insert_bootstrap_user(password_hash, first_name, last_name, user_settings_id
         "audit_info_entry_id": audit_info_entry_id
     })
 
+    bootstrap_user_id = result.fetchone()[0]
+
     db.session.commit()
 
     # Alter table to set column as NOT NULL again
     alter_sql_2 = """ALTER TABLE users ALTER COLUMN audit_info_entry_id SET NOT NULL;"""
     db.session.execute(alter_sql_2)
     db.session.commit()
+
+    return bootstrap_user_id
 
 
 
@@ -215,7 +219,19 @@ def main():
     #     #     'poster_path': poster_path,
     #     #     'release_date': release_date
     #     #     })
-        
+            # Initial creation of user to create all other data and users
+    insert_bootstrap_user('fire', 'Prometheus', 'Admin', 1, datetime.utcnow(), 1)
+
+
+    db_creator = bootstrap_user.id
+    crud.create_user(password_hash="password",
+                    first_name="John",
+                    last_name="Doe",
+                    currency_id=1,
+                    time_format_is_24=True,
+                    created_by_user_id=db_creator,
+                    details=init_message,
+                    commit=True)
 
     #     db_movie = crud.create_movie(title, overview, release_date, poster_path)
     #     movies_in_db.append(db_movie)
@@ -235,16 +251,14 @@ def main():
     populate_currencies()
 
     # Initial creation of user to create all other data and users
-    insert_bootstrap_user('fire', 'Prometheus', 'Admin', 1, datetime.utcnow(), 1)
+    db_creator = insert_bootstrap_user('fire', 'Prometheus', 'Admin', 1, datetime.utcnow(), 1)
 
-
-    created_by_user_id = bootstrap_user.id
     crud.create_user(password_hash="password",
                     first_name="John",
                     last_name="Doe",
                     currency_id=1,
                     time_format_is_24=True,
-                    created_by_user_id=created_by_user_id,
+                    created_by_user_id=db_creator,
                     details=init_message,
                     commit=True)
 
