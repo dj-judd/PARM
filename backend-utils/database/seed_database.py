@@ -298,7 +298,6 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
 
         model.db.session.commit()
 
-        return default_currency_id
 
     except Exception as e:
         # If any error occurs, rollback the changes
