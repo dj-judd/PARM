@@ -406,16 +406,12 @@ class GlobalSetting(db.Model):
 
     __tablename__ = "global_settings"
 
-    id = db.Column(db.String(64), primary_key=True, nullable=False)
+    deployment_fingerprint = db.Column(db.String(64), primary_key=True, nullable=False)
     default_currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    time_format_is_24h = db.Column(db.Boolean, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='global_settings')
 
 
     def __repr__(self):
-        return f'<id={self.id} currency_settings={self.default_currency_id} time_format_is_24h={self.time_format_is_24h}>'
+        return f'<id={self.deployment_fingerprint} currency_settings={self.default_currency_id}>'
     
 
 
@@ -946,6 +942,27 @@ class PhoneNumber(db.Model):
 
     def __repr__(self):
         return f"<PhoneNumber id={self.id} phone_type={self.phone_type} phone_number={self.phone_number}>"
+
+
+
+class UiTheme(db.Model):
+    """Name and values for UI Themes."""
+
+    __tablename__ = "ui_themes"
+
+    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    name = db.Column(db.String(64), nullable=False, unique=True)
+    description = db.Column(db.String(512), nullable=False)
+    primary_color = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
+    secondary_color = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
+    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+
+    color = db.relationship('Color', backref='ui_themes')
+    audit_info_entry = db.relationship('AuditInfoEntry', backref='ui_themes')
+
+
+    def __repr__(self):
+        return f'<UiTheme id={self.id} name={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
 
 
 

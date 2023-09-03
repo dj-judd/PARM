@@ -123,27 +123,48 @@ def create_audit_entry(operation_type, created_by_user_id, details=None, commit=
 
     return audit_entry
 
+def create_global_settings(deployment_fingerprint,
+                           default_currency_id,
+                           commit=True):
+    """Create and return a global settings entry."""
+
+    # Check to make sure that the currency ID value is in the Enum list
+    if default_currency_id not in [e.value for e in model.CurrencyIsoCode]:
+        raise ValueError(f"Invalid currency ID: {default_currency_id}")
+    
+    global_setting = model.GlobalSetting(
+        deployment_fingerprint=deployment_fingerprint,
+        default_currency_id=default_currency_id
+    )
+
+    if commit:
+        model.db.session.add(global_setting)
+        model.db.session.commit()
+
+    return global_setting
+
+
 def create_user_setting(created_by_user_id,
                         details,
-                        currency_id = 0,
-                        time_format_is_24 = False,
-                        is_darkmode = False,
-                        commit = True):
+                        currency_id=0,
+                        time_format_is_24h=False,
+                        ui_theme_id=0, 
+                        commit=True):
     """Create and return a settings for a user."""
 
     # Check to make sure that the value is in the Enum list
     if currency_id not in [e.value for e in model.CurrencyIsoCode]:
-        raise ValueError(f"Invalid operation type: {currency_id}")
+        raise ValueError(f"Invalid currency ID: {currency_id}")
     
-    user_setting_audit_entry = create_audit_entry("CREATE",
-                                                    created_by_user_id,
-                                                    details)
+    user_setting_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
+                                                  created_by_user_id,
+                                                  details)
 
     user_setting = model.UserSetting(
-        currency_id = currency_id,
-        time_format_is_24 = time_format_is_24,
-        is_darkmode = is_darkmode,
-        audit_info_entry_id = user_setting_audit_entry.id
+        currency_id=currency_id,
+        time_format_is_24h=time_format_is_24h,
+        ui_theme_id=ui_theme_id,
+        audit_info_entry_id=user_setting_audit_entry.id
     )
 
     if commit:
@@ -158,10 +179,10 @@ def create_user(password_hash,
                 first_name,
                 last_name,
                 currency_id,
-                time_format_is_24,
                 created_by_user_id,
-                details = None,
-                is_darkmode = False,
+                time_format_is_24h=False,
+                audit_details = None,
+                ui_theme_id = 0,
                 middle_name = None,
                 nickname = None,
                 nickname_prefered = None,
@@ -169,20 +190,17 @@ def create_user(password_hash,
                 commit = True):
     """Create and return a new user."""
 
-    # user_audit_entry = create_audit_entry("CREATE",
-    #                                  details,
-    #                                  created_by_user_id)
     
-    user_audit_entry = create_audit_entry("CREATE",
+    user_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
                                  created_by_user_id,
-                                 details)
+                                 audit_details)
 
     
-    user_setting, user_setting_audit_entry = create_user_setting(currency_id,
-                                                                  time_format_is_24,
-                                                                  is_darkmode,
-                                                                  created_by_user_id,
-                                                                  details)
+    user_setting, user_setting_audit_entry = create_user_setting(created_by_user_id,
+                                                             audit_details,
+                                                             currency_id,
+                                                             time_format_is_24h,
+                                                             ui_theme_id)
 
     user = model.User(
         password_hash = password_hash, 
@@ -205,6 +223,25 @@ def create_user(password_hash,
 
     return user, user_audit_entry, user_setting, user_setting_audit_entry
 
+
+
+
+# Read
+
+
+
+
+def read_global_settings():
+    """Fetch default settings from the global_settings table."""
+    global_settings = model.db.session.query(model.GlobalSettings).first()
+    
+    if global_settings:
+        return {
+            "default_currency_id": global_settings.default_currency_id,
+            "time_format_is_24h": global_settings.time_format_is_24h
+        }
+    else:
+        return None
 
 
 

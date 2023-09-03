@@ -49,34 +49,25 @@ def insert_bootstrap_audit_entry(operation_type=model.OperationType.CREATE.value
     db.session.commit()
 
 
-    # Step 2: Inserting the bootstrap audit entry
-    insert_sql_for_audit_entry = text("""
+    # Step 2: Inserting the bootstrap user_setting
+    insert_sql_for_user_setting = text("""
         INSERT INTO audit_info_entries 
-        (id, operation_type, details, created_by, created_at, last_edited_by, last_edited_at, is_archived, archived_at)
-        VALUES (:id, :operation_type, :details, :created_by, :created_at, :last_edited_by, :last_edited_at, :is_archived, :archived_at)
+        (operation_type, details, created_at, last_edited_at, is_archived, archived_at)
+        VALUES (:operation_type, :details, :created_at, :last_edited_at, :is_archived, :archived_at)
         RETURNING id
         """)
 
-    result = db.session.execute(insert_sql_for_audit_entry, {
-        "id": 0,
+    result = db.session.execute(insert_sql_for_user_setting, {
         "operation_type": operation_type,
         "details": details,
-        # "created_by":None,
-        "created_by":0,
         "created_at": created_at,
-        # "last_edited_by":None,
-        "last_edited_by":0,
         "last_edited_at": last_edited_at,
         "is_archived": is_archived,
         "archived_at": archived_at
+
     })
 
     prime_audit_entry_id = result.fetchone()[0]
-    db.session.commit()
-
-    # Adjust the sequence immediately after inserting the bootstrap audit info entry
-    sequence_name = "audit_info_entries_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
     db.session.commit()
 
     # Step 3: Set AuditEntry's user_id requirements back to on.
@@ -87,11 +78,10 @@ def insert_bootstrap_audit_entry(operation_type=model.OperationType.CREATE.value
     return prime_audit_entry_id
 
 
-def insert_bootstrap_user(password_hash, first_name, last_name, last_login, currency_id=1, time_format_is_24h=True):
+def insert_bootstrap_user(password_hash, first_name, last_name, last_login, currency_id=0, time_format_is_24h=False, ui_theme_id=0):
     """Breaks the DB's null rules to seed the initial entries in a couple of tables. Then restores everything."""
     
-    # Step 1: Set User Settings ui_theme_id & audit requirements off
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN ui_theme_id DROP NOT NULL;")
+    # Step 1: Set User Settings audit requirement off
     db.session.execute("ALTER TABLE user_settings ALTER COLUMN audit_info_entry_id DROP NOT NULL;")
     db.session.commit()
 
@@ -99,29 +89,22 @@ def insert_bootstrap_user(password_hash, first_name, last_name, last_login, curr
     # Step 2: Inserting the bootstrap user_setting
     insert_sql_for_user_setting = text("""
         INSERT INTO user_settings 
-        (id, currency_id, time_format_is_24h, ui_theme_id, audit_info_entry_id) 
-        VALUES (:id, :currency_id, :time_format_is_24h, :ui_theme_id, :audit_info_entry_id)
+        (currency_id, time_format_is_24h, ui_theme_id, audit_info_entry_id) 
+        VALUES (:currency_id, :time_format_is_24h, :ui_theme_id, :audit_info_entry_id)
         RETURNING id
         """)
 
     result = db.session.execute(insert_sql_for_user_setting, {
-        "id": 0,
         "currency_id": currency_id,
         "time_format_is_24h": time_format_is_24h,
-        "ui_theme_id": None,
+        "ui_theme_id": ui_theme_id,
         "audit_info_entry_id": None
     })
 
     user_settings_id = result.fetchone()[0]
     db.session.commit()
 
-    # Adjust the sequence immediately after inserting the bootstrap user setting
-    sequence_name = "user_settings_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
-    db.session.commit()
-
     # Step 3: Alter user_settings table's audit requirement back to on
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN ui_theme_id SET NOT NULL;")
     db.session.execute("ALTER TABLE user_settings ALTER COLUMN audit_info_entry_id SET NOT NULL;")
     db.session.commit()
 
@@ -135,32 +118,28 @@ def insert_bootstrap_user(password_hash, first_name, last_name, last_login, curr
     # Step 5: Inserting the bootstrap user
     insert_sql_for_user = text("""
         INSERT INTO users 
-        (id, password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
-        VALUES (:id, :password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
+        (password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
+        VALUES (:password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
         """)
 
     db.session.execute(insert_sql_for_user, {
-        "id":0,
         "password_hash": password_hash,
         "first_name": first_name,
         "last_name": last_name,
         "user_settings_id": user_settings_id,
         "last_login": last_login,
-        # "audit_info_entry_id": None
         "audit_info_entry_id": None
     })
 
-    db.session.commit()
+    bootstrap_user_id = result.fetchone()[0]
 
-
-    # Adjust the sequence immediately after inserting the bootstrap user
-    sequence_name = "users_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
     db.session.commit()
 
     # Step 6: Alter users table's audit requirement back to on
     db.session.execute("ALTER TABLE users ALTER COLUMN audit_info_entry_id SET NOT NULL;")
     db.session.commit()
+
+    return bootstrap_user_id
 
 
 def populate_timezones():
@@ -194,7 +173,7 @@ def populate_timezones():
 def populate_countries():
     try:
         # Open and load the JSON file
-        with open('data/countries.json', 'r') as file:
+        with open('countries.json', 'r') as file:
             countries = json.load(file)
         
         model.db.session.begin()
@@ -247,7 +226,7 @@ def populate_states():
 def populate_currencies():
     try:
         # Open and load the JSON file
-        with open('data/currencies.json', 'r') as file:
+        with open('currencies.json', 'r') as file:
             currencies = json.load(file)
         
         model.db.session.begin()
@@ -275,15 +254,11 @@ def populate_currencies():
 def generate_deployment_fingerprint(input_data=None):
     if input_data is None:
         input_data = os.urandom(32)  # Generate 32 random bytes if no data is provided
-    elif isinstance(input_data, str):
-        input_data = input_data.encode()  # Encode only if it's a string
-
-    fingerprint = hashlib.sha256(input_data).hexdigest()  # Generate SHA-256 hash
+    fingerprint = hashlib.sha256(input_data.encode()).hexdigest()  # Generate SHA-256 hash
     return fingerprint
 
 
-
-def populate_global_settings(deployment_fingerprint=None, default_currency_id=1):
+def populate_global_settings(deployment_fingerprint=None, default_currency_id=0):
     try:
         model.db.session.begin()
 
@@ -308,60 +283,76 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
 
 def populate_users(default_currency_id):
 
-
-    # Initial creation of user to create all other data and users
-    insert_bootstrap_user('fire', 'Prometheus', 'Admin', datetime.utcnow(), currency_id=1, time_format_is_24h=True)
-
     # Initialization of the one Audit Entry that will be referenced by everything created here and now
-    insert_bootstrap_audit_entry()
+    prime_audit_entry_id = insert_bootstrap_audit_entry()
+
+    ### OLD WAY 
+    # Initial creation of user to create all other data and users
+    prime_creator_id = insert_bootstrap_user('fire', 'Prometheus', 'Admin', datetime.utcnow(), currency_id=0, time_format_is_24h=False, ui_theme_id=0)
+
+    # NEW REFACTORED create_user METHOD
+    # def create_user(password_hash,
+    #             first_name,
+    #             last_name,
+    #             currency_id,
+    #             created_by_user_id,
+    #             time_format_is_24h=False,
+    #             audit_details = None,
+    #             ui_theme_id = 0,
+    #             middle_name = None,
+    #             nickname = None,
+    #             nickname_prefered = None,
+    #             last_login = None,
+    #             commit = True):
+
 
     crud.create_user(password_hash="password",
                     first_name="John",
                     last_name="Doe",
                     currency_id=1,
-                    time_format_is_24=False,
-                    created_by_user_id=0,
+                    time_format_is_24=True,
+                    created_by_user_id=prime_creator_id,
                     details=db_init_message,
                     commit=True)
 
-    # # Generate 10 Users
-    # for n in range(10):
+    # Generate 10 Users
+    for n in range(10):
 
-    #     try:
-    #         # Begin the transaction
-    #         model.db.session.begin()
+        try:
+            # Begin the transaction
+            model.db.session.begin()
 
-    #         password_hash = 'test'
-    #         first_name = 'bob'
-    #         last_name = 'theBuilder'
+            password_hash = 'test'
+            first_name = 'bob'
+            last_name = 'theBuilder'
 
-    #         # TODO: Generate an email, phone number, and select user roles
-    #         # crud.create_email()
-    #         # crud.create_phone_number()
+            # TODO: Generate an email, phone number, and select user roles
+            # crud.create_email()
+            # crud.create_phone_number()
 
-    #         db_user, db_user_audit_entry, db_user_setting, db_user_setting_audit_entry = crud.create_user(password_hash,
-    #                                                                                           first_name,
-    #                                                                                           last_name,
-    #                                                                                           currency_id=1,
-    #                                                                                           time_format_is_24=True,  # or False, based on your needs
-    #                                                                                           created_by_user_id=prime_creator_id,
-    #                                                                                           details=db_init_message,
-    #                                                                                           commit=False)
-
-
-    #         model.db.session.add(db_user_audit_entry)
-    #         model.db.session.add(db_user_setting_audit_entry)
-    #         model.db.session.add(db_user_setting)
-    #         model.db.session.add(db_user)
-
-    #         # Commit all at once
-    #         model.db.session.commit()
+            db_user, db_user_audit_entry, db_user_setting, db_user_setting_audit_entry = crud.create_user(password_hash,
+                                                                                              first_name,
+                                                                                              last_name,
+                                                                                              currency_id=0,
+                                                                                              time_format_is_24=True,  # or False, based on your needs
+                                                                                              created_by_user_id=prime_creator_id,
+                                                                                              details=db_init_message,
+                                                                                              commit=False)
 
 
-    #     except Exception as e:
-    #         # If any error occurs, rollback the changes
-    #         model.db.session.rollback()
-    #         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
+            model.db.session.add(db_user_audit_entry)
+            model.db.session.add(db_user_setting_audit_entry)
+            model.db.session.add(db_user_setting)
+            model.db.session.add(db_user)
+
+            # Commit all at once
+            model.db.session.commit()
+
+
+        except Exception as e:
+            # If any error occurs, rollback the changes
+            model.db.session.rollback()
+            print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
 
 
 
@@ -400,15 +391,15 @@ def main():
 
     populate_timezones()
 
-    populate_currencies()
-
     populate_countries()
 
     populate_states()
     
-    populate_global_settings()
+    populate_currencies()
 
-    # populate_users(default_currency_id)
+    default_currency_id = populate_global_settings()
+
+    populate_users(default_currency_id)
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):

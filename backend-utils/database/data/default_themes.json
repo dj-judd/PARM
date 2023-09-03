@@ -1,20 +1,20 @@
 [
     {
-        "id": 1,
-        "name": "United States Dollar",
-        "symbol": "$",
-        "iso_code": "USD",
-        "exchange_rate": 1
+        "id": 0,
+        "name": "Default Theme",
+        "description": "This is the default theme.",
+        "primary_color": 0,
+        "secondary_color": 1
     },
     {
-        "id": 2,
+        "id": 1,
         "name": "Canadian Dollar",
         "symbol": "Can$",
         "iso_code": "CAD",
         "exchange_rate": 1.360252
     },
     {
-        "id": 3,
+        "id": 2,
         "name": "Mexican Peso",
         "symbol": "Mex$",
         "iso_code": "MXN",
