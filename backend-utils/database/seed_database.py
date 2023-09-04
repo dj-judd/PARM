@@ -40,6 +40,28 @@ model.db.create_all()
 from model import db
 
 
+def insert_temporary_bootstrap_audit_entry():
+    insert_sql = text("""
+        INSERT INTO audit_info_entries 
+        (operation_type, details, created_at, last_edited_at, is_archived)
+        VALUES (:operation_type, :details, :created_at, :last_edited_at, :is_archived)
+        RETURNING id
+    """)
+    
+    result = db.session.execute(insert_sql, {
+        "operation_type": 'CREATE',
+        "details": 'Temporary bootstrap entry',
+        "created_at": datetime.utcnow(),
+        "last_edited_at": datetime.utcnow(),
+        "is_archived": False
+    })
+    audit_entry_id = result.fetchone()[0]
+    db.session.commit()
+
+    return audit_entry_id
+
+
+
 def insert_bootstrap_audit_entry():
     # Step 1: Set AuditEntry's user_id requirements off
     db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
@@ -54,7 +76,26 @@ def insert_bootstrap_audit_entry():
         RETURNING id
         """)
 
-    result = db.session.execute(insert_sql_for_audit_entry, {
+    result = db.session.execute(insert_sql_for_audit_entry, {def insert_temporary_bootstrap_audit_entry():
+    insert_sql = text("""
+        INSERT INTO audit_info_entries 
+        (operation_type, details, created_at, last_edited_at, is_archived)
+        VALUES (:operation_type, :details, :created_at, :last_edited_at, :is_archived)
+        RETURNING id
+    """)
+    
+    result = db.session.execute(insert_sql, {
+        "operation_type": 'CREATE',
+        "details": 'Temporary bootstrap entry',
+        "created_at": datetime.utcnow(),
+        "last_edited_at": datetime.utcnow(),
+        "is_archived": False
+    })
+    audit_entry_id = result.fetchone()[0]
+    db.session.commit()
+
+    return audit_entry_id
+
         "id": 0,
         "operation_type": "CREATE",
         "details": "Bootstrap entry",
@@ -75,6 +116,23 @@ def insert_bootstrap_audit_entry():
     db.session.commit()
 
     return prime_audit_entry_id
+
+
+
+def update_audit_entry_with_user_reference(audit_entry_id, user_id):
+    update_sql = text("""
+        UPDATE audit_info_entries 
+        SET created_by = :user_id, last_edited_by = :user_id
+        WHERE id = :audit_entry_id
+    """)
+    
+    db.session.execute(update_sql, {
+        "audit_entry_id": audit_entry_id,
+        "user_id": user_id
+    })
+    db.session.commit()
+
+
 
 
 def insert_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login):
@@ -138,35 +196,21 @@ def insert_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_
 
     return prime_user_id
 
+
+
 def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow()):
+    
+    # Step 1: Create a temporary bootstrap audit entry (without a user reference)
+    temp_audit_entry_id = insert_temporary_bootstrap_audit_entry()
 
-    # Step 1: We create the initial Bootstrap Audit Entry and get it's ID
-    prime_audit_entry_id = insert_bootstrap_audit_entry()
+    # Step 2: Create the user using the temporary audit entry
+    prime_user_id = insert_bootstrap_user(temp_audit_entry_id, password_hash, first_name, last_name, last_login)
 
-    # Step 2: We create the initial Bootstrap User and pass it the Bootstrap Audit Entry
-    prime_user_id = insert_bootstrap_user(prime_audit_entry_id, password_hash=password_hash, first_name=first_name, last_name=last_name, last_login=last_login)
+    # Step 3: Update the temporary audit entry to now reference the created user
+    update_audit_entry_with_user_reference(temp_audit_entry_id, prime_user_id)
 
-    # At this point, the Bootstrap User should have ID 0
-    # Step 3: Now, we update the Bootstrap Audit Entry to reference the correct User ID
-    update_sql = text("""
-        UPDATE audit_info_entries 
-        SET created_by = :user_id, last_edited_by = :user_id
-        WHERE id = :audit_entry_id
-        """)
+    return temp_audit_entry_id, prime_user_id
 
-    db.session.execute(update_sql, {
-        "user_id": 0,
-        "audit_entry_id": prime_audit_entry_id
-    })
-
-    db.session.commit()
-
-    # Step 4: We can now set the NOT NULL constraints back on the necessary columns
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by SET NOT NULL;")
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by SET NOT NULL;")
-    db.session.commit()
-
-    return prime_audit_entry_id, prime_user_id
 
 
 def populate_timezones():
