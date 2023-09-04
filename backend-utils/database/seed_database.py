@@ -122,7 +122,7 @@ def insert_bootstrap_audit_entry():
     return prime_audit_entry_id
 
 
-def insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id=1):
+def insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id):
     # Insert user_settings
     insert_sql_for_user_setting = """
         INSERT INTO user_settings 
@@ -201,7 +201,7 @@ def adjust_sequence(sequence_name, value=1):
     db.session.commit()
 
 
-def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow()):
+def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow(), default_currency_id=1):
     
     # Step 1: Disable the NOT NULL constraint on the created_by column
     disable_not_null_constraint("audit_info_entries", "created_by")
@@ -216,7 +216,7 @@ def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admi
     ui_theme_id = insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, prime_audit_entry_id)
     
     # Continue with creating the bootstrap user
-    prime_user_id = insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id)
+    prime_user_id = insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id)
     update_audit_entry_with_user_reference(prime_audit_entry_id, prime_user_id)
 
 
@@ -257,7 +257,7 @@ def populate_timezones():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 73{RESET}\n{e}")
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 235{RESET}\n{e}")
 
 
 def populate_countries():
@@ -284,7 +284,7 @@ def populate_countries():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 102{RESET}\n{e}")
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 263{RESET}\n{e}")
 
 
 def populate_states():
@@ -310,7 +310,7 @@ def populate_states():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 167{RESET}\n{e}")
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 290{RESET}\n{e}")
 
 
 def populate_currencies():
@@ -338,7 +338,7 @@ def populate_currencies():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 162{RESET}\n{e}")
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 316{RESET}\n{e}")
 
 
 def generate_deployment_fingerprint(input_data=None):
@@ -371,61 +371,71 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 197{RESET}\n{e}")
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 355{RESET}\n{e}")
 
 
 def populate_users():
 
-    # Initial creation of prime user and audit entry to create all other data and users
-    prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow())
+    try:
 
-    # crud.create_user(password_hash="password",
-    #                 first_name="John",
-    #                 last_name="Doe",
-    #                 currency_id=1,
-    #                 time_format_is_24=False,
-    #                 created_by_user_id=0,
-    #                 details=db_init_message,
-    #                 commit=True)
+        #
+        default_currency_id = crud.read_global_settings().get('default_currency_id')
+        # get('default_currency_id')
 
-    # # Generate 10 Users
-    # for n in range(10):
+        # Initial creation of prime user and audit entry to create all other data and users
+        prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow(), default_currency_id)
 
-    #     try:
-    #         # Begin the transaction
-    #         model.db.session.begin()
+        # crud.create_user(password_hash="password",
+        #                 first_name="John",
+        #                 last_name="Doe",
+        #                 currency_id=1,
+        #                 time_format_is_24=False,
+        #                 created_by_user_id=0,
+        #                 details=db_init_message,
+        #                 commit=True)
 
-    #         password_hash = 'test'
-    #         first_name = 'bob'
-    #         last_name = 'theBuilder'
+        # # Generate 10 Users
+        # for n in range(10):
 
-    #         # TODO: Generate an email, phone number, and select user roles
-    #         # crud.create_email()
-    #         # crud.create_phone_number()
+        #     try:
+        #         # Begin the transaction
+        #         model.db.session.begin()
 
-    #         db_user, db_user_audit_entry, db_user_setting, db_user_setting_audit_entry = crud.create_user(password_hash,
-    #                                                                                           first_name,
-    #                                                                                           last_name,
-    #                                                                                           currency_id=1,
-    #                                                                                           time_format_is_24=True,  # or False, based on your needs
-    #                                                                                           created_by_user_id=prime_creator_id,
-    #                                                                                           details=db_init_message,
-    #                                                                                           commit=False)
+        #         password_hash = 'test'
+        #         first_name = 'bob'
+        #         last_name = 'theBuilder'
 
+        #         # TODO: Generate an email, phone number, and select user roles
+        #         # crud.create_email()
+        #         # crud.create_phone_number()
 
-    #         model.db.session.add(db_user_audit_entry)
-    #         model.db.session.add(db_user_setting_audit_entry)
-    #         model.db.session.add(db_user_setting)
-    #         model.db.session.add(db_user)
-
-    #         # Commit all at once
-    #         model.db.session.commit()
+        #         db_user, db_user_audit_entry, db_user_setting, db_user_setting_audit_entry = crud.create_user(password_hash,
+        #                                                                                           first_name,
+        #                                                                                           last_name,
+        #                                                                                           currency_id=1,
+        #                                                                                           time_format_is_24=True,  # or False, based on your needs
+        #                                                                                           created_by_user_id=prime_creator_id,
+        #                                                                                           details=db_init_message,
+        #                                                                                           commit=False)
 
 
-    #     except Exception as e:
-    #         # If any error occurs, rollback the changes
-    #         model.db.session.rollback()
-    #         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
+        #         model.db.session.add(db_user_audit_entry)
+        #         model.db.session.add(db_user_setting_audit_entry)
+        #         model.db.session.add(db_user_setting)
+        #         model.db.session.add(db_user)
+
+        #         # Commit all at once
+        #         model.db.session.commit()
+
+
+        #     except Exception as e:
+        #         # If any error occurs, rollback the changes
+        #         model.db.session.rollback()
+        #         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 377{RESET}\n{e}")
 
 
 
