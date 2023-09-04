@@ -401,17 +401,20 @@ state_names_enum = ENUM(
 
 
 
-class GlobalSetting(db.Model):
+class GlobalSettings(db.Model):
     """Settings and Defaults for the entire app."""
 
     __tablename__ = "global_settings"
 
     deployment_fingerprint = db.Column(db.String(64), primary_key=True, nullable=False)
-    default_currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    default_currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)  
 
+    # Relationship for easier ORM-based lookups
+    default_currency = db.relationship("Currency")
 
     def __repr__(self):
         return f'<id={self.deployment_fingerprint} currency_settings={self.default_currency_id}>'
+
     
 
 
@@ -967,7 +970,7 @@ class UiTheme(db.Model):
 
 
 
-class UserSetting(db.Model):
+class UserSettings(db.Model):
     """Settings and Defaults for the entire app."""
 
     __tablename__ = "user_settings"
@@ -982,7 +985,7 @@ class UserSetting(db.Model):
 
 
     def __repr__(self):
-        return f'<UserSetting id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
+        return f'<UserSettings id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
 
 
 
@@ -1002,7 +1005,7 @@ class User(db.Model):
     last_login = db.Column(db.DateTime, nullable=True)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    user_settings = db.relationship('UserSetting', backref='user')
+    user_settings = db.relationship('UserSettings', backref='user')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='created_by_user', foreign_keys=[audit_info_entry_id])
 
 

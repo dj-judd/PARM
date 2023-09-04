@@ -22,8 +22,11 @@ def create_timezone_entry(id, identifier, abbreviation, utc_offset_minutes, has_
         has_dst = has_dst
     )
 
+    # Always add to the session
+    model.db.session.add(timezone_entry)
+    
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(timezone_entry)
         model.db.session.commit()
 
     return timezone_entry
@@ -47,8 +50,11 @@ def create_country_entry(id, code, name, intl_phone_code, commit=True):
         intl_phone_code = intl_phone_code,
     )
 
+    # Always add to the session
+    model.db.session.add(country_entry)
+    
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(country_entry)
         model.db.session.commit()
 
     return country_entry
@@ -72,8 +78,11 @@ def create_state_entry(code, name, timezone_id, country_id, commit=True):
         country_id = country_id
     )
 
+    # Always add to the session
+    model.db.session.add(state_entry)
+    
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(state_entry)
         model.db.session.commit()
 
     return state_entry
@@ -93,8 +102,11 @@ def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True
         exchange_rate = exchange_rate
     )
 
+    # Always add to the session
+    model.db.session.add(currency_entry)
+    
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(currency_entry)
         model.db.session.commit()
 
     return currency_entry
@@ -116,52 +128,38 @@ def create_audit_entry(operation_type, created_by_user_id, details=None, commit=
         last_edited_by = created_by_user_id
     )
 
+    # Always add to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(audit_entry)
         model.db.session.commit()
 
     return audit_entry
 
-def create_global_settings(deployment_fingerprint,
-                           default_currency_id,
-                           commit=True):
+def create_global_settings(deployment_fingerprint, default_currency_id, commit=True):
     """Create and return a global settings entry."""
 
-
     currency = model.db.session.query(model.Currency).filter_by(id=default_currency_id).first()
-
 
     # Check if currency exists
     if not currency:
         raise ValueError(f"Invalid currency ID: {default_currency_id}")
 
-    global_setting = model.GlobalSetting(
+    global_setting = model.GlobalSettings(
         deployment_fingerprint=deployment_fingerprint,
         default_currency_id=default_currency_id
     )
 
+    # Always add the global_setting to the session
+    model.db.session.add(global_setting)
+
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(global_setting)
         model.db.session.commit()
 
     return global_setting
 
-
-
-    # # Check to make sure that the currency ID value is in the Enum list
-    # if default_currency_id not in [e.value for e in model.CurrencyIsoCode]:
-    #     raise ValueError(f"Invalid currency ID: {default_currency_id}")
-    
-    # global_setting = model.GlobalSetting(
-    #     deployment_fingerprint=deployment_fingerprint,
-    #     default_currency_id=default_currency_id
-    # )
-
-    # if commit:
-    #     model.db.session.add(global_setting)
-    #     model.db.session.commit()
-
-    # return global_setting
 
 
 def create_user_setting(created_by_user_id,
@@ -187,10 +185,14 @@ def create_user_setting(created_by_user_id,
         audit_info_entry_id=user_setting_audit_entry.id
     )
 
+    # Always add to the session
+    model.db.session.add(user_setting_audit_entry)
+    model.db.session.add(user_setting)
+
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(user_setting_audit_entry)
-        model.db.session.add(user_setting)
         model.db.session.commit()
+
 
     return user_setting, user_setting_audit_entry
 
@@ -234,11 +236,14 @@ def create_user(password_hash,
         audit_info_entry_id = user_audit_entry.id
     )
 
+    # Always add to the session
+    model.db.session.add(user_audit_entry)
+    model.db.session.add(user_setting_audit_entry)
+    model.db.session.add(user_setting)
+    model.db.session.add(user)
+
+    # Commit only if commit=True
     if commit:
-        model.db.session.add(user_audit_entry)
-        model.db.session.add(user_setting_audit_entry)
-        model.db.session.add(user_setting)
-        model.db.session.add(user)
         model.db.session.commit()
 
     return user, user_audit_entry, user_setting, user_setting_audit_entry
@@ -257,11 +262,12 @@ def read_global_settings():
     
     if global_settings:
         return {
-            "default_currency_id": global_settings.default_currency_id,
-            "time_format_is_24h": global_settings.time_format_is_24h
+            "deployment_fingerprint": global_settings.deployment_fingerprint,
+            "default_currency_id": global_settings.default_currency_id
         }
     else:
         return None
+
 
 
 

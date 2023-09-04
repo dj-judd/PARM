@@ -1,6 +1,8 @@
+import os
 import sys
 import time
 import threading
+import inspect
 
 
 # ANSI codes for colors and text attributes
@@ -57,6 +59,27 @@ def openingText(program_name, version_number):
     print(version_number_formatted)
     print("~" * (len(program_name_formatted)-(len(YELLOW_BOLD)+len(RESET))))
     print()
+
+
+def errorMessage(e, origin_file=None, line_number=None):
+    if origin_file is None or line_number is None:
+        current_frame = inspect.currentframe()
+        outer_frame = inspect.getouterframes(current_frame, 2)
+        
+        # Get the caller's file name
+        origin_file = outer_frame[1][1]
+
+        # Get the line number in the caller
+        line_number = outer_frame[1][2]
+        
+    print(f"\n{RED_BOLD}Error occurred!{RESET} in {YELLOW}{os.path.basename(origin_file)}{RESET} on {UNDERLINED}Line {line_number}{RESET}")
+    print(f"{e}\n")
+
+
+def successMessage():
+    # Get the name of the caller function
+    caller_name = inspect.stack()[1].function
+    print(f"{GREEN_BOLD}Success!{RESET} {YELLOW}{caller_name}{RESET} finished {GREEN}successfully.{RESET}")
 
 
 def signal_handler(spinner_obj, signum, frame):
