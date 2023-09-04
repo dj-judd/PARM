@@ -40,7 +40,7 @@ def create_country_entry(id, code, name, intl_phone_code, commit=True):
     # if name not in [e.value for e in model.CountryNames]:
     #     raise ValueError(f"Invalid operation type: {name}")
 
-    country_entry = model.State(
+    country_entry = model.Country(
         id = id,
         code = code,
         name = name,
@@ -55,7 +55,7 @@ def create_country_entry(id, code, name, intl_phone_code, commit=True):
 
 
 
-def create_state_entry(id, code, name, timezone_id, country_id, commit=True):
+def create_state_entry(code, name, timezone_id, country_id, commit=True):
     
     # Check to make sure that the value is in the Enum list
     if code not in [e.value for e in model.StateCodes]:
@@ -66,7 +66,6 @@ def create_state_entry(id, code, name, timezone_id, country_id, commit=True):
         raise ValueError(f"Invalid operation type: {name}")
 
     state_entry = model.State(
-        id = id,
         code = code,
         name = name,
         timezone_id = timezone_id,
@@ -128,10 +127,14 @@ def create_global_settings(deployment_fingerprint,
                            commit=True):
     """Create and return a global settings entry."""
 
-    # Check to make sure that the currency ID value is in the Enum list
-    if default_currency_id not in [e.value for e in model.CurrencyIsoCode]:
+
+    currency = model.db.session.query(model.Currency).filter_by(id=default_currency_id).first()
+
+
+    # Check if currency exists
+    if not currency:
         raise ValueError(f"Invalid currency ID: {default_currency_id}")
-    
+
     global_setting = model.GlobalSetting(
         deployment_fingerprint=deployment_fingerprint,
         default_currency_id=default_currency_id
@@ -142,6 +145,23 @@ def create_global_settings(deployment_fingerprint,
         model.db.session.commit()
 
     return global_setting
+
+
+
+    # # Check to make sure that the currency ID value is in the Enum list
+    # if default_currency_id not in [e.value for e in model.CurrencyIsoCode]:
+    #     raise ValueError(f"Invalid currency ID: {default_currency_id}")
+    
+    # global_setting = model.GlobalSetting(
+    #     deployment_fingerprint=deployment_fingerprint,
+    #     default_currency_id=default_currency_id
+    # )
+
+    # if commit:
+    #     model.db.session.add(global_setting)
+    #     model.db.session.commit()
+
+    # return global_setting
 
 
 def create_user_setting(created_by_user_id,

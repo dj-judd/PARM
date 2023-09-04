@@ -40,14 +40,11 @@ model.db.create_all()
 from model import db
 
 
-def insert_bootstrap_audit_entry(operation_type=model.OperationType.CREATE.value, details=db_init_message, created_at=datetime.utcnow(), last_edited_at=datetime.utcnow(), is_archived=False, archived_at=None):
-    """Breaks the DB's null rules to seed the initial entries in a couple of tables. Then restores everything."""
-    
+def insert_bootstrap_audit_entry():
     # Step 1: Set AuditEntry's user_id requirements off
     db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
     db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by DROP NOT NULL;")
     db.session.commit()
-
 
     # Step 2: Inserting the bootstrap audit entry
     insert_sql_for_audit_entry = text("""
@@ -59,16 +56,14 @@ def insert_bootstrap_audit_entry(operation_type=model.OperationType.CREATE.value
 
     result = db.session.execute(insert_sql_for_audit_entry, {
         "id": 0,
-        "operation_type": operation_type,
-        "details": details,
-        # "created_by":None,
-        "created_by":0,
-        "created_at": created_at,
-        # "last_edited_by":None,
-        "last_edited_by":0,
-        "last_edited_at": last_edited_at,
-        "is_archived": is_archived,
-        "archived_at": archived_at
+        "operation_type": "CREATE",
+        "details": "Bootstrap entry",
+        "created_by": 0,
+        "created_at": datetime.utcnow(),
+        "last_edited_by": 0,
+        "last_edited_at": datetime.utcnow(),
+        "is_archived": False,
+        "archived_at": None
     })
 
     prime_audit_entry_id = result.fetchone()[0]
@@ -79,37 +74,25 @@ def insert_bootstrap_audit_entry(operation_type=model.OperationType.CREATE.value
     db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
     db.session.commit()
 
-    # Step 3: Set AuditEntry's user_id requirements back to on.
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by SET NOT NULL;")
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by SET NOT NULL;")
-    db.session.commit()
-
     return prime_audit_entry_id
 
 
-def insert_bootstrap_user(password_hash, first_name, last_name, last_login, currency_id=1, time_format_is_24h=True):
-    """Breaks the DB's null rules to seed the initial entries in a couple of tables. Then restores everything."""
-    
-    # Step 1: Set User Settings ui_theme_id & audit requirements off
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN ui_theme_id DROP NOT NULL;")
+def insert_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login):
+    # Step 1: Set User Settings audit requirements off
     db.session.execute("ALTER TABLE user_settings ALTER COLUMN audit_info_entry_id DROP NOT NULL;")
     db.session.commit()
-
 
     # Step 2: Inserting the bootstrap user_setting
     insert_sql_for_user_setting = text("""
         INSERT INTO user_settings 
-        (id, currency_id, time_format_is_24h, ui_theme_id, audit_info_entry_id) 
-        VALUES (:id, :currency_id, :time_format_is_24h, :ui_theme_id, :audit_info_entry_id)
+        (id, audit_info_entry_id) 
+        VALUES (:id, :audit_info_entry_id)
         RETURNING id
         """)
 
     result = db.session.execute(insert_sql_for_user_setting, {
         "id": 0,
-        "currency_id": currency_id,
-        "time_format_is_24h": time_format_is_24h,
-        "ui_theme_id": None,
-        "audit_info_entry_id": None
+        "audit_info_entry_id": prime_audit_entry_id
     })
 
     user_settings_id = result.fetchone()[0]
@@ -120,19 +103,11 @@ def insert_bootstrap_user(password_hash, first_name, last_name, last_login, curr
     db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
     db.session.commit()
 
-    # Step 3: Alter user_settings table's audit requirement back to on
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN ui_theme_id SET NOT NULL;")
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN audit_info_entry_id SET NOT NULL;")
-    db.session.commit()
-
-    
-   
-    # Step 4: Set Users audit requirement off
+    # Step 3: Set Users audit requirement off
     db.session.execute("ALTER TABLE users ALTER COLUMN audit_info_entry_id DROP NOT NULL;")
     db.session.commit()
 
-
-    # Step 5: Inserting the bootstrap user
+    # Step 4: Inserting the bootstrap user
     insert_sql_for_user = text("""
         INSERT INTO users 
         (id, password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
@@ -146,21 +121,52 @@ def insert_bootstrap_user(password_hash, first_name, last_name, last_login, curr
         "last_name": last_name,
         "user_settings_id": user_settings_id,
         "last_login": last_login,
-        # "audit_info_entry_id": None
-        "audit_info_entry_id": None
+        "audit_info_entry_id": prime_audit_entry_id
     })
 
+    prime_user_id = result.fetchone()[0]
     db.session.commit()
-
 
     # Adjust the sequence immediately after inserting the bootstrap user
     sequence_name = "users_id_seq"
     db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
     db.session.commit()
 
-    # Step 6: Alter users table's audit requirement back to on
+    # Step 5: Alter users table's audit requirement back to on
     db.session.execute("ALTER TABLE users ALTER COLUMN audit_info_entry_id SET NOT NULL;")
     db.session.commit()
+
+    return prime_user_id
+
+def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow()):
+
+    # Step 1: We create the initial Bootstrap Audit Entry and get it's ID
+    prime_audit_entry_id = insert_bootstrap_audit_entry()
+
+    # Step 2: We create the initial Bootstrap User and pass it the Bootstrap Audit Entry
+    prime_user_id = insert_bootstrap_user(prime_audit_entry_id, password_hash=password_hash, first_name=first_name, last_name=last_name, last_login=last_login)
+
+    # At this point, the Bootstrap User should have ID 0
+    # Step 3: Now, we update the Bootstrap Audit Entry to reference the correct User ID
+    update_sql = text("""
+        UPDATE audit_info_entries 
+        SET created_by = :user_id, last_edited_by = :user_id
+        WHERE id = :audit_entry_id
+        """)
+
+    db.session.execute(update_sql, {
+        "user_id": 0,
+        "audit_entry_id": prime_audit_entry_id
+    })
+
+    db.session.commit()
+
+    # Step 4: We can now set the NOT NULL constraints back on the necessary columns
+    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by SET NOT NULL;")
+    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by SET NOT NULL;")
+    db.session.commit()
+
+    return prime_audit_entry_id, prime_user_id
 
 
 def populate_timezones():
@@ -305,23 +311,19 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 197{RESET}\n{e}")
 
 
-def populate_users(default_currency_id):
+def populate_users():
 
+    # Initial creation of prime user and audit entry to create all other data and users
+    prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow())
 
-    # Initial creation of user to create all other data and users
-    insert_bootstrap_user('fire', 'Prometheus', 'Admin', datetime.utcnow(), currency_id=1, time_format_is_24h=True)
-
-    # Initialization of the one Audit Entry that will be referenced by everything created here and now
-    insert_bootstrap_audit_entry()
-
-    crud.create_user(password_hash="password",
-                    first_name="John",
-                    last_name="Doe",
-                    currency_id=1,
-                    time_format_is_24=False,
-                    created_by_user_id=0,
-                    details=db_init_message,
-                    commit=True)
+    # crud.create_user(password_hash="password",
+    #                 first_name="John",
+    #                 last_name="Doe",
+    #                 currency_id=1,
+    #                 time_format_is_24=False,
+    #                 created_by_user_id=0,
+    #                 details=db_init_message,
+    #                 commit=True)
 
     # # Generate 10 Users
     # for n in range(10):
@@ -407,7 +409,7 @@ def main():
     
     populate_global_settings()
 
-    # populate_users(default_currency_id)
+    populate_users()
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):

@@ -957,9 +957,10 @@ class UiTheme(db.Model):
     secondary_color = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
     audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
-    color = db.relationship('Color', backref='ui_themes')
+    # Specifying the foreign_keys for each relationship
+    primary_color_relation = db.relationship('Color', foreign_keys=[primary_color], backref='ui_theme_primary')
+    secondary_color_relation = db.relationship('Color', foreign_keys=[secondary_color], backref='ui_theme_secondary')
     audit_info_entry = db.relationship('AuditInfoEntry', backref='ui_themes')
-
 
     def __repr__(self):
         return f'<UiTheme id={self.id} name={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
