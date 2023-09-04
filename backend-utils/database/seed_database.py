@@ -40,6 +40,142 @@ model.db.create_all()
 from model import db
 
 
+def insert_bootstrap_colors(audit_entry_id):
+    insert_sql = text("""
+        INSERT INTO colors 
+        (name, hex_value, audit_info_entry_id) 
+        VALUES (:name, :hex_value, :audit_info_entry_id)
+        RETURNING id
+    """)
+
+    primary_color_id = db.session.execute(insert_sql, {
+        "name": "Default Primary",
+        "hex_value": "#f0eae7", # Default primary hex value
+        "audit_info_entry_id": audit_entry_id
+    }).fetchone()[0]
+
+    secondary_color_id = db.session.execute(insert_sql, {
+        "name": "Default Secondary",
+        "hex_value": "#17baeb", # Default secondary hex value
+        "audit_info_entry_id": audit_entry_id
+    }).fetchone()[0]
+
+    db.session.commit()
+    
+    return primary_color_id, secondary_color_id
+
+
+def insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, audit_entry_id):
+    insert_sql = text("""
+        INSERT INTO ui_themes 
+        (name, description, primary_color, secondary_color, audit_info_entry_id) 
+        VALUES (:name, :description, :primary_color, :secondary_color, :audit_info_entry_id)
+        RETURNING id
+    """)
+    
+    result = db.session.execute(insert_sql, {
+        "name": "Default Theme",
+        "description": "The default user interface theme.",
+        "primary_color": primary_color_id,
+        "secondary_color": secondary_color_id,
+        "audit_info_entry_id": audit_entry_id
+    })
+
+    ui_theme_id = result.fetchone()[0]
+    db.session.commit()
+
+    return ui_theme_id
+
+
+
+def insert_bootstrap_audit_entry():
+    # Step 1: Set AuditEntry's user_id requirements off
+    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
+    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by DROP NOT NULL;")
+    db.session.commit()
+
+    # Step 2: Inserting the bootstrap audit entry
+    insert_sql_for_audit_entry = text("""
+        INSERT INTO audit_info_entries 
+        (id, operation_type, details, created_by, created_at, last_edited_by, last_edited_at, is_archived, archived_at)
+        VALUES (:id, :operation_type, :details, :created_by, :created_at, :last_edited_by, :last_edited_at, :is_archived, :archived_at)
+        RETURNING id
+        """)
+
+    result = db.session.execute(insert_sql_for_audit_entry, {
+        "id": 0,
+        "operation_type": "CREATE",
+        "details": "Bootstrap entry",
+        "created_by": None,
+        "created_at": datetime.utcnow(),
+        "last_edited_by": None,
+        "last_edited_at": datetime.utcnow(),
+        "is_archived": False,
+        "archived_at": None
+    })
+
+    prime_audit_entry_id = result.fetchone()[0]
+    db.session.commit()
+
+    # Adjust the sequence immediately after inserting the bootstrap audit info entry
+    adjust_sequence(sequence_name="audit_info_entries_id_seq", value=1)
+
+    return prime_audit_entry_id
+
+
+def insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id=1):
+    # Insert user_settings
+    insert_sql_for_user_setting = """
+        INSERT INTO user_settings 
+        (id, currency_id, time_format_is_24h, ui_theme_id, audit_info_entry_id) 
+        VALUES (:id, :currency_id, :time_format_is_24h, :ui_theme_id, :audit_info_entry_id)
+        RETURNING id
+    """
+
+    result = db.session.execute(insert_sql_for_user_setting, {
+        "id": 0,  # Explicitly setting the ID to 0
+        "currency_id": default_currency_id,
+        "time_format_is_24h": True,  # Default to 24hr format
+        "ui_theme_id": ui_theme_id,
+        "audit_info_entry_id": prime_audit_entry_id
+    })
+
+    user_settings_id = result.fetchone()[0]
+    db.session.commit()
+
+    # Adjust sequence after inserting into user_settings
+    adjust_sequence(sequence_name="user_settings_id_seq", value=1)
+
+    # Insert users
+    insert_sql_for_user = text("""
+        INSERT INTO users 
+        (id, password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
+        VALUES (:id, :password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
+        RETURNING id
+    """)
+
+    result = db.session.execute(insert_sql_for_user, {
+        "id": 0,
+        "password_hash": password_hash,
+        "first_name": first_name,
+        "last_name": last_name,
+        "user_settings_id": user_settings_id,
+        "last_login": last_login,
+        "audit_info_entry_id": prime_audit_entry_id
+    })
+
+    prime_user_id = result.fetchone()[0]
+    db.session.commit()
+
+    # Adjust sequence after inserting the bootstrap user
+    adjust_sequence(sequence_name="users_id_seq", value=1)
+
+    return prime_user_id
+
+
+
+
+
 def insert_temporary_bootstrap_audit_entry():
     insert_sql = text("""
         INSERT INTO audit_info_entries 
@@ -62,62 +198,6 @@ def insert_temporary_bootstrap_audit_entry():
 
 
 
-def insert_bootstrap_audit_entry():
-    # Step 1: Set AuditEntry's user_id requirements off
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by DROP NOT NULL;")
-    db.session.commit()
-
-    # Step 2: Inserting the bootstrap audit entry
-    insert_sql_for_audit_entry = text("""
-        INSERT INTO audit_info_entries 
-        (id, operation_type, details, created_by, created_at, last_edited_by, last_edited_at, is_archived, archived_at)
-        VALUES (:id, :operation_type, :details, :created_by, :created_at, :last_edited_by, :last_edited_at, :is_archived, :archived_at)
-        RETURNING id
-        """)
-
-    result = db.session.execute(insert_sql_for_audit_entry, {def insert_temporary_bootstrap_audit_entry():
-    insert_sql = text("""
-        INSERT INTO audit_info_entries 
-        (operation_type, details, created_at, last_edited_at, is_archived)
-        VALUES (:operation_type, :details, :created_at, :last_edited_at, :is_archived)
-        RETURNING id
-    """)
-    
-    result = db.session.execute(insert_sql, {
-        "operation_type": 'CREATE',
-        "details": 'Temporary bootstrap entry',
-        "created_at": datetime.utcnow(),
-        "last_edited_at": datetime.utcnow(),
-        "is_archived": False
-    })
-    audit_entry_id = result.fetchone()[0]
-    db.session.commit()
-
-    return audit_entry_id
-
-        "id": 0,
-        "operation_type": "CREATE",
-        "details": "Bootstrap entry",
-        "created_by": 0,
-        "created_at": datetime.utcnow(),
-        "last_edited_by": 0,
-        "last_edited_at": datetime.utcnow(),
-        "is_archived": False,
-        "archived_at": None
-    })
-
-    prime_audit_entry_id = result.fetchone()[0]
-    db.session.commit()
-
-    # Adjust the sequence immediately after inserting the bootstrap audit info entry
-    sequence_name = "audit_info_entries_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
-    db.session.commit()
-
-    return prime_audit_entry_id
-
-
 
 def update_audit_entry_with_user_reference(audit_entry_id, user_id):
     update_sql = text("""
@@ -133,83 +213,50 @@ def update_audit_entry_with_user_reference(audit_entry_id, user_id):
     db.session.commit()
 
 
-
-
-def insert_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login):
-    # Step 1: Set User Settings audit requirements off
-    db.session.execute("ALTER TABLE user_settings ALTER COLUMN audit_info_entry_id DROP NOT NULL;")
+def disable_not_null_constraint(table_name, column_name):
+    db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} DROP NOT NULL;")
     db.session.commit()
 
-    # Step 2: Inserting the bootstrap user_setting
-    insert_sql_for_user_setting = text("""
-        INSERT INTO user_settings 
-        (id, audit_info_entry_id) 
-        VALUES (:id, :audit_info_entry_id)
-        RETURNING id
-        """)
-
-    result = db.session.execute(insert_sql_for_user_setting, {
-        "id": 0,
-        "audit_info_entry_id": prime_audit_entry_id
-    })
-
-    user_settings_id = result.fetchone()[0]
+def enable_not_null_constraint(table_name, column_name):
+    db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} SET NOT NULL;")
     db.session.commit()
 
-    # Adjust the sequence immediately after inserting the bootstrap user setting
-    sequence_name = "user_settings_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
+def adjust_sequence(sequence_name, value=1):
+    db.session.execute(f"SELECT setval('{sequence_name}', {value}, true);")
     db.session.commit()
-
-    # Step 3: Set Users audit requirement off
-    db.session.execute("ALTER TABLE users ALTER COLUMN audit_info_entry_id DROP NOT NULL;")
-    db.session.commit()
-
-    # Step 4: Inserting the bootstrap user
-    insert_sql_for_user = text("""
-        INSERT INTO users 
-        (id, password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
-        VALUES (:id, :password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
-        """)
-
-    db.session.execute(insert_sql_for_user, {
-        "id":0,
-        "password_hash": password_hash,
-        "first_name": first_name,
-        "last_name": last_name,
-        "user_settings_id": user_settings_id,
-        "last_login": last_login,
-        "audit_info_entry_id": prime_audit_entry_id
-    })
-
-    prime_user_id = result.fetchone()[0]
-    db.session.commit()
-
-    # Adjust the sequence immediately after inserting the bootstrap user
-    sequence_name = "users_id_seq"
-    db.session.execute(f"SELECT setval('{sequence_name}', 1, true);")
-    db.session.commit()
-
-    # Step 5: Alter users table's audit requirement back to on
-    db.session.execute("ALTER TABLE users ALTER COLUMN audit_info_entry_id SET NOT NULL;")
-    db.session.commit()
-
-    return prime_user_id
 
 
 
 def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow()):
     
-    # Step 1: Create a temporary bootstrap audit entry (without a user reference)
-    temp_audit_entry_id = insert_temporary_bootstrap_audit_entry()
+    # Step 1: Disable the NOT NULL constraint on the created_by column
+    disable_not_null_constraint("audit_info_entries", "created_by")
+    
+    # Create the bootstrap audit entry with ID of 0
+    prime_audit_entry_id = insert_bootstrap_audit_entry()
 
-    # Step 2: Create the user using the temporary audit entry
-    prime_user_id = insert_bootstrap_user(temp_audit_entry_id, password_hash, first_name, last_name, last_login)
+    # Insert bootstrap colors
+    primary_color_id, secondary_color_id = insert_bootstrap_colors(prime_audit_entry_id)
+    
+    # Insert bootstrap UI theme
+    ui_theme_id = insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, prime_audit_entry_id)
+    
+    # Continue with creating the bootstrap user
+    prime_user_id = insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id)
+    update_audit_entry_with_user_reference(prime_audit_entry_id, prime_user_id)
 
-    # Step 3: Update the temporary audit entry to now reference the created user
-    update_audit_entry_with_user_reference(temp_audit_entry_id, prime_user_id)
 
-    return temp_audit_entry_id, prime_user_id
+    # Step 5: Re-enable the NOT NULL constraints
+    enable_not_null_constraint("users", "audit_info_entry_id")
+    enable_not_null_constraint("user_settings", "audit_info_entry_id")
+    enable_not_null_constraint("colors", "audit_info_entry_id")
+    enable_not_null_constraint("ui_themes", "audit_info_entry_id")
+    enable_not_null_constraint("audit_info_entries", "created_by")
+    enable_not_null_constraint("audit_info_entries", "last_edited_by")
+
+    return prime_audit_entry_id, prime_user_id
+
+
 
 
 
