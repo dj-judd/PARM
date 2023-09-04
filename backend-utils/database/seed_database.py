@@ -400,6 +400,27 @@ def populate_users():
                         created_by_user_id=prime_user_id,
                         audit_details=db_init_message,
                         commit=True)
+        
+        crud.create_phone_number(model.PhoneType.PERSONAL.value,
+                                 True,
+                                 1,
+                                 479,
+                                 3811605,
+                                 0,
+                                 "Testing phone number Creation",
+                                 None,
+                                 is_primary=True,
+                                 associated_user_id=1)
+        
+        crud.create_email_address(model.EmailType.PERSONAL.value,
+                                  "john.doe@gmail.com",
+                                  0,
+                                  audit_details="Testing email Creation",
+                                  is_primary=True,
+                                  associated_user_id=1                                  
+                                  )
+        
+
 
         # # Generate 10 Users
         # for n in range(10):

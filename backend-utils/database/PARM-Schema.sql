@@ -400,7 +400,7 @@ CREATE TABLE "brand_email_addresses" (
 
 CREATE TABLE "brand_phone_numbers" (
   "brand_id" int NOT NULL,
-  "phone_numbers_id" int NOT NULL,
+  "phone_number_id" int NOT NULL,
   "audit_info_entry_id" int NOT NULL
 );
 
@@ -483,7 +483,7 @@ CREATE TABLE "email_addresses" (
 
 CREATE TABLE "user_phone_numbers" (
   "user_id" int NOT NULL,
-  "phone_numbers_id" int NOT NULL,
+  "phone_number_id" int NOT NULL,
   "audit_info_entry_id" int NOT NULL
 );
 
