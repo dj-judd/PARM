@@ -87,7 +87,6 @@ def insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, audit_entry_
     return ui_theme_id
 
 
-
 def insert_bootstrap_audit_entry():
     # Step 1: Set AuditEntry's user_id requirements off
     db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
@@ -173,32 +172,6 @@ def insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_na
     return prime_user_id
 
 
-
-
-
-def insert_temporary_bootstrap_audit_entry():
-    insert_sql = text("""
-        INSERT INTO audit_info_entries 
-        (operation_type, details, created_at, last_edited_at, is_archived)
-        VALUES (:operation_type, :details, :created_at, :last_edited_at, :is_archived)
-        RETURNING id
-    """)
-    
-    result = db.session.execute(insert_sql, {
-        "operation_type": 'CREATE',
-        "details": 'Temporary bootstrap entry',
-        "created_at": datetime.utcnow(),
-        "last_edited_at": datetime.utcnow(),
-        "is_archived": False
-    })
-    audit_entry_id = result.fetchone()[0]
-    db.session.commit()
-
-    return audit_entry_id
-
-
-
-
 def update_audit_entry_with_user_reference(audit_entry_id, user_id):
     update_sql = text("""
         UPDATE audit_info_entries 
@@ -217,14 +190,15 @@ def disable_not_null_constraint(table_name, column_name):
     db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} DROP NOT NULL;")
     db.session.commit()
 
+
 def enable_not_null_constraint(table_name, column_name):
     db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} SET NOT NULL;")
     db.session.commit()
 
+
 def adjust_sequence(sequence_name, value=1):
     db.session.execute(f"SELECT setval('{sequence_name}', {value}, true);")
     db.session.commit()
-
 
 
 def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow()):
@@ -255,8 +229,6 @@ def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admi
     enable_not_null_constraint("audit_info_entries", "last_edited_by")
 
     return prime_audit_entry_id, prime_user_id
-
-
 
 
 
