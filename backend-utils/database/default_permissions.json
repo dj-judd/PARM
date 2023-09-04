@@ -1,0 +1,152 @@
+{
+    "default_permissions": {
+      "assets": [
+        {
+          "permission": "can_create_assets",
+          "name": "Can Create Assets",
+          "description": "Allow creating new assets."
+        },
+        {
+          "permission": "can_update_assets",
+          "name": "Can Update Assets",
+          "description": "Allow modifying existing assets."
+        },
+        {
+          "permission": "can_archive_assets",
+          "name": "Can Archive Assets",
+          "description": "Allow marking an asset as archived."
+        }
+        /*{
+          "permission": "can_read_assets",
+          "name": "Can Read Assets",
+          "description": "Allow viewing of all assets."
+        }*/
+      ],
+      "users": [
+        {
+          "permission": "can_create_users",
+          "name": "Can Create Users",
+          "description": "Allow creating new users."
+        },
+        {
+          "permission": "can_update_users",
+          "name": "Can Update Users",
+          "description": "Allow modifying user details."
+        },
+        {
+          "permission": "can_archive_users",
+          "name": "Can Archive Users",
+          "description": "Allow marking a user profile as archived."
+        },
+        {
+          "permission": "can_assign_role_to_users",
+          "name": "Can Assign Role to Users",
+          "description": "Allow assigning roles to users."
+        }
+        /*{
+          "permission": "can_read_users",
+          "name": "Can Read Users",
+          "description": "Allow viewing of all users."
+        }*/
+      ],
+      "roles": [
+        {
+          "permission": "can_create_roles",
+          "name": "Can Create Roles",
+          "description": "Allow creating new roles."
+        },
+        {
+          "permission": "can_update_roles",
+          "name": "Can Update Roles",
+          "description": "Allow modifying existing roles."
+        },
+        {
+          "permission": "can_archive_roles",
+          "name": "Can Archive Roles",
+          "description": "Allow marking a role as archived."
+        },
+        {
+          "permission": "can_assign_permission_to_roles",
+          "name": "Can Assign Permission to Roles",
+          "description": "Allow assigning permissions to roles."
+        }
+        /*{
+          "permission": "can_read_roles",
+          "name": "Can Read Roles",
+          "description": "Allow viewing of all roles."
+        }*/
+      ],
+      "areas": [
+        {
+          "permission": "can_create_areas",
+          "name": "Can Create Areas",
+          "description": "Allow creating new areas."
+        },
+        {
+          "permission": "can_update_areas",
+          "name": "Can Update Areas",
+          "description": "Allow modifying existing areas."
+        },
+        {
+          "permission": "can_archive_areas",
+          "name": "Can Archive Areas",
+          "description": "Allow marking an area as archived."
+        }
+        /*{
+          "permission": "can_read_areas",
+          "name": "Can Read Areas",
+          "description": "Allow viewing of all areas."
+        }*/
+      ],
+      "reservations": [
+        {
+          "permission": "can_create_reservations",
+          "name": "Can Create Reservations",
+          "description": "Allow creating new reservations."
+        },
+        {
+          "permission": "can_update_reservations",
+          "name": "Can Update Reservations",
+          "description": "Allow modifying existing reservations."
+        },
+        {
+          "permission": "can_archive_reservations",
+          "name": "Can Archive Reservations",
+          "description": "Allow marking a reservation as archived."
+        }
+        /*{
+          "permission": "can_read_reservations",
+          "name": "Can Read Reservations",
+          "description": "Allow viewing of all reservations."
+        }*/
+      ],
+      "comments": [
+        {
+          "permission": "can_create_comments",
+          "name": "Can Create Comments",
+          "description": "Allow posting new comments."
+        },
+        {
+          "permission": "can_update_own_comments",
+          "name": "Can Update Own Comments",
+          "description": "Allow modifying comments made by the user."
+        },
+        {
+          "permission": "can_archive_comments",
+          "name": "Can Archive Comments",
+          "description": "Allow marking a comment as archived."
+        },
+        {
+          "permission": "can_view_archived_comments",
+          "name": "Can View Archived Comments",
+          "description": "Allow viewing of comments marked as archived."
+        }
+        /*{
+          "permission": "can_read_comments",
+          "name": "Can Read Comments",
+          "description": "Allow viewing of all comments."
+        }*/
+      ]
+    }
+  }
+  

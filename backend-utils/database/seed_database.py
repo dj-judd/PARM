@@ -10,6 +10,7 @@ from sqlalchemy import text
 
 import crud
 import model
+import permissions
 import server
 
 # Modify sys.path to include the parent directory
@@ -259,7 +260,7 @@ def populate_timezones():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 235{RESET}\n{e}")
+        utils.errorMessage(e)
 
 
 def populate_countries():
@@ -287,7 +288,7 @@ def populate_countries():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 263{RESET}\n{e}")
+        utils.errorMessage(e)
 
 
 def populate_states():
@@ -314,7 +315,7 @@ def populate_states():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 290{RESET}\n{e}")
+        utils.errorMessage(e)
 
 
 def populate_currencies():
@@ -343,7 +344,7 @@ def populate_currencies():
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 316{RESET}\n{e}")
+        utils.errorMessage(e)
 
 
 def generate_deployment_fingerprint(input_data=None):
@@ -378,16 +379,124 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
-        utils.errorMessage(__file__, "Line 361", e)
+        utils.errorMessage(e)
+
+
+
+def populate_permissions(created_by_user_id=0, audit_info_entry_id=0):
+    try:
+        # Open and load the default_permissions.json file
+        with open('data/default_permissions.json', 'r') as file:
+            permissions_data = json.load(file)["default_permissions"]
+        
+        model.db.session.begin()
+        
+        # permission_id_mapping dictionary to store permission name and its corresponding ID
+        permission_id_mapping = {}
+
+        # Iterate over each category of permissions in the JSON
+        for category, permissions in permissions_data.items():
+            for permission in permissions:
+                # Create the permission using crud.py's function
+                new_permission, _ = crud.create_permission(
+                    name=permission["permission"],
+                    description=permission["description"],
+                    created_by_user_id=created_by_user_id,
+                    audit_details=f"Seeding permission: {permission['permission']}",
+                    commit=False
+                )
+
+                # Override the audit_info_entry_id to 0 to denote it was created during seeding
+                new_permission.audit_info_entry_id = audit_info_entry_id
+                
+                # Adding the created permission's ID to the permission_id_mapping
+                permission_id_mapping[permission["permission"]] = new_permission.id
+                model.db.session.add(new_permission)
+
+        # Commit all the permissions at once
+        model.db.session.commit()
+        utils.successMessage()
+
+        # Return the permission_id_mapping to be used elsewhere if needed
+        return permission_id_mapping
+        
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
+        return {}
+
+
+def populate_user_roles_and_permissions():
+    try:
+        model.db.session.begin()
+
+        owner_role = crud.create_role(
+            name="Account Owner",
+            description="SuperUser. Has full access to the account and all permissions.",
+            created_by_user_id=0,
+            audit_details=db_init_message,
+            commit=False
+        )
+
+        admin_role = crud.create_role(
+            name="Admin",
+            description="Has full access to change anything.",
+            created_by_user_id=0,
+            audit_details=db_init_message,
+            commit=False
+        )
+
+        asset_admin_role = crud.create_role(
+            name="Asset Admin",
+            description="Has full access to asset management.",
+            created_by_user_id=0,
+            audit_details=db_init_message,
+            commit=False
+        )
+
+        user_role = crud.create_role(
+            name="User",
+            description="Can create and fulfill bookings, manage reservations and check-outs, and more.",workspace_
+            created_by_user_id=0,
+            audit_details=db_init_message,
+            commit=False
+        )
+
+        
+        # Assign permissions to roles
+        admin_role_permissions = [
+            # Add permissions
+        ]
+        for permission in admin_role_permissions:
+            crud.create_role_permission(
+                role_id=admin_role.id,
+                permission_id=permission.id,
+                created_by_user_id=0,
+                audit_details=db_init_message,
+                commit=False
+            )
+
+        
+        model.db.session.commit()
+        utils.successMessage()
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
+
+
+
+
+
 
 
 def populate_users():
 
     try:
 
-        settings = crud.read_global_settings()
-        print(f"\n\n{settings}\n\n")
-        global_settings_default_currency_id = settings.get('default_currency_id')
+        global_settings_default_currency_id = crud.read_global_settings().get('default_currency_id')
 
         # Initial creation of prime user and audit entry to create all other data and users
         prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow(), global_settings_default_currency_id)
@@ -395,7 +504,7 @@ def populate_users():
         crud.create_user(password_hash="password",
                         first_name="John",
                         last_name="Doe",
-                        currency_id=1,
+                        currency_id=global_settings_default_currency_id,
                         time_format_is_24h=False,
                         created_by_user_id=prime_user_id,
                         audit_details=db_init_message,
@@ -419,6 +528,42 @@ def populate_users():
                                   is_primary=True,
                                   associated_user_id=1                                  
                                   )
+        
+
+
+
+        crud.create_user(password_hash="password",
+                first_name="Jane",
+                last_name="Doe",
+                currency_id=global_settings_default_currency_id,
+                time_format_is_24h=False,
+                created_by_user_id=prime_user_id,
+                audit_details=db_init_message,
+                commit=True)
+        
+        crud.create_phone_number(model.PhoneType.PERSONAL.value,
+                                 True,
+                                 1,
+                                 234,
+                                 5678910,
+                                 0,
+                                 "Testing phone number Creation",
+                                 None,
+                                 is_primary=True,
+                                 associated_user_id=2)
+        
+        crud.create_email_address(model.EmailType.PERSONAL.value,
+                                  "john.doe@gmail.com",
+                                  0,
+                                  audit_details="Testing email Creation",
+                                  is_primary=True,
+                                  associated_user_id=2                                  
+                                  )
+        
+
+
+
+        populate_user_roles_and_permissions()
         
 
 

@@ -2,7 +2,15 @@
 
 # from sqlalchemy import func
 # from model import db, User, Asset, Rating, connect_to_db
+import os
+import sys
 import model
+
+
+# Modify sys.path to include the parent directory
+sys.path.append('..')
+import utils
+from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
 def create_timezone_entry(id, identifier, abbreviation, utc_offset_minutes, has_dst, commit=True):
     
@@ -387,7 +395,7 @@ def create_email_address(email_type: model.EmailType, #Type hint
 
 
 
-# Read
+# READ
 
 
 
@@ -408,23 +416,55 @@ def read_global_settings():
 
 
 
-# def create_movie(title, overview, release_date, poster_path):
-#     """Create and return a new movie."""
 
-#     movie = model.Movie(
-#                   title=title,
-#                   overview=overview,
-#                   release_date=release_date,
-#                   poster_path=poster_path,
-#                   )
 
-#     return movie
 
-# def create_rating(user, movie, score):
+# UPDATE
+
+
+
+
+
+
+def update_default_currency(default_currency_id, commit=True):
+    """Update the default currency in the global_settings table."""
+    global_settings = model.db.session.query(model.GlobalSettings).first()
     
-#     rating = model.Rating(user=user, movie=movie, score=score)
+    if global_settings:
+        # Update the default_currency_id
+        global_settings.default_currency_id = default_currency_id
+        if commit:
+            model.db.session.commit()
+            utils.successMessage()
+        
+        # Return the updated default currency ID
+        return global_settings.default_currency_id
+    else:
+        utils.errorMessage("Global settings entry not found.")
+        return None
 
-#     return rating
+
+
+
+
+
+# def update_default_currency(default_currency_id):
+#     """Update the default currency in the global_settings table."""
+#     global_settings = model.db.session.query(model.GlobalSettings).first()
+    
+#     if global_settings:
+#         # Update the default_currency_id
+#         global_settings.default_currency_id = default_currency_id
+#         model.db.session.commit()
+#         return {
+#             utils.successMessage()
+#         }
+#     else:
+#         return {
+#             utils.errorMessage("Global settings entry not found.")
+#         }
+
+
 
 if __name__ == '__main__':
     from server import app
