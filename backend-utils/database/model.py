@@ -970,22 +970,24 @@ class UiTheme(db.Model):
 
 
 
+from sqlalchemy import Boolean, Column, Integer, ForeignKey, SmallInteger
+
 class UserSettings(db.Model):
     """Settings and Defaults for the entire app."""
 
     __tablename__ = "user_settings"
 
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    currency_id = db.Column(currency_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    time_format_is_24h = db.Column(db.Boolean, nullable=False, default=True)
-    is_darkmode = db.Column(db.Boolean, nullable=False, default=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
+    id = Column(Integer, autoincrement=True, primary_key=True, nullable=False)
+    currency_id = Column(SmallInteger, nullable=False)
+    time_format_is_24h = Column(Boolean, nullable=False, default=True)
+    ui_theme_id = Column(SmallInteger, nullable=False)
+    audit_info_entry_id = Column(Integer, ForeignKey('audit_info_entries.id'))
 
     audit_info_entry = db.relationship('AuditInfoEntry', backref='user_settings')
 
-
     def __repr__(self):
         return f'<UserSettings id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
+
 
 
 

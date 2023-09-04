@@ -515,7 +515,7 @@ CREATE TABLE "users" (
   "middle_name" varchar(64),
   "last_name" varchar(64) NOT NULL,
   "nickname" varchar(64),
-  "nickname_prefered" bool,
+  "nickname_preferred" bool,
   "user_settings_id" int NOT NULL,
   "last_login" timestamp,
   "audit_info_entry_id" int NOT NULL

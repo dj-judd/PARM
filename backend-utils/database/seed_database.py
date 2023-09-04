@@ -196,8 +196,8 @@ def enable_not_null_constraint(table_name, column_name):
     db.session.commit()
 
 
-def adjust_sequence(sequence_name, value=1):
-    db.session.execute(f"SELECT setval('{sequence_name}', {value}, true);")
+def adjust_sequence(sequence_name, value=0):
+    db.session.execute(f"SELECT setval('{sequence_name}', {value}, false);")
     db.session.commit()
 
 
@@ -392,14 +392,14 @@ def populate_users():
         # Initial creation of prime user and audit entry to create all other data and users
         prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow(), global_settings_default_currency_id)
 
-        # crud.create_user(password_hash="password",
-        #                 first_name="John",
-        #                 last_name="Doe",
-        #                 currency_id=1,
-        #                 time_format_is_24=False,
-        #                 created_by_user_id=0,
-        #                 details=db_init_message,
-        #                 commit=True)
+        crud.create_user(password_hash="password",
+                        first_name="John",
+                        last_name="Doe",
+                        currency_id=1,
+                        time_format_is_24h=False,
+                        created_by_user_id=prime_user_id,
+                        audit_details=db_init_message,
+                        commit=True)
 
         # # Generate 10 Users
         # for n in range(10):
