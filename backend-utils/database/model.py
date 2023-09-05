@@ -10,6 +10,8 @@ from sqlalchemy.ext.declarative import declarative_base
 db = SQLAlchemy()
 
 
+
+# Python Enum
 class OperationType(PyEnum):  # Use the PyEnum alias here
     CREATE =    "CREATE"
     UPDATE =    "UPDATE"
@@ -24,11 +26,52 @@ operation_type_enum = ENUM(
 
 
 
+# Python Enum
+class AuditableEntityTypes(PyEnum):  # Using the PyEnum alias here
+    GLOBAL_SETTINGS =        "GLOBAL_SETTINGS"
+    UI_THEME =               "UI_THEME"
+    RESERVATION =            "RESERVATION"
+    RESERVATION_ASSET =      "RESERVATION_ASSET"
+    ASSET_TAG =              "ASSET_TAG"
+    COMMENT =                "COMMENT"
+    REACTION =               "REACTION"
+    CATEGORY =               "CATEGORY"
+    COLOR =                  "COLOR"
+    CUSTOM_PROPERTY =        "CUSTOM_PROPERTY"
+    ASSET_CUSTOM_PROPERTY =  "ASSET_CUSTOM_PROPERTY"
+    ASSET =                  "ASSET"
+    BRAND =                  "BRAND"
+    ASSET_FLAG =             "ASSET_FLAG"
+    FLAG =                   "FLAG"
+    FINANCIAL_ENTRY =        "FINANCIAL_ENTRY"
+    ASSET_LOCATION_LOG =     "ASSET_LOCATION_LOG"
+    FILE_ATTACHMENT =        "FILE_ATTACHMENT"
+    EMAIL_ADDRESS =          "EMAIL_ADDRESS"
+    PHONE_NUMBER =           "PHONE_NUMBER"
+    USER_SETTINGS =          "USER_SETTINGS"
+    USER =                   "USER"
+    USER_ROLE =              "USER_ROLE"
+    ROLE =                   "ROLE"
+    PERMISSION =             "PERMISSION"
+    ROLE_PERMISSION =        "ROLE_PERMISSION"
+    AREA =                   "AREA"
+    ADDRESS =                "ADDRESS"
+
+# PostgreSQL ENUM
+auditable_entity_types_enum = ENUM(
+    *[e.value for e in AuditableEntityTypes],  # Use the PyEnum values to define the PostgreSQL ENUM
+    name='auditable_entity_types'
+)
+
+
+
+# Python Enum
 class CurrencyIsoCode(PyEnum):
     UNITED_STATES = "USD"
     CANADA =        "CAD"
     MEXICO =        "MXN"
 
+# PostgreSQL ENUMs:
 currency_iso_code_enum = ENUM(
     *[e.value for e in CurrencyIsoCode],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='currency_iso_code'
@@ -36,11 +79,13 @@ currency_iso_code_enum = ENUM(
 
 
 
+# Python Enum
 class CountryIsoCode(PyEnum):
     UNITED_STATES = "US"
     CANADA =        "CA"
     MEXICO =        "MX"
 
+# PostgreSQL ENUMs:
 country_iso_code_enum = ENUM(
     *[e.value for e in CountryIsoCode],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='country_iso_code'
@@ -48,11 +93,13 @@ country_iso_code_enum = ENUM(
 
 
 
+# Python Enum
 class CountryName(PyEnum):
     UNITED_STATES = "United States"
     CANADA =        "Canada"
     MEXICO =        "Mexico"
 
+# PostgreSQL ENUMs:
 country_names_enum = ENUM(
     *[e.value for e in CountryName],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='country_iso_code'
@@ -61,6 +108,7 @@ country_names_enum = ENUM(
 
 
 # TODO: Look at this. Should it be split out to a separate list "approvals"?
+# Python Enum
 class ReservationStatus(PyEnum):
     PENDING =       "PENDING"
     APPROVED =      "APPROVED"
@@ -69,6 +117,7 @@ class ReservationStatus(PyEnum):
     CANCELLED =     "CANCELLED"
     DENIED =        "DENIED"
 
+# PostgreSQL ENUMs:
 reservation_status_enum = ENUM(
     *[e.value for e in ReservationStatus],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='reservation_status'
@@ -76,12 +125,14 @@ reservation_status_enum = ENUM(
 
 
 
+# Python Enum
 class ScanCodeType(PyEnum):
     BARCODE =   "BARCODE"
     QR =        "QR"
     NFC =       "NFC"
     BLUETOOTH = "BLUETOOTH"
 
+# PostgreSQL ENUMs:
 asset_code_type_enum = ENUM(
     *[e.value for e in ScanCodeType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='asset_code_type'
@@ -89,6 +140,7 @@ asset_code_type_enum = ENUM(
 
 
 
+# Python Enum
 class CustomPropertyDataType(PyEnum):
     VARCHAR =   "VARCHAR"
     INTEGER =   "INTEGER"
@@ -98,6 +150,7 @@ class CustomPropertyDataType(PyEnum):
     TIMESTAMP = "TIMESTAMP"
     DATE =      "DATE"
 
+# PostgreSQL ENUMs:
 custom_property_data_type_enum = ENUM(
     *[e.value for e in CustomPropertyDataType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='custom_property_data_type'
@@ -105,6 +158,23 @@ custom_property_data_type_enum = ENUM(
 
 
 
+# Python Enum
+class AttachableEntityTypes(PyEnum):  # Using the PyEnum alias here
+    ASSET =   "ASSET"
+    BRAND =   "BRAND"
+    USER =    "USER"
+    AREA =    "AREA"
+    FLAG =    "FLAG"
+
+# PostgreSQL ENUM
+attachable_entity_types_enum = ENUM(
+    *[e.value for e in AttachableEntityTypes],  # Use the PyEnum values to define the PostgreSQL ENUM
+    name='attachable_entity_types'
+)
+
+
+
+# Python Enum
 class FileCategory(PyEnum):
     ARCHIVE =       "ARCHIVE"
     DOCUMENT =      "DOCUMENT"
@@ -114,6 +184,7 @@ class FileCategory(PyEnum):
     VIDEO =         "VIDEO"
     AUDIO =         "AUDIO"
 
+# PostgreSQL ENUMs:
 file_category_enum = ENUM(
     *[e.value for e in FileCategory],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='file_category'
@@ -121,6 +192,7 @@ file_category_enum = ENUM(
 
 
 
+# Python Enum
 class FileType(PyEnum):
     JPEG =      "JPEG"
     PNG =       "PNG"
@@ -147,6 +219,7 @@ class FileType(PyEnum):
     AVI =       "AVI"
     MKV =       "MKV"
 
+# PostgreSQL ENUMs:
 file_type_enum = ENUM(
     *[e.value for e in FileType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='file_type'
@@ -154,6 +227,7 @@ file_type_enum = ENUM(
 
 
 
+# Python Enum
 class AttachmentType(PyEnum):
     PROFILE_PIC =       "PROFILE_PIC"
     HERO_PIC =          "HERO_PIC"
@@ -166,6 +240,7 @@ class AttachmentType(PyEnum):
     ICON =              "ICON"
     MISCELLANEOUS =     "MISCELLANEOUS"
 
+# PostgreSQL ENUMs:
 attachment_type_enum = ENUM(
     *[e.value for e in AttachmentType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='attachment_type'
@@ -173,6 +248,7 @@ attachment_type_enum = ENUM(
 
 
 
+# Python Enum
 class ImageSize(PyEnum):
 
     ORIGINAL =  "0-original"
@@ -183,6 +259,7 @@ class ImageSize(PyEnum):
     XLARGE =    "5-xlarge"
     MONGO =     "6-mongo"
 
+# PostgreSQL ENUMs:
 image_size_enum = ENUM(
     *[e.value for e in ImageSize],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='image_size'
@@ -190,14 +267,42 @@ image_size_enum = ENUM(
 
 
 
+# Python Enum
+class EmailOwnerTypes(PyEnum):  # Using the PyEnum alias here
+    USER =    "USER"
+    COMPANY = "COMPANY"
+
+# PostgreSQL ENUM
+email_owner_types_enum = ENUM(
+    *[e.value for e in EmailOwnerTypes],  # Use the PyEnum values to define the PostgreSQL ENUM
+    name='email_owner_types'
+)
+
+
+
+# Python Enum
 class EmailType(PyEnum):
     PERSONAL =  "PERSONAL"
     WORK =      "WORK"
     BUSINESS =  "BUSINESS"
 
+# PostgreSQL ENUMs:
 email_type_enum = ENUM(
     *[e.value for e in EmailType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='email_type'
+)
+
+
+
+# Python Enum
+class PhoneOwnerTypes(PyEnum):  # Using the PyEnum alias here
+    USER =    "USER"
+    COMPANY = "COMPANY"
+
+# PostgreSQL ENUM
+phone_owner_types_enum = ENUM(
+    *[e.value for e in PhoneOwnerTypes],  # Use the PyEnum values to define the PostgreSQL ENUM
+    name='phone_owner_types'
 )
 
 
@@ -207,6 +312,7 @@ class PhoneType(PyEnum):
     WORK =      "WORK"
     OTHER =     "OTHER"
 
+# PostgreSQL ENUMs:
 phone_type_enum = ENUM(
     *[e.value for e in PhoneType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='phone_type'
@@ -214,11 +320,13 @@ phone_type_enum = ENUM(
 
 
 
+# Python Enum
 class AddressType(PyEnum):
     RESIDENTIAL =   "RESIDENTIAL"
     BUSINESS =      "BUSINESS"
     OTHER =         "OTHER"
 
+# PostgreSQL ENUMs:
 address_type_enum = ENUM(
     *[e.value for e in AddressType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='address_type'
@@ -226,12 +334,14 @@ address_type_enum = ENUM(
 
 
 
+# Python Enum
 class RelatedEntityType(PyEnum):
     COMMENT =       "COMMENT"
     ASSET =         "ASSET"
     RESERVATION =   "RESERVATION"
     AREA =          "AREA"
 
+# PostgreSQL ENUMs:
 related_entity_type_enum = ENUM(
     *[e.value for e in RelatedEntityType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='related_entity_type'
@@ -239,11 +349,29 @@ related_entity_type_enum = ENUM(
 
 
 
+# Python Enum
+class CommentableEntityTypes(PyEnum):  # Using the PyEnum alias here
+    COMMENT =       "COMMENT"
+    ASSET =         "ASSET"
+    RESERVATION =   "RESERVATION"
+    AREA =          "AREA"
+    FLAG =          "FLAG"
+
+# PostgreSQL ENUM
+commentable_entity_types_enum = ENUM(
+    *[e.value for e in CommentableEntityTypes],  # Use the PyEnum values to define the PostgreSQL ENUM
+    name='commentable_entity_types'
+)
+
+
+
+# Python Enum
 class ReactionType(PyEnum):
     THUMBS_UP = "👍️"
     MAD =       "🤬"
     DEAD =      "💀"
 
+# PostgreSQL ENUMs:
 reaction_type_enum = ENUM(
     *[e.value for e in ReactionType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='reaction_type'
@@ -251,6 +379,7 @@ reaction_type_enum = ENUM(
 
 
 
+# Python Enum
 class TimezoneIdentifier(PyEnum):
     UTC =           "Universal Coordinated Time"
     NEW_YORK =      "America/New_York"
@@ -262,12 +391,15 @@ class TimezoneIdentifier(PyEnum):
     JUNEAU =        "America/Juneau"
     HONOLULU =      "America/Honolulu"
 
+# PostgreSQL ENUMs:
 timezone_identifier_enum = ENUM(
     *[e.value for e in TimezoneIdentifier],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='timezone_identifier'
 )
 
 
+
+# Python Enum
 class TimezoneAbbreviation(PyEnum):
     UTC =       "UTC"
     EASTERN =   "EST"
@@ -277,11 +409,15 @@ class TimezoneAbbreviation(PyEnum):
     ALASKAN =   "AKST"
     HAWIIAN =   "HST"
 
+# PostgreSQL ENUMs:
 timezone_abbreviation_enum = ENUM(
     *[e.value for e in TimezoneAbbreviation],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='timezone_abbreviation'
 )
 
+
+
+# Python Enum
 class StateCodes(PyEnum):
     AL = "AL"
     AK = "AK"
@@ -334,6 +470,7 @@ class StateCodes(PyEnum):
     WI = "WI"
     WY = "WY"
 
+# PostgreSQL ENUMs:
 state_codes_enum = ENUM(
     *[e.value for e in StateCodes],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='state_codes'
@@ -341,6 +478,7 @@ state_codes_enum = ENUM(
 
 
 
+# Python Enum
 class StateNames(PyEnum):
     ALABAMA =           "Alabama"
     ALASKA =            "Alaska"
@@ -393,6 +531,7 @@ class StateNames(PyEnum):
     WISCONSIN =         "Wisconsin"
     WYOMING =           "Wyoming"
 
+# PostgreSQL ENUMs:
 state_names_enum = ENUM(
     *[e.value for e in StateNames],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='state_names'
