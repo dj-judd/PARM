@@ -480,7 +480,7 @@ CREATE TABLE "email_addresses" (
   "is_shared" bool,
   "audit_info_entry_id" int NOT NULL
 );
-
+ 
 CREATE TABLE "user_phone_numbers" (
   "user_id" int NOT NULL,
   "phone_number_id" int NOT NULL,
