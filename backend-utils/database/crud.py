@@ -393,6 +393,104 @@ def create_email_address(email_type: model.EmailType, #Type hint
 
 
 
+def create_user_role(user_id, role_id, created_by_user_id, audit_details=None, commit=True):
+    """Create and return a new user role entry."""
+    
+    role_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
+    
+
+
+
+    new_user_role = model.UserRole(
+        user_id=user_id,
+        role_id=role_id,
+        audit_info_entry_id=role_audit_entry.id
+    )
+    
+    model.db.session.add(role_audit_entry)
+    model.db.session.add(new_user_role)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return new_user_role, role_audit_entry
+
+
+
+
+def create_role(name, description, created_by_user_id, audit_details=None, commit=True):
+    """Create and return a new role entry."""
+
+    role_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
+    
+    new_role = model.Role(
+        name=name,
+        description=description,
+        audit_info_entry_id=role_audit_entry.id
+    )
+    
+    model.db.session.add(role_audit_entry)
+    model.db.session.add(new_role)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return new_role, role_audit_entry
+
+
+
+
+def create_role_permission(role_id, permission_id, created_by_user_id, audit_details=None, commit=True):
+    """Create and return a new role permission entry."""
+
+    role_permission_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
+    
+    new_role_permission = model.RolePermission(
+        role_id=role_id,
+        permission_id=permission_id,
+        audit_info_entry_id=role_permission_audit_entry.id
+    )
+    
+    model.db.session.add(role_permission_audit_entry)
+    model.db.session.add(new_role_permission)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return new_role_permission, role_permission_audit_entry
+
+
+
+
+def create_permission(name, description, created_by_user_id, audit_details=None, commit=True):
+    """Create and return a new permission entry."""
+
+    permission_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
+    
+    new_permission = model.Permission(
+        name=name,
+        description=description,
+        audit_info_entry_id=permission_audit_entry.id
+    )
+    
+    model.db.session.add(permission_audit_entry)
+    model.db.session.add(new_permission)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return new_permission, permission_audit_entry
+
+
+
+
+
+
+
 
 
 # READ

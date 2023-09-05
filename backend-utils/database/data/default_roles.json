@@ -1,0 +1,132 @@
+{
+    "default_roles": [
+        {
+            "name": "Account Owner",
+            "description": "Superuser with full access to the entire deployment and all permissions.",
+            "permissions": [
+                "can_create_assets",
+                "can_update_assets",
+                "can_archive_assets",
+                "can_create_users",
+                "can_update_users",
+                "can_archive_users",
+                "can_assign_role_to_users",
+                "can_create_roles",
+                "can_update_roles",
+                "can_archive_roles",
+                "can_assign_permission_to_roles",
+                "can_create_areas",
+                "can_update_areas",
+                "can_archive_areas",
+                "can_create_reservations",
+                "can_update_reservations",
+                "can_archive_reservations",
+                "can_create_comments",
+                "can_update_own_comments",
+                "can_archive_comments",
+                "can_view_archived_comments",
+                "can_flag_issues",
+                "can_clear_flags"
+            ]
+        },
+        {
+            "name": "System Admin",
+            "description": "Administrative access with the ability to modify system-wide settings and all entities.",
+            "permissions": [
+                "can_create_assets",
+                "can_update_assets",
+                "can_archive_assets",
+                "can_create_users",
+                "can_update_users",
+                "can_archive_users",
+                "can_assign_role_to_users",
+                "can_create_roles",
+                "can_update_roles",
+                "can_archive_roles",
+                "can_assign_permission_to_roles",
+                "can_create_areas",
+                "can_update_areas",
+                "can_archive_areas",
+                "can_create_reservations",
+                "can_update_reservations",
+                "can_archive_reservations",
+                "can_create_comments",
+                "can_update_own_comments",
+                "can_archive_comments",
+                "can_view_archived_comments"
+            ]
+        },
+        {
+            "name": "Asset Admin",
+            "description": "Exclusive control over assets, including creation, editing, and archiving.",
+            "permissions": [
+                "can_create_assets",
+                "can_update_assets",
+                "can_archive_assets"
+            ]
+        },
+        {
+            "name": "Reservation Admin",
+            "description": "Exclusive control over reservations, including creation, editing, and archiving.",
+            "permissions": [
+                "can_create_reservations",
+                "can_update_reservations",
+                "can_archive_reservations"
+            ]
+        },
+        {
+            "name": "Area Admin",
+            "description": "Exclusive control over areas, including creation, editing, and archiving.",
+            "permissions": [
+                "can_create_areas",
+                "can_update_areas",
+                "can_archive_areas"
+            ]
+        },
+        {
+            "name": "Comments Moderator",
+            "description": "Control over comments, allowing for editing and archiving without modifying other entities.",
+            "permissions": [
+                "can_create_comments",
+                "can_update_own_comments",
+                "can_archive_comments",
+                "can_view_archived_comments"
+            ]
+        },
+        {
+            "name": "Reservation Member",
+            "description": "Limited access to reservations, allowing creation, editing, and archiving of own reservations.",
+            "permissions": [
+                "can_create_reservations",
+                "can_update_reservations"
+            ]
+        },
+        {
+            "name": "Comment Contributor",
+            "description": "Can create, edit, and archive own comments only.",
+            "permissions": [
+                "can_create_comments",
+                "can_update_own_comments"
+            ]
+        },
+        {
+            "name": "Maintenance Admin",
+            "description": "Can clear maintenance-related flags.",
+            "permissions": [
+                "can_clear_flags"
+            ]
+        },
+        {
+            "name": "Flagger",
+            "description": "Can flag issues but not clear them.",
+            "permissions": [
+                "can_flag_issues"
+            ]
+        },
+        {
+            "name": "Guest",
+            "description": "Can read everything but has no permissions to create, edit, or archive.",
+            "permissions": []
+        }
+    ]
+}

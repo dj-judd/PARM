@@ -425,66 +425,61 @@ def populate_permissions(created_by_user_id=0, audit_info_entry_id=0):
         model.db.session.rollback()
         utils.errorMessage(e)
         return {}
+    
 
-
-def populate_user_roles_and_permissions():
+def populate_roles(created_by_user_id=0, audit_info_entry_id=0, permission_id_mapping={}):
     try:
-        model.db.session.begin()
-
-        owner_role = crud.create_role(
-            name="Account Owner",
-            description="SuperUser. Has full access to the account and all permissions.",
-            created_by_user_id=0,
-            audit_details=db_init_message,
-            commit=False
-        )
-
-        admin_role = crud.create_role(
-            name="Admin",
-            description="Has full access to change anything.",
-            created_by_user_id=0,
-            audit_details=db_init_message,
-            commit=False
-        )
-
-        asset_admin_role = crud.create_role(
-            name="Asset Admin",
-            description="Has full access to asset management.",
-            created_by_user_id=0,
-            audit_details=db_init_message,
-            commit=False
-        )
-
-        user_role = crud.create_role(
-            name="User",
-            description="Can create and fulfill bookings, manage reservations and check-outs, and more.",workspace_
-            created_by_user_id=0,
-            audit_details=db_init_message,
-            commit=False
-        )
-
+        # Open and load the default_roles.json file
+        with open('data/default_roles.json', 'r') as file:
+            roles_data = json.load(file)["default_roles"]
         
-        # Assign permissions to roles
-        admin_role_permissions = [
-            # Add permissions
-        ]
-        for permission in admin_role_permissions:
-            crud.create_role_permission(
-                role_id=admin_role.id,
-                permission_id=permission.id,
-                created_by_user_id=0,
-                audit_details=db_init_message,
+        model.db.session.begin()
+        
+        # role_id_mapping dictionary to store role name and its corresponding ID
+        role_id_mapping = {}
+
+        # Iterate over each role in the JSON
+        for role in roles_data:
+            # Create the role using crud.py's function
+            new_role, _ = crud.create_role(
+                name=role["name"],
+                description=role["description"],
+                created_by_user_id=created_by_user_id,
+                audit_details=f"Seeding role: {role['name']}",
                 commit=False
             )
 
-        
+
+            # Assigning permissions to the role
+            for permission_code in role["permissions"]:
+                permission_id = permission_id_mapping.get(permission_code)
+                if permission_id:
+                    crud.create_role_permission(
+                        role_id=new_role.id,
+                        permission_id=permission_id,
+                        created_by_user_id=created_by_user_id,
+                        audit_details=f"Assigning permission {permission_code} to role {role['name']}",
+                        commit=False
+                    )
+
+
+            # Override the audit_info_entry_id to 0 to denote it was created during seeding
+            new_role.audit_info_entry_id = audit_info_entry_id
+            
+            # Adding the created role's ID to the role_id_mapping
+            role_id_mapping[role["name"]] = new_role.id
+            model.db.session.add(new_role)
+
+        # Commit all the roles and role-permissions at once
         model.db.session.commit()
         utils.successMessage()
 
+        return role_id_mapping
+        
     except Exception as e:
-        # If any error occurs, rollback the changes
         model.db.session.rollback()
         utils.errorMessage(e)
+        return {}
 
 
 
@@ -500,6 +495,8 @@ def populate_users():
 
         # Initial creation of prime user and audit entry to create all other data and users
         prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow(), global_settings_default_currency_id)
+
+
 
         crud.create_user(password_hash="password",
                         first_name="John",
@@ -519,14 +516,16 @@ def populate_users():
                                  "Testing phone number Creation",
                                  None,
                                  is_primary=True,
-                                 associated_user_id=1)
+                                 associated_user_id=1,
+                                 commit=True)
         
         crud.create_email_address(model.EmailType.PERSONAL.value,
                                   "john.doe@gmail.com",
                                   0,
                                   audit_details="Testing email Creation",
                                   is_primary=True,
-                                  associated_user_id=1                                  
+                                  associated_user_id=1,
+                                  commit=True
                                   )
         
 
@@ -550,21 +549,19 @@ def populate_users():
                                  "Testing phone number Creation",
                                  None,
                                  is_primary=True,
-                                 associated_user_id=2)
+                                 associated_user_id=2,
+                                 commit=True)
         
         crud.create_email_address(model.EmailType.PERSONAL.value,
                                   "john.doe@gmail.com",
                                   0,
                                   audit_details="Testing email Creation",
                                   is_primary=True,
-                                  associated_user_id=2                                  
+                                  associated_user_id=2,
+                                  commit=True                                  
                                   )
         
 
-
-
-        populate_user_roles_and_permissions()
-        
 
 
         # # Generate 10 Users
@@ -605,6 +602,9 @@ def populate_users():
         #         # If any error occurs, rollback the changes
         #         model.db.session.rollback()
         #         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
+        model.db.session.commit()
+
+        
         utils.successMessage()
 
     except Exception as e:
@@ -630,6 +630,9 @@ def main():
     populate_global_settings()
 
     populate_users()
+
+    permission_mapping = populate_permissions()
+    populate_roles(permission_id_mapping=permission_mapping)
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):

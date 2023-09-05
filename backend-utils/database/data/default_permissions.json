@@ -16,11 +16,6 @@
           "name": "Can Archive Assets",
           "description": "Allow marking an asset as archived."
         }
-        /*{
-          "permission": "can_read_assets",
-          "name": "Can Read Assets",
-          "description": "Allow viewing of all assets."
-        }*/
       ],
       "users": [
         {
@@ -43,11 +38,6 @@
           "name": "Can Assign Role to Users",
           "description": "Allow assigning roles to users."
         }
-        /*{
-          "permission": "can_read_users",
-          "name": "Can Read Users",
-          "description": "Allow viewing of all users."
-        }*/
       ],
       "roles": [
         {
@@ -70,11 +60,6 @@
           "name": "Can Assign Permission to Roles",
           "description": "Allow assigning permissions to roles."
         }
-        /*{
-          "permission": "can_read_roles",
-          "name": "Can Read Roles",
-          "description": "Allow viewing of all roles."
-        }*/
       ],
       "areas": [
         {
@@ -92,11 +77,6 @@
           "name": "Can Archive Areas",
           "description": "Allow marking an area as archived."
         }
-        /*{
-          "permission": "can_read_areas",
-          "name": "Can Read Areas",
-          "description": "Allow viewing of all areas."
-        }*/
       ],
       "reservations": [
         {
@@ -114,11 +94,6 @@
           "name": "Can Archive Reservations",
           "description": "Allow marking a reservation as archived."
         }
-        /*{
-          "permission": "can_read_reservations",
-          "name": "Can Read Reservations",
-          "description": "Allow viewing of all reservations."
-        }*/
       ],
       "comments": [
         {
@@ -141,12 +116,19 @@
           "name": "Can View Archived Comments",
           "description": "Allow viewing of comments marked as archived."
         }
-        /*{
-          "permission": "can_read_comments",
-          "name": "Can Read Comments",
-          "description": "Allow viewing of all comments."
-        }*/
-      ]
+      ],
+      "flags": [
+        {
+            "permission": "can_flag_issues",
+            "name": "Can Flag Issues",
+            "description": "Allow flagging any issues."
+        },
+        {
+            "permission": "can_clear_flags",
+            "name": "Can Clear Flags",
+            "description": "Allow clearing flagged issues."
+        }
+       ]
     }
   }
   
