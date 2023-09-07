@@ -7,8 +7,10 @@ from enum import Enum as PyEnum
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.ext.declarative import declarative_base
 
+# Create a Flask-SQLAlchemy instance to handle database interactions
 db = SQLAlchemy()
-
+# # Get the underlying engine from the Flask-SQLAlchemy instance for direct manipulation
+# engine = db.engine
 
 
 # Python Enum
@@ -557,18 +559,20 @@ class GlobalSettings(db.Model):
     
 
 
-class AuditInfoEntry(db.Model):
+class AuditEntry(db.Model):
     """Audit info for changes."""
 
-    __tablename__ = "audit_info_entries"
+    __tablename__ = "audit_entries"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True)
     operation_type = db.Column(operation_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    auditable_entity_type = db.Column(auditable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    related_entity_id = db.Column(db.Integer, nullable=False)
     details = db.Column(db.String, nullable=True)
-    created_by = db.Column(db.Integer, ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
     last_edited_by = db.Column(db.Integer, ForeignKey('users.id'), nullable=True)
-    last_edited_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_edited_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=True)
     is_archived = db.Column(db.Boolean, nullable=False, default=False)
     archived_at = db.Column(db.DateTime, nullable=True)
 
@@ -577,7 +581,7 @@ class AuditInfoEntry(db.Model):
 
 
     def __repr__(self):
-        return f"<AuditInfoEntry id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
+        return f"<AuditEntry id={self.id} operation_type={self.operation_type} created_at={self.created_at}>"
 
 
 

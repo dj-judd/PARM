@@ -119,15 +119,17 @@ def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True
 
 
 
-def create_audit_entry(operation_type, created_by_user_id, details=None, commit=True):
+def create_audit_entry(operation_type, auditable_entity_type, related_entity_id, created_by_user_id, details=None, commit=True):
     """Create and return a new audit info entry."""
 
     # Check to make sure that the value is in the Enum list
     if operation_type not in [e.value for e in model.OperationType]:
         raise ValueError(f"Invalid operation type: {operation_type}")
 
-    audit_entry = model.AuditInfoEntry(
+    audit_entry = model.AuditEntry(
         operation_type = operation_type,
+        auditable_entity_type = auditable_entity_type,
+        related_entity_id = related_entity_id,
         details = details,
         created_by = created_by_user_id,
         last_edited_by = created_by_user_id
@@ -395,7 +397,7 @@ def create_email_address(email_type: model.EmailType, #Type hint
 
 def create_user_role(user_id, role_id, created_by_user_id, audit_details=None, commit=True):
     """Create and return a new user role entry."""
-    
+
     role_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
     
 

@@ -18,6 +18,14 @@ sys.path.append('..')
 import utils
 from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
+# # Turn off SQL output before seeding
+# model.engine.echo = False
+
+# Your seeding logic here...
+
+# # Optionally turn on SQL output after seeding
+# model.engine.echo = True
+
 
 version_number = 0.2
 program_name = "PARM Database Seeder 3,000,000"
