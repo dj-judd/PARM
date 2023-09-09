@@ -367,7 +367,7 @@ def generate_deployment_fingerprint(input_data=None):
 
 
 
-def populate_global_settings(deployment_fingerprint=None, default_currency_id=1):
+def populate_global_settings(deployment_fingerprint=None, default_currency_id=1, created_by_user_id=0, audit_details=db_init_message):
     try:
         model.db.session.begin()
 
@@ -376,7 +376,9 @@ def populate_global_settings(deployment_fingerprint=None, default_currency_id=1)
         else:
             deployment_fingerprint = generate_deployment_fingerprint(deployment_fingerprint)
 
-        crud.create_global_settings(deployment_fingerprint=deployment_fingerprint,
+        crud.create_global_settings(created_by_user_id,
+                                    audit_details,
+                                    deployment_fingerprint=deployment_fingerprint,
                                     default_currency_id=default_currency_id,
                                     commit=False)
 
@@ -414,8 +416,6 @@ def populate_permissions(created_by_user_id=0, audit_info_entry_id=0):
                     commit=False
                 )
 
-                # Override the audit_info_entry_id to 0 to denote it was created during seeding
-                new_permission.audit_info_entry_id = audit_info_entry_id
                 
                 # Adding the created permission's ID to the permission_id_mapping
                 permission_id_mapping[permission["permission"]] = new_permission.id
@@ -470,9 +470,6 @@ def populate_roles(created_by_user_id=0, audit_info_entry_id=0, permission_id_ma
                         commit=False
                     )
 
-
-            # Override the audit_info_entry_id to 0 to denote it was created during seeding
-            new_role.audit_info_entry_id = audit_info_entry_id
             
             # Adding the created role's ID to the role_id_mapping
             role_id_mapping[role["name"]] = new_role.id

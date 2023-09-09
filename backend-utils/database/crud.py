@@ -144,7 +144,7 @@ def create_audit_entry(operation_type, auditable_entity_type, related_entity_id,
 
     return audit_entry
 
-def create_global_settings(deployment_fingerprint, default_currency_id, commit=True):
+def create_global_settings(deployment_fingerprint, default_currency_id, created_by_user_id, audit_details, commit=True):
     """Create and return a global settings entry."""
 
     currency = model.db.session.query(model.Currency).filter_by(id=default_currency_id).first()
@@ -161,11 +161,27 @@ def create_global_settings(deployment_fingerprint, default_currency_id, commit=T
     # Always add the global_setting to the session
     model.db.session.add(global_setting)
 
+
+    # Flush to get the, now created, id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
+        related_entity_id=global_setting.id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
-    return global_setting
+    return global_setting, audit_entry
 
 
 
@@ -278,21 +294,29 @@ def create_phone_number(phone_type: model.PhoneType, #Type hint,
                         is_verified=False,
                         is_primary=False,
                         associated_user_id=None,
-                        associated_brand_id=None,
+                        associated_manufacturer_id=None,
                         commit=True):
     """
     Create and return a phone number. If `user_id` is provided, it's associated with a user, 
-    if `brand_id` is provided, it's associated with a brand.
+    if `manufacturer_id` is provided, it's associated with a manufacturer.
     """
 
-    if associated_user_id is None and associated_brand_id is None:
-        raise ValueError("Either user_id or brand_id should be provided")
-    elif associated_user_id is not None and associated_brand_id is not None:
-        raise ValueError("Both user_id and brand_id cannot be provided simultaneously")
+    if associated_user_id is None and associated_manufacturer_id is None:
+        raise ValueError("Either user_id or manufacturer_id should be provided")
+    elif associated_user_id is not None and associated_manufacturer_id is not None:
+        raise ValueError("Both user_id and manufacturer_id cannot be provided simultaneously")
 
     phone_number_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
                                                   created_by_user_id,
                                                   audit_details)
+    
+
+    phone_number_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
+                                                  model.CLASS_TO_ENUM_MAP['PhoneNumber'],  # or however you get the enum value
+                                                  new_phone_number.id,  # or however you get the related entity id
+                                                  created_by_user_id,
+                                                  audit_details)
+
 
     new_phone_number = model.PhoneNumber(
         phone_type=phone_type,
@@ -320,13 +344,13 @@ def create_phone_number(phone_type: model.PhoneType, #Type hint,
         )
         model.db.session.add(user_phone_number_association)
 
-    elif associated_brand_id:
-        brand_phone_number_association = model.BrandPhoneNumber(
-            brand_id=associated_brand_id,
+    elif associated_manufacturer_id:
+        manufacturer_phone_number_association = model.BrandPhoneNumber(
+            manufacturer_id=associated_manufacturer_id,
             phone_number_id=new_phone_number.id,
             audit_info_entry_id=phone_number_audit_entry.id # Reusing the same audit entry for association
         )
-        model.db.session.add(brand_phone_number_association)
+        model.db.session.add(manufacturer_phone_number_association)
 
     # Commit only if commit=True
     if commit:
@@ -344,7 +368,7 @@ def create_email_address(email_type: model.EmailType, #Type hint
                          is_shared=None, 
                          audit_details=None,
                          associated_user_id=None,
-                         associated_brand_id=None, 
+                         associated_manufacturer_id=None, 
                          commit=True):
     """Create and return a new email address."""
     
@@ -377,13 +401,13 @@ def create_email_address(email_type: model.EmailType, #Type hint
         )
         model.db.session.add(user_email_association)
     
-    elif associated_brand_id:
-        brand_email_association = model.BrandEmailAddress(
-            brand_id=associated_brand_id,
+    elif associated_manufacturer_id:
+        manufacturer_email_association = model.BrandEmailAddress(
+            manufacturer_id=associated_manufacturer_id,
             email_address_id=new_email_address.id,
             audit_info_entry_id=email_audit_entry.id  # Reusing the same audit entry for association
         )
-        model.db.session.add(brand_email_association)
+        model.db.session.add(manufacturer_email_association)
 
     # Commit only if commit=True
     if commit:
