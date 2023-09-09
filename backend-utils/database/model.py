@@ -6,6 +6,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy import Boolean, Column, Integer, ForeignKey, SmallInteger
 
 # Create a Flask-SQLAlchemy instance to handle database interactions
 db = SQLAlchemy()
@@ -42,9 +43,10 @@ class AuditableEntityTypes(PyEnum):  # Using the PyEnum alias here
     CUSTOM_PROPERTY =        "CUSTOM_PROPERTY"
     ASSET_CUSTOM_PROPERTY =  "ASSET_CUSTOM_PROPERTY"
     ASSET =                  "ASSET"
-    BRAND =                  "BRAND"
+    MANUFACTURER =           "MANUFACTURER"
     ASSET_FLAG =             "ASSET_FLAG"
     FLAG =                   "FLAG"
+    CURRENCY =               "CURRENCY"
     FINANCIAL_ENTRY =        "FINANCIAL_ENTRY"
     ASSET_LOCATION_LOG =     "ASSET_LOCATION_LOG"
     FILE_ATTACHMENT =        "FILE_ATTACHMENT"
@@ -163,7 +165,7 @@ custom_property_data_type_enum = ENUM(
 # Python Enum
 class AttachableEntityTypes(PyEnum):  # Using the PyEnum alias here
     ASSET =   "ASSET"
-    BRAND =   "BRAND"
+    MANUFACTURER =   "MANUFACTURER"
     USER =    "USER"
     AREA =    "AREA"
     FLAG =    "FLAG"
@@ -230,27 +232,6 @@ file_type_enum = ENUM(
 
 
 # Python Enum
-class AttachmentType(PyEnum):
-    PROFILE_PIC =       "PROFILE_PIC"
-    HERO_PIC =          "HERO_PIC"
-    THUMBNAIL =         "THUMBNAIL"
-    DOCUMENT_COVER =    "DOCUMENT_COVER"
-    AVATAR =            "AVATAR"
-    BANNER =            "BANNER"
-    LOGO =              "LOGO"
-    BACKGROUND =        "BACKGROUND"
-    ICON =              "ICON"
-    MISCELLANEOUS =     "MISCELLANEOUS"
-
-# PostgreSQL ENUMs:
-attachment_type_enum = ENUM(
-    *[e.value for e in AttachmentType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
-    name='attachment_type'
-)
-
-
-
-# Python Enum
 class ImageSize(PyEnum):
 
     ORIGINAL =  "0-original"
@@ -267,6 +248,18 @@ image_size_enum = ENUM(
     name='image_size'
 )
 
+
+# Python Enum
+class EmailableEntityTypes(PyEnum):
+    USER =         "USER"
+    MANUFACTURER = "MANUFACTURER"
+    AREA =         "AREA"
+
+# PostgreSQL ENUMs:
+emailable_entity_types_enum = ENUM(
+    *[e.value for e in EmailableEntityTypes],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='emailable_entity_types'
+)
 
 
 # Python Enum
@@ -294,6 +287,18 @@ email_type_enum = ENUM(
     name='email_type'
 )
 
+
+# Python Enum
+class PhoneableEntityTypes(PyEnum):
+    USER =         "USER"
+    MANUFACTURER = "MANUFACTURER"
+    AREA =         "AREA"
+
+# PostgreSQL ENUMs:
+phoneable_entity_types_enum = ENUM(
+    *[e.value for e in PhoneableEntityTypes],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    name='phonable_entity_types'
+)
 
 
 # Python Enum
@@ -540,9 +545,56 @@ state_names_enum = ENUM(
 )
 
 
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Get Audit Type Base Class for auditable model classes
+class AuditableBase(db.Model):
+    __abstract__ = True  # Make sure SQLAlchemy knows this is an abstract base class
 
 
-class GlobalSettings(db.Model):
+    CLASS_TO_ENUM_MAP = {
+        # Auditable Classes
+        'GlobalSettings': 'GLOBAL_SETTINGS',
+        'UiTheme': 'UI_THEME',
+        'Reservation': 'RESERVATION',
+        'ReservationAsset': 'RESERVATION_ASSET',
+        'AssetTag': 'ASSET_TAG',
+        'Comment': 'COMMENT',
+        'Reaction': 'REACTION',
+        'Category': 'CATEGORY',
+        'Color': 'COLOR',
+        'CustomProperty': 'CUSTOM_PROPERTY',
+        'AssetCustomProperty': 'ASSET_CUSTOM_PROPERTY',
+        'Asset': 'ASSET',
+        'Manufacturer': 'MANUFACTURER',
+        'AssetFlag': 'ASSET_FLAG',
+        'Flag': 'FLAG',
+        'Currency': 'CURRENCY',
+        'FinancialEntry': 'FINANCIAL_ENTRY',
+        'AssetLocationLog': 'ASSET_LOCATION_LOG',
+        'FileAttachment': 'FILE_ATTACHMENT',
+        'EmailAddress': 'EMAIL_ADDRESS',
+        'PhoneNumber': 'PHONE_NUMBER',
+        'UserSettings': 'USER_SETTINGS',
+        'User': 'USER',
+        'UserRole': 'USER_ROLE',
+        'Role': 'ROLE',
+        'Permission': 'PERMISSION',
+        'RolePermission': 'ROLE_PERMISSION',
+        'Area': 'AREA',
+        'Address': 'ADDRESS'
+        }
+
+
+    def get_audit_type(self):
+        class_name = self.__class__.__name__
+        return self.CLASS_TO_ENUM_MAP.get(class_name, class_name.upper())
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+class GlobalSettings(AuditableBase):
     """Settings and Defaults for the entire app."""
 
     __tablename__ = "global_settings"
@@ -585,7 +637,7 @@ class AuditEntry(db.Model):
 
 
 
-class Reservation(db.Model):
+class Reservation(AuditableBase):
     """Reservations."""
 
     __tablename__ = "reservations"
@@ -598,34 +650,29 @@ class Reservation(db.Model):
     checkout_time = db.Column(db.DateTime, nullable=True)
     checkin_time = db.Column(db.DateTime, nullable=True)
     is_indefinite = db.Column(db.Boolean, nullable=False, default=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='reservations')
 
     def __repr__(self):
         return f"<Reservation id={self.id} reserved_for={self.reserved_for} area_id={self.area_id}>"
 
 
 
-class ReservationAsset(db.Model):
+class ReservationAsset(AuditableBase):
     """Reservation Assets."""
 
     __tablename__ = "reservation_assets"
 
     reservation_id = db.Column(db.Integer, db.ForeignKey('reservations.id'), primary_key=True, nullable=False)
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
     reservation = db.relationship('Reservation', backref='asset_relationships')
     asset = db.relationship('Asset', backref='reservation_relationships')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='reservation_asset')
-
+    
     def __repr__(self):
         return f"<ReservationAsset reservation_id={self.reservation_id} asset_id={self.asset_id} audit_info_entry_id={self.audit_info_entry_id}>"
 
 
 
-class AssetTag(db.Model):
+class AssetTag(AuditableBase):
     """Some form of scannable tag that is attached to an asset."""
 
     __tablename__ = "asset_tags"
@@ -634,12 +681,8 @@ class AssetTag(db.Model):
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
     code_type = db.Column(asset_code_type_enum, nullable=False)
     data = db.Column(db.String(3072), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-
 
     asset = db.relationship('Asset', backref='tags')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_tags')
     
     def __repr__(self):
         return f'<AssetTag id={self.id} asset_id={self.asset_id} code_type={self.code_type}>'
@@ -653,22 +696,19 @@ class Comment(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=True)
-    related_entity_type = db.Column(related_entity_type_enum, nullable=False)
-    related_entity_id = db.Column(db.Integer, nullable=False)
+    commentable_entity_type = db.Column(commentable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    entity_id = db.Column(db.Integer, nullable=False)
     comment_data = db.Column(db.String(2048), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     # Relationship to represent the parent comment.
     parent = db.relationship('Comment', remote_side=[id], backref=db.backref('nested_comments', lazy='dynamic'))
 
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_comments')
     
     def __repr__(self):
         return f'<Comment id={self.id} related_entity_type={self.related_entity_type} related_entity_id={self.related_entity_id}>'
 
 
-class Reaction(db.Model):
+class Reaction(AuditableBase):
     """Join Table. Something like an emoji reaction to a comment."""
 
     __tablename__ = "reactions"
@@ -677,11 +717,9 @@ class Reaction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=False)
     reaction_type = db.Column(reaction_type_enum, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
     user = db.relationship('User', backref='reactions')
     comment = db.relationship('Comment', backref='reactions')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='reactions')
 
     def __repr__(self):
         return f"<Reaction user_id={self.user_id} comment_id={self.comment_id} audit_info_entry_id={self.audit_info_entry_id}>"
@@ -689,7 +727,7 @@ class Reaction(db.Model):
 
 
 
-class Category(db.Model):
+class Category(AuditableBase):
     """A category for assets."""
 
     __tablename__ = "categories"
@@ -697,19 +735,16 @@ class Category(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     parent_category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), nullable=True)
     name = db.Column(db.String(64), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
 
     # Relationship to represent the parent category.
     parent = db.relationship('Category', remote_side=[id], backref=db.backref('subcategories', lazy='dynamic'))
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_categories')
     
     def __repr__(self):
         return f'<Category id={self.id} name={self.name}>'
 
 
 
-class Color(db.Model):
+class Color(AuditableBase):
     """Custom property / field to be added ale-cart to assets."""
 
     __tablename__ = "colors"
@@ -717,16 +752,13 @@ class Color(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
     hex_value = db.Column(db.String(7), nullable=False, unique=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='colors')
-    
+        
     def __repr__(self):
         return f'<Color id={self.id} name={self.name} hex_value={self.hex_value}>'
 
 
 
-class CustomProperty(db.Model):
+class CustomProperty(AuditableBase):
     """Custom property / field to be added ale-cart to assets."""
 
     __tablename__ = "custom_properties"
@@ -736,16 +768,13 @@ class CustomProperty(db.Model):
     prefix = db.Column(db.String(8), nullable=True)
     suffix = db.Column(db.String(8), nullable=True)
     data_type = db.Column(custom_property_data_type_enum, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='custom_properties')
-    
+        
     def __repr__(self):
         return f'<CustomProperty id={self.id} name={self.name} data_type={self.data_type}>'
 
 
 
-class AssetCustomProperty(db.Model):
+class AssetCustomProperty(AuditableBase):
     """Join Table. Custom properties associated with assets."""
 
     __tablename__ = "asset_custom_properties"
@@ -753,26 +782,23 @@ class AssetCustomProperty(db.Model):
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
     custom_property_id = db.Column(db.Integer, db.ForeignKey('custom_properties.id'), primary_key=True, nullable=False)
     data_value = db.Column(db.String(512), nullable=False)  # The actually value being stored as a String. Will have to work out on the app side what to do with it.
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
     asset = db.relationship('Asset', backref='associated_custom_properties')
     custom_property = db.relationship('CustomProperty', backref='associated_assets')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_custom_properties')
-
+    
     def __repr__(self):
         return f"<AssetCustomProperty asset_id={self.asset_id} custom_property_id={self.custom_property_id} audit_info_entry_id={self.audit_info_entry_id}>"
 
 
 
 
-class Asset(db.Model):
+class Asset(AuditableBase):
     """An asset."""
 
     __tablename__ = "assets"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    # manufacturer = db.Column(db.String, nullable=False)
-    brand_id = db.Column(db.SmallInteger, db.ForeignKey('brands.id'), nullable= False)
+    manufacturer_id = db.Column(db.SmallInteger, db.ForeignKey('manufacturers.id'), nullable= False)
     model_number = db.Column(db.String(64), nullable=True)
     model_name = db.Column(db.String(64), nullable=False)
     category_id = db.Column(db.SmallInteger, db.ForeignKey('categories.id'), nullable= True)
@@ -791,116 +817,53 @@ class Asset(db.Model):
     online_item_page = db.Column(db.String, nullable=True)
     warranty_starts = db.Column(db.DateTime, nullable=True)
     warranty_ends = db.Column(db.DateTime, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    brand = db.relationship('Brand', backref= 'assets')
+    
+    manufacturer = db.relationship('Manufacturer', backref= 'assets')
     category = db.relationship('Category', backref= 'assets')
     area = db.relationship('Area', backref= 'assets')
     purchase_price_entry = db.relationship('FinancialEntry', foreign_keys=[purchase_price_id], backref='purchase_price_assets')
     msrp_entry = db.relationship('FinancialEntry', foreign_keys=[msrp_id], backref='msrp_assets')
     residual_value_entry = db.relationship('FinancialEntry', foreign_keys=[residual_value_id], backref='residual_value_assets')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'assets')
-
+    
     def __repr__(self):
         return f'<Asset id={self.id} model_name={self.model_name}>'
-    
 
 
 
-class BrandFileAttachment(db.Model):
-    """Join Table. File attachments associated with brands. Ex: photos, location releases"""
-
-    __tablename__ = "brand_file_attachments"
-
-    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
-    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    brand = db.relationship('Brand', backref='file_attachments')
-    attachment = db.relationship('FileAttachment', backref='associated_brands')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_attachment')
-
-    def __repr__(self):
-        return f"<BrandFileAttachment brand_id={self.brand_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-
-class BrandEmailAddress(db.Model):
-    """Join Table. Email addresses associated with brands."""
-
-    __tablename__ = "brand_email_addresses"
-
-    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
-    email_address_id = db.Column(db.Integer, db.ForeignKey('email_addresses.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    brand = db.relationship('Brand', backref='associated_email_addresses')
-    email_address = db.relationship('EmailAddress', backref='associated_brands')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_email_addresses')
-
-    def __repr__(self):
-        return f"<BrandEmailAddress brand_id={self.brand_id} email_address_id={self.email_address_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-class BrandPhoneNumber(db.Model):
-    """Join Table. Phone numbers associated with brands."""
-
-    __tablename__ = "brand_phone_numbers"
-
-    brand_id = db.Column(db.Integer, db.ForeignKey('brands.id'), primary_key=True, nullable=False)
-    phone_number_id = db.Column(db.Integer, db.ForeignKey('phone_numbers.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    brand = db.relationship('Brand', backref='associated_phone_numbers')
-    phone_number = db.relationship('PhoneNumber', backref='associated_brands')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='brand_phone_numbers')
-
-    def __repr__(self):
-        return f"<BrandPhoneNumber brand_id={self.brand_id} phone_number_id={self.phone_number_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-
-class Brand(db.Model):
+class Manufacturer(AuditableBase):
     """Brand/Manufacturer/Company"""
 
-    __tablename__ = "brands"
+    __tablename__ = "manufacturers"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
     website = db.Column(db.String(512), nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
 
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='brands')
-    
+    area = db.relationship('Area', backref= 'manufacturers')
+        
     def __repr__(self):
-        return f'<Brand id={self.id} name={self.name}>'
+        return f'<Company id={self.id} name={self.name}>'
 
 
 
-class AssetFlag(db.Model):
+class AssetFlag(AuditableBase):
     """Join Table. The connection between a flag and an asset."""
 
     __tablename__ = "asset_flags"
 
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
     flag_id = db.Column(db.Integer, db.ForeignKey('flags.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
     asset = db.relationship('Asset', backref='associated_flags')
     flag = db.relationship('Flag', backref='associated_assets')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_flags')
-
+    
     def __repr__(self):
         return f"<AssetFlag asset_id={self.asset_id} flag_id={self.flag_id} audit_info_entry_id={self.audit_info_entry_id}>"
 
 
 
 
-class Flag(db.Model):
+class Flag(AuditableBase):
     """Flags to callout something about an entity."""
 
     __tablename__ = "flags"
@@ -910,17 +873,15 @@ class Flag(db.Model):
     description = db.Column(db.String(512), nullable=False)
     color_id = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
     makes_unavailable = db.Column(db.Boolean, nullable=False, default=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    color = db.relationship('Color', backref='flags')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='flags')
     
+    color = db.relationship('Color', backref='flags')
+        
     def __repr__(self):
         return f'<Flag id={self.id} name={self.name} makes_unavailable={self.makes_unavailable}>'
 
 
 
-class Currency(db.Model):
+class Currency(AuditableBase):
     """A currency model representing different global currencies."""
 
     
@@ -937,7 +898,7 @@ class Currency(db.Model):
     
 
 
-class FinancialEntry(db.Model):
+class FinancialEntry(AuditableBase):
     """Track financial entries across the database."""
 
     __tablename__ = "financial_entries"
@@ -945,17 +906,15 @@ class FinancialEntry(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     currency_id = db.Column(db.Integer, db.ForeignKey('currencies.id'), nullable=False)
     amount = db.Column(db.Numeric( 10, 2 ), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
     currency = db.relationship('Currency', backref='financial_entries')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='financial_entries')
-
+    
     def __repr__(self):
         return f'<FinancialEntry id={self.id} currency_id={self.currency_id} amount={self.amount} audit_id={self.audit_info_entry_id}>'
 
 
 
-class AssetLocationLog(db.Model):
+class AssetLocationLog(AuditableBase):
     """Logs to keep track everytime an asset is scanned."""
 
     __tablename__ = "asset_location_logs"
@@ -964,116 +923,62 @@ class AssetLocationLog(db.Model):
     asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), nullable=False)
     latitude = db.Column(db.Numeric(9, 6), nullable=True)
     longitude = db.Column(db.Numeric(9, 6), nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    asset = db.relationship('Asset', backref='location_logs')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_location_logs')
     
+    asset = db.relationship('Asset', backref='location_logs')
+      
     def __repr__(self):
         return f'<AssetLocationLog id={self.id} asset_id={self.asset_id} lat={self.latitude} long={self.longitude}>'
 
 
 
-class AssetFileAttachment(db.Model):
-    """File attachments associated with assets. Ex: photos, location releases"""
-
-    __tablename__ = "asset_file_attachments"
-
-    asset_id = db.Column(db.Integer, db.ForeignKey('assets.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
-    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    asset = db.relationship('Asset', backref='file_attachments')
-    attachment = db.relationship('FileAttachment', backref='associated_assets')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='asset_attachment')
-
-    def __repr__(self):
-        return f"<AssetFileAttachment asset_id={self.asset_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-class FileAttachment(db.Model):
+class FileAttachment(AuditableBase):
     """Files. Can be images, video, or documents."""
 
     __tablename__ = "file_attachments"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    attachable_entity_type = db.Column(attachable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    entity_id = db.Column(db.Integer, nullable=False)
+
     file_path = db.Column(db.String, unique=True, nullable=False)  # Path or URL to the actual file
     file_type = db.Column(file_type_enum, nullable=False)
     file_category = db.Column(file_category_enum, nullable=False)
     image_size = db.Column(image_size_enum, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='file_attachments')
-
+    
     def __repr__(self):
-        return f"<FileAttachment id={self.id} file_type={self.file_type} audit_info_entry_id={self.audit_info_entry_id}>"
+        return f"<FileAttachment id={self.id} file_type={self.file_type} attachable_entity_type={self.attachable_entity_type} related_entity_id={self.related_entity_id}>"
 
 
 
-class UserEmailAddress(db.Model):
-    """Join Table. Email addresses associated with users."""
-
-    __tablename__ = "user_email_addresses"
-
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
-    email_address_id = db.Column(db.Integer, db.ForeignKey('email_addresses.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    user = db.relationship('User', backref='associated_email_addresses')
-    email_address = db.relationship('EmailAddress', backref='associated_users')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_email_addresses')
-
-    def __repr__(self):
-        return f"<UserEmailAddress user_id={self.user_id} email_address_id={self.email_address_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-class EmailAddress(db.Model):
+class EmailAddress(AuditableBase):
     """Email Address."""
 
     __tablename__ = "email_addresses"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    emailable_entity_type = db.Column(emailable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    entity_id = db.Column(db.Integer, nullable=False)
+
     email_type = db.Column(email_type_enum, nullable=False)
     email_address = db.Column(db.String(64), unique=True, nullable=False)
     is_verified = db.Column(db.Boolean, nullable=False, default=False)
     is_primary = db.Column(db.Boolean, nullable=True)
     is_shared = db.Column(db.Boolean, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='email_addresses')
-
+    
     def __repr__(self):
         return f"<EmailAddress id={self.id} email_type={self.email_type} email_address={self.email_address}>"
 
 
 
-class UserPhoneNumber(db.Model):
-    """Join Table. Phone numbers associated with users."""
-
-    __tablename__ = "user_phone_numbers"
-
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
-    phone_number_id = db.Column(db.Integer, db.ForeignKey('phone_numbers.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    user = db.relationship('User', backref='associated_phone_numbers')
-    phone_number = db.relationship('PhoneNumber', backref='associated_users')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_phone_numbers')
-
-    def __repr__(self):
-        return f"<UserPhoneNumber user_id={self.user_id} phone_number_id={self.phone_number_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-class PhoneNumber(db.Model):
+class PhoneNumber(AuditableBase):
     """Phone Number."""
 
     __tablename__ = "phone_numbers"
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
+    phoneable_entity_type = db.Column(phoneable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
+    entity_id = db.Column(db.Integer, nullable=False)
+
     phone_type = db.Column(phone_type_enum, nullable=False)
     is_cell = db.Column(db.Boolean, nullable=False)
     country_code = db.Column(db.SmallInteger, nullable=False)
@@ -1082,16 +987,13 @@ class PhoneNumber(db.Model):
     extension = db.Column(db.SmallInteger, nullable=True)
     is_verified = db.Column(db.Boolean, nullable=False, default=False)
     is_primary = db.Column(db.Boolean, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='phone_numbers')
-
+    
     def __repr__(self):
         return f"<PhoneNumber id={self.id} phone_type={self.phone_type} phone_number={self.phone_number}>"
 
 
 
-class UiTheme(db.Model):
+class UiTheme(AuditableBase):
     """Name and values for UI Themes."""
 
     __tablename__ = "ui_themes"
@@ -1101,21 +1003,17 @@ class UiTheme(db.Model):
     description = db.Column(db.String(512), nullable=False)
     primary_color = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
     secondary_color = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
+    
     # Specifying the foreign_keys for each relationship
     primary_color_relation = db.relationship('Color', foreign_keys=[primary_color], backref='ui_theme_primary')
     secondary_color_relation = db.relationship('Color', foreign_keys=[secondary_color], backref='ui_theme_secondary')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='ui_themes')
-
+    
     def __repr__(self):
         return f'<UiTheme id={self.id} name={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
 
 
 
-from sqlalchemy import Boolean, Column, Integer, ForeignKey, SmallInteger
-
-class UserSettings(db.Model):
+class UserSettings(AuditableBase):
     """Settings and Defaults for the entire app."""
 
     __tablename__ = "user_settings"
@@ -1124,17 +1022,14 @@ class UserSettings(db.Model):
     currency_id = Column(SmallInteger, nullable=False)
     time_format_is_24h = Column(Boolean, nullable=False, default=True)
     ui_theme_id = Column(SmallInteger, nullable=False)
-    audit_info_entry_id = Column(Integer, ForeignKey('audit_info_entries.id'))
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_settings')
-
+    
     def __repr__(self):
         return f'<UserSettings id={self.id} currency_settings={self.currency_id} time_format_is_24h={self.time_format_is_24h}>'
 
 
 
 
-class User(db.Model):
+class User(AuditableBase):
     """A user."""
 
     __tablename__ = "users"
@@ -1148,37 +1043,15 @@ class User(db.Model):
     nickname_preferred = db.Column(db.Boolean, nullable=True)
     user_settings_id = db.Column(db.Integer, db.ForeignKey('user_settings.id'))
     last_login = db.Column(db.DateTime, nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'))
-
+    
     user_settings = db.relationship('UserSettings', backref='user')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='created_by_user', foreign_keys=[audit_info_entry_id])
-
 
     def __repr__(self):
         return f'<User id={self.id} first_name={self.first_name} last_name={self.last_name}>'
 
 
 
-class UserFileAttachment(db.Model):
-    """File attachments associated with users. Ex: photos, location releases"""
-
-    __tablename__ = "user_file_attachments"
-
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
-    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    user = db.relationship('User', backref='file_attachments')
-    attachment = db.relationship('FileAttachment', backref='associated_users')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='user_attachment')
-
-    def __repr__(self):
-        return f"<UserFileAttachment user_id={self.user_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
-
-
-
-class UserRole(db.Model):
+class UserRole(AuditableBase):
     """Track when a user was assigned a specific role."""
 
     
@@ -1186,18 +1059,16 @@ class UserRole(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), primary_key=True, nullable=False)
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-    
+        
     user = db.relationship('User', backref='role_relationships')
     role = db.relationship('Role', backref='user_relationships')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'user_roles')
-
+    
     def __repr__(self):
         return f'<UserRole user_id={self.user_id} role_id={self.role_id} audit_info_entry_id={self.audit_info_entry_id}>'
 
 
 
-class Role(db.Model):
+class Role(AuditableBase):
     """Role for user assignment."""
 
     __tablename__ = "roles"
@@ -1205,17 +1076,13 @@ class Role(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
     description = db.Column(db.String(512), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='roles')
-    
+        
     def __repr__(self):
         return f'<Role id={self.id} name={self.name}>'
 
 
 
-class Permission(db.Model):
+class Permission(AuditableBase):
     """Permissions for app access and control."""
 
     __tablename__ = "permissions"
@@ -1223,17 +1090,13 @@ class Permission(db.Model):
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
     description = db.Column(db.String(512), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='permissions')
-    
+        
     def __repr__(self):
         return f'<Permission id={self.id} name={self.name}>'
 
 
 
-class RolePermission(db.Model):
+class RolePermission(AuditableBase):
     """Track when a role was granted a particular permission."""
 
     
@@ -1241,18 +1104,16 @@ class RolePermission(db.Model):
 
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'), primary_key=True, nullable=False)
     permission_id = db.Column(db.Integer, db.ForeignKey('permissions.id'), primary_key=True, nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-    
+        
     role = db.relationship('Role', backref='permission_relationships')
     permission = db.relationship('Permission', backref='role_relationships')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref= 'role_permissions')
-
+    
     def __repr__(self):
         return f'<RolePermission role_id={self.role_id} permission_id={self.permission_id} audit_info_entry_id={self.audit_info_entry_id}>'
 
 
 
-class Area(db.Model):
+class Area(AuditableBase):
     """Areas."""
 
     __tablename__ = "areas"
@@ -1263,38 +1124,18 @@ class Area(db.Model):
     latitude = db.Column(db.Numeric(9, 6), nullable=True)
     longitude = db.Column(db.Numeric(9, 6), nullable=True)
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
     # Relationship to represent the parent area.
     parent = db.relationship('Area', remote_side=[id], backref=db.backref('nested_areas', lazy='dynamic'))
 
     address = db.relationship('Address', backref='addresses')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='associated_areas')
-    
+        
     def __repr__(self):
         return f'<Area id={self.id} name={self.name}>'
     
 
-class AreaFileAttachment(db.Model):
-    """File attachments associated with areas. Ex: photos, location releases"""
 
-    __tablename__ = "area_file_attachments"
-
-    area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), primary_key=True, nullable=False)
-    attachment_id = db.Column(db.Integer, db.ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
-    attachment_type = db.Column(attachment_type_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
-    area = db.relationship('Area', backref='file_attachments')
-    attachment = db.relationship('FileAttachment', backref='associated_areas')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='area_attachment')
-
-    def __repr__(self):
-        return f"<AreaFileAttachment area_id={self.area_id} attachment_id={self.attachment_id} audit_info_entry_id={self.audit_info_entry_id}>"
-    
-
-
-class Address(db.Model):
+class Address(AuditableBase):
     """A street address."""
     
     __tablename__ = "addresses"
@@ -1307,13 +1148,11 @@ class Address(db.Model):
     state_id = db.Column(db.Integer, db.ForeignKey('states.id'), nullable=False)
     zip = db.Column(db.String(16), nullable=False)
     country_id = db.Column(db.Integer, db.ForeignKey('countries.id'), nullable=False)
-    audit_info_entry_id = db.Column(db.Integer, db.ForeignKey('audit_info_entries.id'), nullable=False)
-
+    
 
     state = db.relationship('State', backref='addresses')
     country = db.relationship('Country', backref='addresses')
-    audit_info_entry = db.relationship('AuditInfoEntry', backref='addresses')
-
+    
     def __repr__(self):
         return f'<Address id={self.id} name={self.name} type={self.type}>'
 
