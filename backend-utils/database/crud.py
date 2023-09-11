@@ -5,6 +5,7 @@
 import os
 import sys
 import model
+from datetime import datetime
 
 
 # Modify sys.path to include the parent directory
@@ -12,7 +13,12 @@ sys.path.append('..')
 import utils
 from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
-def create_timezone_entry(id, identifier, abbreviation, utc_offset_minutes, has_dst, commit=True):
+def create_timezone_entry(id,
+                          identifier,
+                          abbreviation,
+                          utc_offset_minutes,
+                          has_dst,
+                          commit=True):
     
     # Check to make sure that the value is in the Enum list
     if identifier not in [e.value for e in model.TimezoneIdentifier]:
@@ -41,7 +47,11 @@ def create_timezone_entry(id, identifier, abbreviation, utc_offset_minutes, has_
 
 
 
-def create_country_entry(id, code, name, intl_phone_code, commit=True):
+def create_country_entry(id,
+                         code,
+                         name,
+                         intl_phone_code,
+                         commit=True):
     
     # Check to make sure that the value is in the Enum list
     if code not in [e.value for e in model.CountryIsoCode]:
@@ -93,6 +103,7 @@ def create_state_entry(code, name, timezone_id, country_id, commit=True):
     return state_entry
 
 
+
 def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True):
     
     # Check to make sure that the value is in the Enum list
@@ -118,23 +129,36 @@ def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True
 
 
 
-
-def create_audit_entry(operation_type, auditable_entity_type, related_entity_id, created_by_user_id, details=None, commit=True):
+def create_audit_entry(operation_type,
+                       auditable_entity_type,
+                       created_by_user_id,
+                       related_entity_id=None,
+                       related_entity_hash=None,
+                       related_composite_id=None,
+                       details=None,
+                       commit=True):
     """Create and return a new audit info entry."""
 
     # Check to make sure that the value is in the Enum list
     if operation_type not in [e.value for e in model.OperationType]:
         raise ValueError(f"Invalid operation type: {operation_type}")
 
-    audit_entry = model.AuditEntry(
-        operation_type = operation_type,
-        auditable_entity_type = auditable_entity_type,
-        related_entity_id = related_entity_id,
-        details = details,
-        created_by = created_by_user_id,
-        last_edited_by = created_by_user_id
-    )
+    if related_entity_id is None and related_entity_hash is None:
+        raise ValueError("Either related_entity_id or related_entity_hash must be provided.")
 
+    time_stamp = datetime.utcnow()
+    audit_entry = model.AuditEntry(
+        operation_type=operation_type,
+        auditable_entity_type=auditable_entity_type,
+        related_entity_id=related_entity_id,
+        related_entity_hash=related_entity_hash,
+        related_composite_id=related_composite_id,  # For composite Foreign Keys
+        details=details,
+        created_by=created_by_user_id,
+        created_at=time_stamp,
+        last_edited_by=created_by_user_id,
+        last_edited_at=time_stamp
+    )
     # Always add to the session
     model.db.session.add(audit_entry)
     
@@ -144,7 +168,15 @@ def create_audit_entry(operation_type, auditable_entity_type, related_entity_id,
 
     return audit_entry
 
-def create_global_settings(deployment_fingerprint, default_currency_id, created_by_user_id, audit_details, commit=True):
+
+
+
+def create_global_settings(deployment_fingerprint,
+                           default_currency_id,
+                           audit=True,
+                           created_by_user_id=None,
+                           audit_details=None,
+                           commit=True):
     """Create and return a global settings entry."""
 
     currency = model.db.session.query(model.Currency).filter_by(id=default_currency_id).first()
@@ -153,44 +185,147 @@ def create_global_settings(deployment_fingerprint, default_currency_id, created_
     if not currency:
         raise ValueError(f"Invalid currency ID: {default_currency_id}")
 
-    global_setting = model.GlobalSettings(
+    global_settings = model.GlobalSettings(
         deployment_fingerprint=deployment_fingerprint,
         default_currency_id=default_currency_id
     )
 
-    # Always add the global_setting to the session
-    model.db.session.add(global_setting)
+    # Add the global_setting to the session
+    model.db.session.add(global_settings)
 
 
-    # Flush to get the, now created, id for this entity for the AuditEntry
-    model.db.session.flush()
+    # Adding this just to the ones that need initalized for database creation
+    if audit:
+        # Flush to get the, now created, id for this entity for the AuditEntry
+        model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
-        related_entity_id=global_setting.id,
-        created_by_user_id=created_by_user_id,
-        details=audit_details
-    )
+        audit_entry = create_audit_entry(
+            operation_type=model.OperationType.CREATE.value,
+            auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
+            related_entity_id=global_settings.id,
+            created_by_user_id=created_by_user_id,
+            details=audit_details
+        )
 
-    # Add the audit_entry to the session
-    model.db.session.add(audit_entry)
+        # Add the audit_entry to the session
+        model.db.session.add(audit_entry)
 
 
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
-    return global_setting, audit_entry
+
+    if audit:
+        return global_settings, audit_entry
+    else:
+        return global_settings
 
 
 
-def create_user_setting(created_by_user_id,
-                        details,
-                        currency_id=1,
-                        time_format_is_24h=False,
-                        ui_theme_id=1, 
-                        commit=True):
+def create_color(name,
+                 hex_value,
+                 audit=True,
+                 created_by_user_id=None,
+                 audit_details=None,
+                 commit=True):
+    """Create and return a color."""
+
+    color = model.Color(
+        name=name,
+        hex_value=hex_value,
+    )
+
+    # Always add to the session
+    model.db.session.add(color)
+
+
+    # Adding this just to the ones that need initalized for database creation
+    if audit:
+        # Flush to get id for this entity for the AuditEntry
+        model.db.session.flush()
+
+        audit_entry = create_audit_entry(
+            operation_type=model.OperationType.CREATE.value,
+            auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
+            related_entity_id=color.id,
+            created_by_user_id=created_by_user_id,
+            details=audit_details
+        )
+
+        # Add the audit_entry to the session
+        model.db.session.add(audit_entry)
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+
+    if audit:
+        return color, audit_entry
+    else:
+        return color
+
+
+
+def create_ui_theme(name,
+                    description,
+                    primary_color_id,
+                    secondary_color_id,
+                    audit=True,
+                    created_by_user_id=None,
+                    audit_details=None,
+                    commit=True):
+    """Create and return a UI Theme."""
+
+    uiTheme = model.UiTheme(
+        name=name,
+        description=description,
+        primary_color_id=primary_color_id,
+        secondary_color_id=secondary_color_id
+    )
+
+    # Always add to the session
+    model.db.session.add(uiTheme)
+
+
+    # Adding this just to the ones that need initalized for database creation
+    if audit:
+        # Flush to get id for this entity for the AuditEntry
+        model.db.session.flush()
+
+        audit_entry = create_audit_entry(
+            operation_type=model.OperationType.CREATE.value,
+            auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
+            related_entity_id=uiTheme.id,
+            created_by_user_id=created_by_user_id,
+            details=audit_details
+        )
+
+        # Add the audit_entry to the session
+        model.db.session.add(audit_entry)
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+
+    if audit:
+        return uiTheme, audit_entry
+    else:
+        return uiTheme
+
+
+
+
+def create_user_settings(currency_id,
+                         time_format_is_24h,
+                         ui_theme_id, 
+                         audit=True,
+                         created_by_user_id=None,
+                         audit_details=None,
+                         commit=True,
+                         id=None):
     """Create and return a settings for a user."""
 
     # Validate the currency_id against the database
@@ -198,27 +333,120 @@ def create_user_setting(created_by_user_id,
     if not currency_exists:
         raise ValueError(f"Invalid currency ID: {currency_id}")
     
-    user_setting_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
-                                                  created_by_user_id,
-                                                  details)
 
-    user_setting = model.UserSettings(
+    user_settings = model.UserSettings(
+        id=id,
         currency_id=currency_id,
         time_format_is_24h=time_format_is_24h,
-        ui_theme_id=ui_theme_id,
-        audit_info_entry_id=user_setting_audit_entry.id
+        ui_theme_id=ui_theme_id
     )
 
     # Always add to the session
-    model.db.session.add(user_setting_audit_entry)
-    model.db.session.add(user_setting)
+    model.db.session.add(user_settings)
+
+
+    # Adding this just to the ones that need initalized for database creation
+    if audit:
+        # Flush to get id for this entity for the AuditEntry
+        model.db.session.flush()
+
+        audit_entry = create_audit_entry(
+            operation_type=model.OperationType.CREATE.value,
+            auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserSettings'],
+            related_entity_id=user_settings.id,
+            created_by_user_id=created_by_user_id,
+            details=audit_details
+        )
+
+        # Add the audit_entry to the session
+        model.db.session.add(audit_entry)
 
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
 
-    return user_setting, user_setting_audit_entry
+    if audit:
+        return user_settings, audit_entry
+    else:
+        return user_settings
+
+
+
+def create_bootstrap_user(password_hash,
+                          first_name,
+                          last_name,
+                          currency_id,
+                          time_format_is_24h=False,
+                          ui_theme_id=1,
+                          middle_name=None,
+                          nickname=None,
+                          nickname_preferred=None,
+                          last_login=None,
+                          audit=False,
+                          created_by_user_id=None,
+                          audit_details=None,
+                          commit=True,
+                          id=None):
+    """Create and return a new bootstrap user for DB initialization."""
+
+    bootstrap_user_settings = create_user_settings(
+        id=id,
+        currency_id=currency_id,
+        time_format_is_24h=time_format_is_24h,
+        ui_theme_id=ui_theme_id,
+        audit=audit,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details,
+        commit=False
+        )
+
+    ## They already get added in the create method
+    # model.db.session.add(user_settings)
+
+    # Flush to get id for this entity for the User
+    model.db.session.flush()
+
+    bootstrap_user = model.User(
+        id=id,
+        password_hash=password_hash, 
+        first_name=first_name,
+        middle_name=middle_name,
+        last_name=last_name,
+        nickname=nickname,
+        nickname_preferred=nickname_preferred,
+        user_settings_id=bootstrap_user_settings.id,
+        last_login=last_login
+        )
+
+
+    # Add user to the session for flush
+    model.db.session.add(bootstrap_user)
+
+
+    ## BOOTSTRAP USER WILL NEVER GET AN AUDIT IN IT'S INITIALIZATION
+    # # Flush to get id for this entity for the AuditEntry
+    # model.db.session.flush()
+
+
+    # user_audit_entry = create_audit_entry(
+    #     operation_type=model.OperationType.CREATE.value,
+    #     auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
+    #     related_entity_id=user.id,
+    #     created_by_user_id=created_by_user_id,
+    #     details=audit_details
+    # )
+
+    # # Add the user_audit_entry to the session
+    # model.db.session.add(user_audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return bootstrap_user, bootstrap_user_settings
+
 
 
 def create_user(password_hash,
@@ -236,24 +464,20 @@ def create_user(password_hash,
                 commit=True):
     """Create and return a new user."""
 
-    # Creating a single audit entry for both the user and the user_setting
-    user_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
-                                          created_by_user_id,
-                                          audit_details)
-    
-    
-    user_setting = model.UserSettings(
+    user_settings, user_settings_audit_entry = create_user_settings(
         currency_id=currency_id,
         time_format_is_24h=time_format_is_24h,
         ui_theme_id=ui_theme_id,
-        audit_info_entry_id=user_audit_entry.id # Reusing the same audit entry for the user setting
-    )
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details,
+        commit=False
+        )
 
-    # Always add to the session
-    model.db.session.add(user_audit_entry)
-    model.db.session.add(user_setting)
+    ## Always add to the session
+    ## They already get added in the create method
+    # model.db.session.add(user_settings, user_settings_audit_entry)
 
-    # Flushing to generate the user_setting ID
+    # Flush to get id for this entity for the AuditEntry & User
     model.db.session.flush()
 
     user = model.User(
@@ -263,23 +487,34 @@ def create_user(password_hash,
         last_name=last_name,
         nickname=nickname,
         nickname_preferred=nickname_preferred,
-        user_settings_id=user_setting.id,
-        last_login=last_login,
-        audit_info_entry_id=user_audit_entry.id # Reusing the same audit entry for the user
+        user_settings_id=user_settings.id,
+        last_login=last_login
+        )
+
+
+    # Add user to the session for flush
+    model.db.session.add(user)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+
+    user_audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
+        related_entity_id=user.id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
     )
 
+    # Add the user_audit_entry to the session
+    model.db.session.add(user_audit_entry)
 
-    # Add the user to the session
-    model.db.session.add(user)
-
-    # Linking user setting to the user
-    user.user_settings_id = user_setting.id
 
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
-    return user, user_audit_entry, user_setting
+    return user, user_audit_entry, user_settings, user_settings_audit_entry
 
 
 
@@ -419,97 +654,154 @@ def create_email_address(email_type: model.EmailType, #Type hint
 
 
 
-def create_user_role(user_id, role_id, created_by_user_id, audit_details=None, commit=True):
+def create_user_role(user_id,
+                     role_id,
+                     created_by_user_id,
+                     audit_details=None,
+                     commit=True):
     """Create and return a new user role entry."""
 
-    role_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
-    
-
-
-
-    new_user_role = model.UserRole(
+    user_role = model.UserRole(
         user_id=user_id,
-        role_id=role_id,
-        audit_info_entry_id=role_audit_entry.id
+        role_id=role_id
     )
     
-    model.db.session.add(role_audit_entry)
-    model.db.session.add(new_user_role)
+    # Add user_role to the session for flush
+    model.db.session.add(user_role)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserRole'],
+        related_entity_id=user_role.user_id,
+        related_composite_id=user_role.role_id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
     
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
     
-    return new_user_role, role_audit_entry
+    return user_role, audit_entry
 
 
 
 
-def create_role(name, description, created_by_user_id, audit_details=None, commit=True):
+def create_role(name, description,
+                created_by_user_id,
+                audit_details=None,
+                commit=True):
     """Create and return a new role entry."""
 
-    role_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
-    
-    new_role = model.Role(
+    role = model.Role(
         name=name,
-        description=description,
-        audit_info_entry_id=role_audit_entry.id
+        description=description
     )
     
-    model.db.session.add(role_audit_entry)
-    model.db.session.add(new_role)
+    # Add role to the session for flush
+    model.db.session.add(role)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Role'],
+        related_entity_id=role.id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
     
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
     
-    return new_role, role_audit_entry
+    return role, audit_entry
 
 
 
 
-def create_role_permission(role_id, permission_id, created_by_user_id, audit_details=None, commit=True):
+def create_role_permission(role_id,
+                           permission_id,
+                           created_by_user_id,
+                           audit_details=None,
+                           commit=True):
     """Create and return a new role permission entry."""
-
-    role_permission_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
     
-    new_role_permission = model.RolePermission(
+    role_permission = model.RolePermission(
         role_id=role_id,
-        permission_id=permission_id,
-        audit_info_entry_id=role_permission_audit_entry.id
+        permission_id=permission_id
     )
     
-    model.db.session.add(role_permission_audit_entry)
-    model.db.session.add(new_role_permission)
+    # Add role_permission to the session for flush
+    model.db.session.add(role_permission)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['RolePermission'],
+        related_entity_id=role_permission.role_id,
+        related_composite_id=role_permission.permission_id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
     
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
     
-    return new_role_permission, role_permission_audit_entry
+    return role_permission, audit_entry
 
 
 
 
-def create_permission(name, description, created_by_user_id, audit_details=None, commit=True):
+
+def create_permission(name,
+                      description,
+                      created_by_user_id,
+                      audit_details=None,
+                      commit=True):
     """Create and return a new permission entry."""
-
-    permission_audit_entry = create_audit_entry(model.OperationType.CREATE.value, created_by_user_id, audit_details)
     
-    new_permission = model.Permission(
+    permission = model.Permission(
         name=name,
-        description=description,
-        audit_info_entry_id=permission_audit_entry.id
+        description=description
     )
-    
-    model.db.session.add(permission_audit_entry)
-    model.db.session.add(new_permission)
+
+    # Add permission to the session for flush
+    model.db.session.add(permission)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Permission'],
+        related_entity_id=permission.id,
+        created_by_user_id=created_by_user_id,
+        details=audit_details
+    )
+
+    # Add audit_entry to the session
+    model.db.session.add(audit_entry)
     
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
     
-    return new_permission, permission_audit_entry
+    return permission, audit_entry
 
 
 

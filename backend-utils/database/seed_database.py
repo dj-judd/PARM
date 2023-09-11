@@ -19,7 +19,7 @@ import utils
 from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
 # # Turn off SQL output before seeding
-# model.engine.echo = False
+# model.db.engine.echo = False
 
 # Your seeding logic here...
 
@@ -46,199 +46,276 @@ model.db.create_all()
 
 
 
-from model import db
+
+def populate_initial_colors():
+    try:
+
+        primary_color_01 = crud.create_color("Paper White | Default",
+                                  "#f0eae7",
+                                  audit=False,
+                                  commit=False
+                                  )
+        
+        secondary_color_01 = crud.create_color("Sky Blue | Default",
+                                  "17baeb",
+                                  audit=False,
+                                  commit=False
+                                  )
+        
+
+        primary_color_02 = crud.create_color("Dark Gray | Default",
+                                  "#0f0d12",
+                                  audit=False,
+                                  commit=False
+                                  )
+        
+        secondary_color_02 = crud.create_color("Hot Red | Default",
+                                  "#eb315d",
+                                  audit=False,
+                                  commit=False
+                                  )        
+        
+
+        model.db.session.commit()
+        utils.successMessage()
+
+        return primary_color_01, secondary_color_01, primary_color_02, secondary_color_02
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
-def insert_bootstrap_colors(audit_entry_id):
-    insert_sql = text("""
-        INSERT INTO colors 
-        (name, hex_value, audit_info_entry_id) 
-        VALUES (:name, :hex_value, :audit_info_entry_id)
-        RETURNING id
-    """)
 
-    primary_color_id = db.session.execute(insert_sql, {
-        "name": "Default Primary",
-        "hex_value": "#f0eae7", # Default primary hex value
-        "audit_info_entry_id": audit_entry_id
-    }).fetchone()[0]
+def populate_initial_ui_themes(primary_color_01_id, secondary_color_01_id, primary_color_02_id, secondary_color_02_id):
+    try:
 
-    secondary_color_id = db.session.execute(insert_sql, {
-        "name": "Default Secondary",
-        "hex_value": "#17baeb", # Default secondary hex value
-        "audit_info_entry_id": audit_entry_id
-    }).fetchone()[0]
+        light_ui_theme = crud.create_ui_theme("Light Theme",
+                                        "Clean & Cultured",
+                                        primary_color_01_id,
+                                        secondary_color_01_id,
+                                        audit=False,
+                                        commit=False
+                                        )
+        
+        dark_ui_theme = crud.create_ui_theme("Dark Theme",
+                                        "Cyberpunk Styling",
+                                        primary_color_02_id,
+                                        secondary_color_02_id,
+                                        audit=False,
+                                        commit=False
+                                        )
 
-    db.session.commit()
-    
-    return primary_color_id, secondary_color_id
+        model.db.session.commit()
+        utils.successMessage()
 
+        return light_ui_theme, dark_ui_theme
 
-def insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, audit_entry_id):
-    insert_sql = text("""
-        INSERT INTO ui_themes 
-        (name, description, primary_color, secondary_color, audit_info_entry_id) 
-        VALUES (:name, :description, :primary_color, :secondary_color, :audit_info_entry_id)
-        RETURNING id
-    """)
-    
-    result = db.session.execute(insert_sql, {
-        "name": "Default Theme",
-        "description": "The default user interface theme.",
-        "primary_color": primary_color_id,
-        "secondary_color": secondary_color_id,
-        "audit_info_entry_id": audit_entry_id
-    })
-
-    ui_theme_id = result.fetchone()[0]
-    db.session.commit()
-
-    return ui_theme_id
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
-def insert_bootstrap_audit_entry():
-    # Step 1: Set AuditEntry's user_id requirements off
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN created_by DROP NOT NULL;")
-    db.session.execute("ALTER TABLE audit_info_entries ALTER COLUMN last_edited_by DROP NOT NULL;")
-    db.session.commit()
 
-    # Step 2: Inserting the bootstrap audit entry
-    insert_sql_for_audit_entry = text("""
-        INSERT INTO audit_info_entries 
-        (id, operation_type, details, created_by, created_at, last_edited_by, last_edited_at, is_archived, archived_at)
-        VALUES (:id, :operation_type, :details, :created_by, :created_at, :last_edited_by, :last_edited_at, :is_archived, :archived_at)
-        RETURNING id
-        """)
+def populate_initial_global_settings(deployment_fingerprint=None,
+                                     default_currency_id=1
+                                     ):
+    try:
 
-    result = db.session.execute(insert_sql_for_audit_entry, {
-        "id": 0,
-        "operation_type": "CREATE",
-        "details": "Bootstrap entry",
-        "created_by": None,
-        "created_at": datetime.utcnow(),
-        "last_edited_by": None,
-        "last_edited_at": datetime.utcnow(),
-        "is_archived": False,
-        "archived_at": None
-    })
+        if deployment_fingerprint is None:
+            deployment_fingerprint = generate_deployment_fingerprint() 
+        else:
+            deployment_fingerprint = generate_deployment_fingerprint(deployment_fingerprint)
 
-    prime_audit_entry_id = result.fetchone()[0]
-    db.session.commit()
+        global_settings = crud.create_global_settings(deployment_fingerprint=deployment_fingerprint,
+                                    default_currency_id=default_currency_id,
+                                    audit=False,
+                                    commit=False)
 
-    # Adjust the sequence immediately after inserting the bootstrap audit info entry
-    adjust_sequence(sequence_name="audit_info_entries_id_seq", value=1)
+        model.db.session.commit()
+        utils.successMessage()
 
-    return prime_audit_entry_id
+        return global_settings
 
 
-def insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id):
-    # Insert user_settings
-    insert_sql_for_user_setting = """
-        INSERT INTO user_settings 
-        (id, currency_id, time_format_is_24h, ui_theme_id, audit_info_entry_id) 
-        VALUES (:id, :currency_id, :time_format_is_24h, :ui_theme_id, :audit_info_entry_id)
-        RETURNING id
-    """
-
-    result = db.session.execute(insert_sql_for_user_setting, {
-        "id": 0,  # Explicitly setting the ID to 0
-        "currency_id": default_currency_id,
-        "time_format_is_24h": True,  # Default to 24hr format
-        "ui_theme_id": ui_theme_id,
-        "audit_info_entry_id": prime_audit_entry_id
-    })
-
-    user_settings_id = result.fetchone()[0]
-    db.session.commit()
-
-    # Adjust sequence after inserting into user_settings
-    adjust_sequence(sequence_name="user_settings_id_seq", value=1)
-
-    # Insert users
-    insert_sql_for_user = text("""
-        INSERT INTO users 
-        (id, password_hash, first_name, last_name, user_settings_id, last_login, audit_info_entry_id) 
-        VALUES (:id, :password_hash, :first_name, :last_name, :user_settings_id, :last_login, :audit_info_entry_id)
-        RETURNING id
-    """)
-
-    result = db.session.execute(insert_sql_for_user, {
-        "id": 0,
-        "password_hash": password_hash,
-        "first_name": first_name,
-        "last_name": last_name,
-        "user_settings_id": user_settings_id,
-        "last_login": last_login,
-        "audit_info_entry_id": prime_audit_entry_id
-    })
-
-    prime_user_id = result.fetchone()[0]
-    db.session.commit()
-
-    # Adjust sequence after inserting the bootstrap user
-    adjust_sequence(sequence_name="users_id_seq", value=1)
-
-    return prime_user_id
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
-def update_audit_entry_with_user_reference(audit_entry_id, user_id):
-    update_sql = text("""
-        UPDATE audit_info_entries 
-        SET created_by = :user_id, last_edited_by = :user_id
-        WHERE id = :audit_entry_id
-    """)
-    
-    db.session.execute(update_sql, {
-        "audit_entry_id": audit_entry_id,
-        "user_id": user_id
-    })
-    db.session.commit()
+
+def populate_boostrap_user(password_hash,
+                           first_name,
+                           last_name,
+                           currency_id,
+                           time_format_is_24h,
+                           ui_theme_id,
+                           middle_name=None,
+                           nickname=None,
+                           nickname_preferred=None,
+                           last_login=None,
+                           ):
+    try:
+
+        bootstrap_user, bootstrap_user_settings = crud.create_bootstrap_user(id=0,
+                                                    password_hash=password_hash,
+                                                    first_name=first_name,
+                                                    last_name=last_name,
+                                                    currency_id=currency_id,
+                                                    time_format_is_24h=time_format_is_24h,
+                                                    ui_theme_id=ui_theme_id,
+                                                    middle_name=middle_name,
+                                                    nickname=nickname,
+                                                    nickname_preferred=nickname_preferred,
+                                                    last_login=last_login,
+                                                    audit=False,
+                                                    commit=False)
+
+        # Attempt to make sure the auto-incrementing sequences start back at "1".
+        adjust_sequence("user_settings_id_seq", 1, commit=False)
+        adjust_sequence("users_id_seq", 1, commit=False)
+
+        model.db.session.commit()
+        utils.successMessage()
+
+        return bootstrap_user, bootstrap_user_settings
 
 
-def disable_not_null_constraint(table_name, column_name):
-    db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} DROP NOT NULL;")
-    db.session.commit()
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
-def enable_not_null_constraint(table_name, column_name):
-    db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} SET NOT NULL;")
-    db.session.commit()
+# # Adjust sequence after inserting into user_settings
+# adjust_sequence(sequence_name="user_settings_id_seq", value=0)
 
 
-def adjust_sequence(sequence_name, value=0):
-    db.session.execute(f"SELECT setval('{sequence_name}', {value}, false);")
-    db.session.commit()
+# # Adjust sequence after inserting the bootstrap user
+# adjust_sequence(sequence_name="users_id_seq", value=0)
 
 
-def main_bootstrap(password_hash="password", first_name="Admin", last_name="Admin", last_login=datetime.utcnow(), default_currency_id=1):
-    
-    # Step 1: Disable the NOT NULL constraint on the created_by column
-    disable_not_null_constraint("audit_info_entries", "created_by")
-    
-    # Create the bootstrap audit entry with ID of 0
-    prime_audit_entry_id = insert_bootstrap_audit_entry()
-
-    # Insert bootstrap colors
-    primary_color_id, secondary_color_id = insert_bootstrap_colors(prime_audit_entry_id)
-    
-    # Insert bootstrap UI theme
-    ui_theme_id = insert_bootstrap_ui_theme(primary_color_id, secondary_color_id, prime_audit_entry_id)
-    
-    # Continue with creating the bootstrap user
-    prime_user_id = insert_complete_bootstrap_user(prime_audit_entry_id, password_hash, first_name, last_name, last_login, ui_theme_id, default_currency_id)
-    update_audit_entry_with_user_reference(prime_audit_entry_id, prime_user_id)
+# def disable_not_null_constraint(table_name, column_name):
+#     model.db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} DROP NOT NULL;")
+#     model.db.session.commit()
 
 
-    # Step 5: Re-enable the NOT NULL constraints
-    enable_not_null_constraint("users", "audit_info_entry_id")
-    enable_not_null_constraint("user_settings", "audit_info_entry_id")
-    enable_not_null_constraint("colors", "audit_info_entry_id")
-    enable_not_null_constraint("ui_themes", "audit_info_entry_id")
-    enable_not_null_constraint("audit_info_entries", "created_by")
-    enable_not_null_constraint("audit_info_entries", "last_edited_by")
-    utils.successMessage()
+# def enable_not_null_constraint(table_name, column_name):
+#     model.db.session.execute(f"ALTER TABLE {table_name} ALTER COLUMN {column_name} SET NOT NULL;")
+#     model.db.session.commit()
 
-    return prime_audit_entry_id, prime_user_id
+
+def adjust_sequence(sequence_name, value=0, commit=True):
+    model.db.session.execute(f"SELECT setval('{sequence_name}', {value}, false);")
+    if commit:
+        model.db.session.commit()
+
+
+def populate_bootstrap_audit_entries(p_color_01_id,
+                                     s_color_01_id,
+                                     p_color_02_id,
+                                     s_color_02_id,
+                                     light_ui_id,
+                                     dark_ui_id,
+                                     global_settings_fingerprint,
+                                     bootstrap_user_settings_id,
+                                     bootstrap_user_id
+                                     ):
+    try:
+        primary_color_01_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                               auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
+                                                               related_entity_id = p_color_01_id,
+                                                               details = db_init_message,
+                                                               created_by_user_id = bootstrap_user_id,
+                                                               commit = False
+                                                               )
+
+        secondary_color_01_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                                 auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
+                                                                 related_entity_id = s_color_01_id,
+                                                                 details = db_init_message,
+                                                                 created_by_user_id = bootstrap_user_id,
+                                                                 commit = False
+                                                                 )
+        
+        primary_color_02_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                               auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
+                                                               related_entity_id = p_color_02_id,
+                                                               details = db_init_message,
+                                                               created_by_user_id = bootstrap_user_id,
+                                                               commit = False
+                                                               )
+        
+        secondary_color_02_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                                 auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
+                                                                 related_entity_id = s_color_02_id,
+                                                                 details = db_init_message,
+                                                                 created_by_user_id = bootstrap_user_id,
+                                                                 commit = False
+                                                                 )
+        
+        light_theme_ui_theme_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                                   auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
+                                                                   related_entity_id = light_ui_id,
+                                                                   details = db_init_message,
+                                                                   created_by_user_id = bootstrap_user_id,
+                                                                   commit = False
+                                                                   )
+        
+        dark_theme_ui_theme_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                                  auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
+                                                                  related_entity_id = dark_ui_id,
+                                                                  details = db_init_message,
+                                                                  created_by_user_id = bootstrap_user_id,
+                                                                  commit = False
+                                                                  )
+        
+        global_settings_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                              auditable_entity_type = model.CLASS_TO_ENUM_MAP['GlobalSettings'],
+                                                              related_entity_hash = global_settings_fingerprint,
+                                                              details = db_init_message,
+                                                              created_by_user_id = bootstrap_user_id,
+                                                              commit = False
+                                                              )
+        
+        bootstrap_user_settings_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                                      auditable_entity_type = model.CLASS_TO_ENUM_MAP['UserSettings'],
+                                                                      related_entity_id = bootstrap_user_settings_id,
+                                                                      details = db_init_message,
+                                                                      created_by_user_id = bootstrap_user_id,
+                                                                      commit = False
+                                                                      )
+        
+        bootstrap_user_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
+                                                             auditable_entity_type = model.CLASS_TO_ENUM_MAP['User'],
+                                                             related_entity_id = bootstrap_user_id,
+                                                             details = db_init_message,
+                                                             created_by_user_id = bootstrap_user_id,
+                                                             commit = False
+                                                             )
+        
+        
+        model.db.session.add(primary_color_01_audit_entry)
+        model.db.session.add(secondary_color_01_audit_entry)
+        model.db.session.add(primary_color_02_audit_entry)
+        model.db.session.add(secondary_color_02_audit_entry)
+        model.db.session.add(light_theme_ui_theme_audit_entry)
+        model.db.session.add(dark_theme_ui_theme_audit_entry)
+        model.db.session.add(global_settings_audit_entry)
+        model.db.session.add(bootstrap_user_settings_audit_entry)
+        model.db.session.add(bootstrap_user_audit_entry)
+
+        model.db.session.commit()
+
+        utils.successMessage()
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
 
@@ -247,8 +324,6 @@ def populate_timezones():
         # Open and load the JSON file
         with open('data/timezones.json', 'r') as file:
             timezones = json.load(file)
-        
-        model.db.session.begin()
         
         # Iterate over each timezone in the JSON file
         for timezone in timezones:
@@ -276,8 +351,7 @@ def populate_countries():
         # Open and load the JSON file
         with open('data/countries.json', 'r') as file:
             countries = json.load(file)
-        
-        model.db.session.begin()
+
         
         # Iterate over each country in the JSON file
         for country in countries:
@@ -305,7 +379,6 @@ def populate_states():
         states_data = json.load(file)
 
     try:
-        model.db.session.begin()
         
         for state in states_data:
             state_entry = crud.create_state_entry(
@@ -331,8 +404,6 @@ def populate_currencies():
         # Open and load the JSON file
         with open('data/currencies.json', 'r') as file:
             currencies = json.load(file)
-        
-        model.db.session.begin()
         
         # Iterate over each currency in the JSON file
         for currency in currencies:
@@ -367,39 +438,11 @@ def generate_deployment_fingerprint(input_data=None):
 
 
 
-def populate_global_settings(deployment_fingerprint=None, default_currency_id=1, created_by_user_id=0, audit_details=db_init_message):
-    try:
-        model.db.session.begin()
-
-        if deployment_fingerprint is None:
-            deployment_fingerprint = generate_deployment_fingerprint() 
-        else:
-            deployment_fingerprint = generate_deployment_fingerprint(deployment_fingerprint)
-
-        crud.create_global_settings(created_by_user_id,
-                                    audit_details,
-                                    deployment_fingerprint=deployment_fingerprint,
-                                    default_currency_id=default_currency_id,
-                                    commit=False)
-
-        model.db.session.commit()
-        utils.successMessage()
-
-
-    except Exception as e:
-        # If any error occurs, rollback the changes
-        model.db.session.rollback()
-        utils.errorMessage(e)
-
-
-
-def populate_permissions(created_by_user_id=0, audit_info_entry_id=0):
+def populate_permissions(created_by_user_id=0):
     try:
         # Open and load the default_permissions.json file
         with open('data/default_permissions.json', 'r') as file:
             permissions_data = json.load(file)["default_permissions"]
-        
-        model.db.session.begin()
         
         # permission_id_mapping dictionary to store permission name and its corresponding ID
         permission_id_mapping = {}
@@ -435,13 +478,11 @@ def populate_permissions(created_by_user_id=0, audit_info_entry_id=0):
         return {}
     
 
-def populate_roles(created_by_user_id=0, audit_info_entry_id=0, permission_id_mapping={}):
+def populate_roles(created_by_user_id=0, permission_id_mapping={}):
     try:
         # Open and load the default_roles.json file
         with open('data/default_roles.json', 'r') as file:
             roles_data = json.load(file)["default_roles"]
-        
-        model.db.session.begin()
         
         # role_id_mapping dictionary to store role name and its corresponding ID
         role_id_mapping = {}
@@ -457,6 +498,8 @@ def populate_roles(created_by_user_id=0, audit_info_entry_id=0, permission_id_ma
                 commit=False
             )
 
+            # Flush to get the, now created, id for this entity
+            model.db.session.flush()
 
             # Assigning permissions to the role
             for permission_code in role["permissions"]:
@@ -496,121 +539,7 @@ def populate_users():
 
     try:
 
-        global_settings_default_currency_id = crud.read_global_settings().get('default_currency_id')
-
-        # Initial creation of prime user and audit entry to create all other data and users
-        prime_audit_entry_id, prime_user_id = main_bootstrap('fire', 'Prometheus', 'Admin', datetime.utcnow(), global_settings_default_currency_id)
-
-
-
-        crud.create_user(password_hash="password",
-                        first_name="John",
-                        last_name="Doe",
-                        currency_id=global_settings_default_currency_id,
-                        time_format_is_24h=False,
-                        created_by_user_id=prime_user_id,
-                        audit_details=db_init_message,
-                        commit=True)
-        
-        crud.create_phone_number(model.PhoneType.PERSONAL.value,
-                                 True,
-                                 1,
-                                 479,
-                                 3811605,
-                                 0,
-                                 "Testing phone number Creation",
-                                 None,
-                                 is_primary=True,
-                                 associated_user_id=1,
-                                 commit=True)
-        
-        crud.create_email_address(model.EmailType.PERSONAL.value,
-                                  "john.doe@gmail.com",
-                                  0,
-                                  audit_details="Testing email Creation",
-                                  is_primary=True,
-                                  associated_user_id=1,
-                                  commit=True
-                                  )
-        
-
-
-
-        crud.create_user(password_hash="password",
-                first_name="Jane",
-                last_name="Doe",
-                currency_id=global_settings_default_currency_id,
-                time_format_is_24h=False,
-                created_by_user_id=prime_user_id,
-                audit_details=db_init_message,
-                commit=True)
-        
-        crud.create_phone_number(model.PhoneType.PERSONAL.value,
-                                 True,
-                                 1,
-                                 234,
-                                 5678910,
-                                 0,
-                                 "Testing phone number Creation",
-                                 None,
-                                 is_primary=True,
-                                 associated_user_id=2,
-                                 commit=True)
-        
-        crud.create_email_address(model.EmailType.PERSONAL.value,
-                                  "john.doe@gmail.com",
-                                  0,
-                                  audit_details="Testing email Creation",
-                                  is_primary=True,
-                                  associated_user_id=2,
-                                  commit=True                                  
-                                  )
-        
-
-
-
-        # # Generate 10 Users
-        # for n in range(10):
-
-        #     try:
-        #         # Begin the transaction
-        #         model.db.session.begin()
-
-        #         password_hash = 'test'
-        #         first_name = 'bob'
-        #         last_name = 'theBuilder'
-
-        #         # TODO: Generate an email, phone number, and select user roles
-        #         # crud.create_email()
-        #         # crud.create_phone_number()
-
-        #         db_user, db_user_audit_entry, db_user_setting, db_user_setting_audit_entry = crud.create_user(password_hash,
-        #                                                                                           first_name,
-        #                                                                                           last_name,
-        #                                                                                           currency_id=1,
-        #                                                                                           time_format_is_24=True,  # or False, based on your needs
-        #                                                                                           created_by_user_id=prime_creator_id,
-        #                                                                                           details=db_init_message,
-        #                                                                                           commit=False)
-
-
-        #         model.db.session.add(db_user_audit_entry)
-        #         model.db.session.add(db_user_setting_audit_entry)
-        #         model.db.session.add(db_user_setting)
-        #         model.db.session.add(db_user)
-
-        #         # Commit all at once
-        #         model.db.session.commit()
-
-
-        #     except Exception as e:
-        #         # If any error occurs, rollback the changes
-        #         model.db.session.rollback()
-        #         print(f"\n{RED_BOLD}Error occurred!{RESET}\nseed_database.py\n{UNDERLINED}Line 238{RESET}\n{e}")
-        model.db.session.commit()
-
-        
-        utils.successMessage()
+        pass
 
     except Exception as e:
         # If any error occurs, rollback the changes
@@ -631,8 +560,32 @@ def main():
     populate_countries()
 
     populate_states()
+
+    primary_color_01 , secondary_color_01, primary_color_02, secondary_color_02 = populate_initial_colors()
+
+    light_theme, dark_theme = populate_initial_ui_themes(primary_color_01.id, secondary_color_01.id, primary_color_02.id, secondary_color_02.id)
+
+    global_settings = populate_initial_global_settings()
+
+    bootstrap_user, bootstrap_user_settings = populate_boostrap_user("password",
+                                                                     "Admin",
+                                                                     "Administrator",
+                                                                     global_settings.default_currency_id,
+                                                                     time_format_is_24h=False,
+                                                                     ui_theme_id=light_theme.id,
+                                                                     last_login=datetime.utcnow())
     
-    populate_global_settings()
+
+    populate_bootstrap_audit_entries(primary_color_01.id,
+                                     secondary_color_01.id,
+                                     primary_color_02.id,
+                                     secondary_color_02.id,
+                                     light_theme.id,
+                                     dark_theme.id,
+                                     global_settings.deployment_fingerprint,
+                                     bootstrap_user_settings.id,
+                                     bootstrap_user.id)
+
 
     populate_users()
 
@@ -642,6 +595,7 @@ def main():
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
 
+    # return
 
 
 if __name__ == "__main__":
