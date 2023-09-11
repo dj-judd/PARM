@@ -583,187 +583,187 @@ CREATE TABLE "states" (
   "country_id" smallint NOT NULL
 );
 
-CREATE INDEX "idx_related_entity_type" ON "audit_entries" ("auditable_entity_type");
+CREATE INDEX "idx_audit_entries_related_entity_type" ON "audit_entries" ("auditable_entity_type");
 
-CREATE INDEX "idx_related_entity_id" ON "audit_entries" ("related_entity_id");
+CREATE INDEX "idx_audit_entries_related_entity_id" ON "audit_entries" ("related_entity_id");
 
-CREATE INDEX "idx_related_entity_hash" ON "audit_entries" ("related_entity_hash");
+CREATE INDEX "idx_audit_entries_related_entity_hash" ON "audit_entries" ("related_entity_hash");
 
-CREATE INDEX "idx_related_composite_id" ON "audit_entries" ("related_composite_id");
+CREATE INDEX "idx_audit_entries_related_composite_id" ON "audit_entries" ("related_composite_id");
 
-CREATE INDEX "idx_related_entity_type_id" ON "audit_entries" ("auditable_entity_type", "related_entity_id");
+CREATE INDEX "idx_audit_entries_related_entity_type_id" ON "audit_entries" ("auditable_entity_type", "related_entity_id");
 
-CREATE INDEX "idx_related_entity_type_composite_id" ON "audit_entries" ("auditable_entity_type", "related_composite_id");
+CREATE INDEX "idx_audit_entries_related_entity_type_composite_id" ON "audit_entries" ("auditable_entity_type", "related_composite_id");
 
-CREATE INDEX "idx_created_at" ON "audit_entries" ("created_at");
+CREATE INDEX "idx_audit_entries_created_at" ON "audit_entries" ("created_at");
 
-CREATE INDEX "idx_area_id" ON "reservations" ("area_id");
+CREATE INDEX "idx_reservations_area_id" ON "reservations" ("area_id");
 
-CREATE INDEX "idx_reserved_for" ON "reservations" ("reserved_for");
+CREATE INDEX "idx_reservations_reserved_for" ON "reservations" ("reserved_for");
 
-CREATE INDEX "idx_planned_checkout_time" ON "reservations" ("planned_checkout_time");
+CREATE INDEX "idx_reservations_planned_checkout_time" ON "reservations" ("planned_checkout_time");
 
-CREATE INDEX "idx_planned_checkin_time" ON "reservations" ("planned_checkin_time");
+CREATE INDEX "idx_reservations_planned_checkin_time" ON "reservations" ("planned_checkin_time");
 
-CREATE INDEX "idx_reservation_id" ON "reservation_assets" ("reservation_id");
+CREATE INDEX "idx_reservation_assets_reservation_id" ON "reservation_assets" ("reservation_id");
 
-CREATE INDEX "idx_asset_id" ON "reservation_assets" ("asset_id");
+CREATE INDEX "idx_reservation_assets_asset_id" ON "reservation_assets" ("asset_id");
 
-CREATE INDEX "idx_reservation_asset" ON "reservation_assets" ("reservation_id", "asset_id");
+CREATE INDEX "idx_reservation_assets_reservation_asset" ON "reservation_assets" ("reservation_id", "asset_id");
 
-CREATE INDEX "idx_asset_id" ON "asset_tags" ("asset_id");
+CREATE INDEX "idx_asset_tags_asset_id" ON "asset_tags" ("asset_id");
 
-CREATE INDEX "idx_code_type" ON "asset_tags" ("code_type");
+CREATE INDEX "idx_asset_tags_code_type" ON "asset_tags" ("code_type");
 
-CREATE INDEX "idx_asset_id_code_type" ON "asset_tags" ("asset_id", "code_type");
+CREATE INDEX "idx_asset_tags_asset_id_code_type" ON "asset_tags" ("asset_id", "code_type");
 
-CREATE INDEX "idx_commentable_entity_types" ON "comments" ("commentable_entity_types");
+CREATE INDEX "idx_comments_commentable_entity_types" ON "comments" ("commentable_entity_types");
 
-CREATE INDEX "idx_related_entity_id" ON "comments" ("entity_id");
+CREATE INDEX "idx_comments_related_entity_id" ON "comments" ("entity_id");
 
-CREATE INDEX "idx_commentable_entity_type_id" ON "comments" ("commentable_entity_types", "entity_id");
+CREATE INDEX "idx_comments_commentable_entity_type_id" ON "comments" ("commentable_entity_types", "entity_id");
 
-CREATE INDEX "idx_parent_comment_id" ON "comments" ("parent_comment_id");
+CREATE INDEX "idx_comments_parent_comment_id" ON "comments" ("parent_comment_id");
 
-CREATE INDEX "idx_parent_comment_id_id" ON "comments" ("parent_comment_id", "id");
+CREATE INDEX "idx_comments_parent_comment_id_id" ON "comments" ("parent_comment_id", "id");
 
-CREATE INDEX "idx_user_id" ON "reactions" ("user_id");
+CREATE INDEX "idx_reactions_user_id" ON "reactions" ("user_id");
 
-CREATE INDEX "idx_comment_id" ON "reactions" ("comment_id");
+CREATE INDEX "idx_reactions_comment_id" ON "reactions" ("comment_id");
 
-CREATE INDEX "idx_user_comment_reaction" ON "reactions" ("user_id", "comment_id", "reaction_type");
+CREATE INDEX "idx_reactions_user_comment_reaction" ON "reactions" ("user_id", "comment_id", "reaction_type");
 
-CREATE INDEX "idx_parent_category_id" ON "categories" ("parent_category_id");
+CREATE INDEX "idx_categories_parent_category_id" ON "categories" ("parent_category_id");
 
-CREATE INDEX "idx_name" ON "categories" ("name");
+CREATE INDEX "idx_categories_name" ON "categories" ("name");
 
-CREATE INDEX "idx_parent_category_name" ON "categories" ("parent_category_id", "name");
+CREATE INDEX "idx_categories_parent_category_name" ON "categories" ("parent_category_id", "name");
 
-CREATE INDEX "idx_data_type" ON "custom_properties" ("data_type");
+CREATE INDEX "idx_custom_properties_data_type" ON "custom_properties" ("data_type");
 
-CREATE INDEX "idx_asset_id" ON "asset_custom_properties" ("asset_id");
+CREATE INDEX "idx_asset_custom_properties_asset_id" ON "asset_custom_properties" ("asset_id");
 
-CREATE INDEX "idx_custom_property_id" ON "asset_custom_properties" ("custom_property_id");
+CREATE INDEX "idx_asset_custom_properties_custom_property_id" ON "asset_custom_properties" ("custom_property_id");
 
-CREATE INDEX "idx_asset_custom_property" ON "asset_custom_properties" ("asset_id", "custom_property_id");
+CREATE INDEX "idx_asset_custom_properties_asset_custom_property" ON "asset_custom_properties" ("asset_id", "custom_property_id");
 
-CREATE INDEX "idx_manufacturer_id" ON "assets" ("manufacturer_id");
+CREATE INDEX "idx_assets_manufacturer_id" ON "assets" ("manufacturer_id");
 
-CREATE INDEX "idx_category_id" ON "assets" ("category_id");
+CREATE INDEX "idx_assets_category_id" ON "assets" ("category_id");
 
-CREATE INDEX "idx_storage_area_id" ON "assets" ("storage_area_id");
+CREATE INDEX "idx_assets_storage_area_id" ON "assets" ("storage_area_id");
 
-CREATE INDEX "idx_parent_asset_id" ON "assets" ("parent_asset_id");
+CREATE INDEX "idx_assets_parent_asset_id" ON "assets" ("parent_asset_id");
 
-CREATE INDEX "idx_is_kit_root" ON "assets" ("is_kit_root");
+CREATE INDEX "idx_assets_is_kit_root" ON "assets" ("is_kit_root");
 
-CREATE INDEX "idx_is_attachment" ON "assets" ("is_attachment");
+CREATE INDEX "idx_assets_is_attachment" ON "assets" ("is_attachment");
 
-CREATE INDEX "idx_is_available" ON "assets" ("is_available");
+CREATE INDEX "idx_assets_is_available" ON "assets" ("is_available");
 
-CREATE INDEX "idx_inventory_number" ON "assets" ("inventory_number");
+CREATE INDEX "idx_assets_inventory_number" ON "assets" ("inventory_number");
 
-CREATE INDEX "idx_manufacturer_area_id" ON "manufacturers" ("manufacturer_area_id");
+CREATE INDEX "idx_manufacturers_manufacturer_area_id" ON "manufacturers" ("manufacturer_area_id");
 
-CREATE INDEX "idx_website" ON "manufacturers" ("website");
+CREATE INDEX "idx_manufacturers_website" ON "manufacturers" ("website");
 
-CREATE INDEX "idx_asset_flag" ON "asset_flags" ("asset_id", "flag_id");
+CREATE INDEX "idx_asset_flags_asset_flag" ON "asset_flags" ("asset_id", "flag_id");
 
-CREATE INDEX "idx_color_id" ON "flags" ("color_id");
+CREATE INDEX "idx_flags_color_id" ON "flags" ("color_id");
 
-CREATE INDEX "idx_makes_unavailable" ON "flags" ("makes_unavailable");
+CREATE INDEX "idx_flags_makes_unavailable" ON "flags" ("makes_unavailable");
 
-CREATE INDEX "idx_name" ON "flags" ("name");
+CREATE INDEX "idx_flags_name" ON "flags" ("name");
 
-CREATE INDEX "idx_name" ON "currencies" ("name");
+CREATE INDEX "idx_currencies_name" ON "currencies" ("name");
 
-CREATE INDEX "idx_symbol" ON "currencies" ("symbol");
+CREATE INDEX "idx_currencies_symbol" ON "currencies" ("symbol");
 
-CREATE INDEX "idx_iso_code" ON "currencies" ("iso_code");
+CREATE INDEX "idx_currencies_iso_code" ON "currencies" ("iso_code");
 
-CREATE INDEX "idx_currency_id" ON "financial_entries" ("currency_id");
+CREATE INDEX "idx_financial_entries_currency_id" ON "financial_entries" ("currency_id");
 
-CREATE INDEX "idx_amount" ON "financial_entries" ("amount");
+CREATE INDEX "idx_financial_entries_amount" ON "financial_entries" ("amount");
 
-CREATE INDEX "idx_asset_id" ON "asset_location_logs" ("asset_id");
+CREATE INDEX "idx_asset_location_logs_asset_id" ON "asset_location_logs" ("asset_id");
 
-CREATE INDEX "idx_lat_long" ON "asset_location_logs" ("latitude", "longitude");
+CREATE INDEX "idx_asset_location_logs_lat_long" ON "asset_location_logs" ("latitude", "longitude");
 
-CREATE INDEX "idx_attachable_entity_type" ON "file_attachments" ("attachable_entity_type");
+CREATE INDEX "idx_file_attachments_attachable_entity_type" ON "file_attachments" ("attachable_entity_type");
 
-CREATE INDEX "idx_related_entity_id" ON "file_attachments" ("entity_id");
+CREATE INDEX "idx_file_attachments_related_entity_id" ON "file_attachments" ("entity_id");
 
-CREATE INDEX "idx_attachable_entity_type_id" ON "file_attachments" ("attachable_entity_type", "entity_id");
+CREATE INDEX "idx_file_attachments_attachable_entity_type_id" ON "file_attachments" ("attachable_entity_type", "entity_id");
 
-CREATE INDEX "idx_file_type" ON "file_attachments" ("file_type");
+CREATE INDEX "idx_file_attachments_file_type" ON "file_attachments" ("file_type");
 
-CREATE INDEX "idx_file_category" ON "file_attachments" ("file_category");
+CREATE INDEX "idx_file_attachments_file_category" ON "file_attachments" ("file_category");
 
-CREATE INDEX "idx_email_owner_type" ON "email_addresses" ("emailable_entity_type");
+CREATE INDEX "idx_email_addresses_email_owner_type" ON "email_addresses" ("emailable_entity_type");
 
-CREATE INDEX "idx_related_owner_id" ON "email_addresses" ("entity_id");
+CREATE INDEX "idx_email_addresses_related_owner_id" ON "email_addresses" ("entity_id");
 
-CREATE INDEX "idx_email_owner_type_id" ON "email_addresses" ("email_type", "entity_id");
+CREATE INDEX "idx_email_addresses_email_owner_type_id" ON "email_addresses" ("email_type", "entity_id");
 
-CREATE INDEX "idx_is_verified" ON "email_addresses" ("is_verified");
+CREATE INDEX "idx_email_addresses_is_verified" ON "email_addresses" ("is_verified");
 
-CREATE INDEX "idx_email_address" ON "email_addresses" ("email_address");
+CREATE INDEX "idx_email_addresses_email_address" ON "email_addresses" ("email_address");
 
-CREATE INDEX "idx_phone_owner_type" ON "phone_numbers" ("phone_type");
+CREATE INDEX "idx_phone_numbers_phone_owner_type" ON "phone_numbers" ("phone_type");
 
-CREATE INDEX "idx_related_owner_id" ON "phone_numbers" ("entity_id");
+CREATE INDEX "idx_phone_numbers_related_owner_id" ON "phone_numbers" ("entity_id");
 
-CREATE INDEX "idx_phone_owner_type_id" ON "phone_numbers" ("phone_type", "entity_id");
+CREATE INDEX "idx_phone_numbers_phone_owner_type_id" ON "phone_numbers" ("phone_type", "entity_id");
 
-CREATE INDEX "idx_is_verified" ON "phone_numbers" ("is_verified");
+CREATE INDEX "idx_phone_numbers_is_verified" ON "phone_numbers" ("is_verified");
 
-CREATE INDEX "idx_phone_number" ON "phone_numbers" ("phone_number");
+CREATE INDEX "idx_phone_numbers_phone_number" ON "phone_numbers" ("phone_number");
 
-CREATE INDEX "idx_primary_color_id" ON "ui_themes" ("primary_color_id");
+CREATE INDEX "idx_ui_themes_primary_color_id" ON "ui_themes" ("primary_color_id");
 
-CREATE INDEX "idx_secondary_color_id" ON "ui_themes" ("secondary_color_id");
+CREATE INDEX "idx_ui_themes_secondary_color_id" ON "ui_themes" ("secondary_color_id");
 
-CREATE INDEX "idx_currency_id" ON "user_settings" ("currency_id");
+CREATE INDEX "idx_user_settings_currency_id" ON "user_settings" ("currency_id");
 
-CREATE INDEX "idx_ui_theme_id" ON "user_settings" ("ui_theme_id");
+CREATE INDEX "idx_user_settings_ui_theme_id" ON "user_settings" ("ui_theme_id");
 
-CREATE INDEX "idx_last_login" ON "users" ("last_login");
+CREATE INDEX "idx_users_last_login" ON "users" ("last_login");
 
-CREATE INDEX "idx_user_id" ON "user_roles" ("user_id");
+CREATE INDEX "idx_user_roles_user_id" ON "user_roles" ("user_id");
 
-CREATE INDEX "idx_role_id" ON "user_roles" ("role_id");
+CREATE INDEX "idx_user_roles_role_id" ON "user_roles" ("role_id");
 
-CREATE INDEX "idx_role_id" ON "role_permissions" ("role_id");
+CREATE INDEX "idx_role_permissions_role_id" ON "role_permissions" ("role_id");
 
-CREATE INDEX "idx_permission_id" ON "role_permissions" ("permission_id");
+CREATE INDEX "idx_role_permissions_permission_id" ON "role_permissions" ("permission_id");
 
-CREATE INDEX "idx_parent_area_id" ON "areas" ("parent_area_id");
+CREATE INDEX "idx_areas_parent_area_id" ON "areas" ("parent_area_id");
 
-CREATE INDEX "idx_name" ON "areas" ("name");
+CREATE INDEX "idx_areas_name" ON "areas" ("name");
 
-CREATE INDEX "idx_address_id" ON "areas" ("address_id");
+CREATE INDEX "idx_areas_address_id" ON "areas" ("address_id");
 
-CREATE INDEX "idx_state_id" ON "addresses" ("state_id");
+CREATE INDEX "idx_addresses_state_id" ON "addresses" ("state_id");
 
-CREATE INDEX "idx_country_id" ON "addresses" ("country_id");
+CREATE INDEX "idx_addresses_country_id" ON "addresses" ("country_id");
 
-CREATE INDEX "idx_type" ON "addresses" ("type");
+CREATE INDEX "idx_addresses_type" ON "addresses" ("type");
 
-CREATE INDEX "idx_code" ON "countries" ("code");
+CREATE INDEX "idx_cidx_countries_codeode" ON "countries" ("code");
 
-CREATE INDEX "idx_intl_phone_code" ON "countries" ("intl_phone_code");
+CREATE INDEX "idx_countries_intl_phone_code" ON "countries" ("intl_phone_code");
 
-CREATE INDEX "idx_identifier" ON "timezones" ("identifier");
+CREATE INDEX "idx_timezones_identifier" ON "timezones" ("identifier");
 
-CREATE INDEX "idx_abbreviation" ON "timezones" ("abbreviation");
+CREATE INDEX "idx_timezones_abbreviation" ON "timezones" ("abbreviation");
 
-CREATE INDEX "idx_timezone_id" ON "states" ("timezone_id");
+CREATE INDEX "idx_states_timezone_id" ON "states" ("timezone_id");
 
-CREATE INDEX "idx_country_id" ON "states" ("country_id");
+CREATE INDEX "idx_states_country_id" ON "states" ("country_id");
 
-CREATE INDEX "idx_code" ON "states" ("code");
+CREATE INDEX "idx_states_code" ON "states" ("code");
 
-CREATE INDEX "idx_name" ON "states" ("name");
+CREATE INDEX "idx_states_name" ON "states" ("name");
 
 COMMENT ON COLUMN "global_settings"."deployment_fingerprint" IS 'Primary key';
 

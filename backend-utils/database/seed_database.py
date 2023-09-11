@@ -539,6 +539,21 @@ def populate_users():
 
     try:
 
+        crud.create_user("password",
+                         "John",
+                         "Doe",
+                         1,
+                         0,
+                         False,
+                         "1st Normal User after Bootstrap",
+                         2,
+                         None,
+                         None,
+                         None,
+                         None,
+                         commit=True,
+                         )
+
         pass
 
     except Exception as e:
