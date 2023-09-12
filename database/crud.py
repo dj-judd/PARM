@@ -5,6 +5,7 @@ import sys
 import model
 
 from datetime import datetime
+from typing import Optional
 
 from backend_utils import utils
 from backend_utils.utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
@@ -102,19 +103,22 @@ def create_state_entry(code, name, timezone_id, country_id, commit=True):
 
 
 
-def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True):
+def create_currency_entry(id: int,
+                          name: str,
+                          symbol: str,
+                          iso_code: model.CurrencyIsoCode,
+                          exchange_rate: int,
+                          commit: bool = True):
     
     # Check to make sure that the value is in the Enum list
     if iso_code not in [e.value for e in model.CurrencyIsoCode]:
         raise ValueError(f"Invalid iso code: {iso_code}")
     
-    currency_entry = model.Currency(
-        id = id,
-        name = name,
-        symbol = symbol,
-        iso_code = iso_code,
-        exchange_rate = exchange_rate
-    )
+    currency_entry = model.Currency(id = id,
+                                    name = name,
+                                    symbol = symbol,
+                                    iso_code = iso_code,
+                                    exchange_rate = exchange_rate)
 
     # Always add to the session
     model.db.session.add(currency_entry)
@@ -124,6 +128,40 @@ def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True
         model.db.session.commit()
 
     return currency_entry
+
+
+
+def create_financial_entry(currency_id: int,
+                           amount: int,
+                           created_by_user_id: int,
+                           audit_details: Optional[str] = None,
+                           commit: bool = True):
+    """Create and return a new financial_entry entry."""
+
+    financial_entry = model.FinancialEntry(currency_id=currency_id,
+                                          amount=amount)
+    
+    # Add financial_entry to the session for flush
+    model.db.session.add(financial_entry)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FinancialEntry'],
+        related_entity_id=financial_entry.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return financial_entry, audit_entry
 
 
 
@@ -785,12 +823,68 @@ def create_permission(name,
 
 
 
-def create_manufacturer(name,
-                        created_by_user_id,
-                        audit_details=None,
-                        manufacturer_area_id=None,
-                        website=None,
-                        commit=True):
+def create_timezone():
+    """Create and return a new timezone entry."""
+    pass
+
+def create_country():
+    """Create and return a new country entry."""
+    pass
+
+def create_state():
+    """Create and return a new state entry."""
+    pass
+
+def create_address():
+    """Create and return a new address entry."""
+    pass
+
+def create_areas(name: str,
+                 created_by_user_id: int,
+                 parent_area_id: Optional[int] = None,
+                 audit_details: Optional[str] = None,
+                 latitude: Optional[float] = None,
+                 longitude: Optional[float] = None,
+                 address_id: Optional[int] = None,
+                 commit: bool = True):
+    """Create and return a new area entry."""
+
+    area = model.Area(parent_area_id=parent_area_id,
+                      name=name,
+                      latitude=latitude,
+                      longitude=longitude,
+                      address_id=address_id)
+    
+    # Add area to the session for flush
+    model.db.session.add(area)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Area'],
+        related_entity_id=area.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return area, audit_entry
+
+
+
+def create_manufacturer(name: str,
+                        created_by_user_id: int,
+                        aaudit_details: Optional[str] = None,
+                        manufacturer_area_id: Optional[int] = None,
+                        website: Optional[str] = None,
+                        commit: bool = True):
     """Create and return a new manufacturer."""
 
     manufacturer = model.Manufacturer(name=name,
@@ -817,6 +911,40 @@ def create_manufacturer(name,
     
     return manufacturer, audit_entry
 
+
+def create_category(name: str,
+                   color_id: int,
+                   created_by_user_id: int,
+                   parent_category_id: Optional[int] = None,
+                   audit_details: Optional[str] = None,
+                   commit: bool = True):
+    """Create and return a new category entry."""
+
+    category = model.Category(parent_category_id=parent_category_id,
+                              name=name,
+                              color_id=color_id)
+    
+    # Add category to the session for flush
+    model.db.session.add(category)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Category'],
+        related_entity_id=category.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return category, audit_entry
 
 
 
