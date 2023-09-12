@@ -27,13 +27,11 @@ def create_timezone_entry(id,
     if abbreviation not in [e.value for e in model.TimezoneAbbreviation]:
         raise ValueError(f"Invalid abbreviation: {abbreviation}")
 
-    timezone_entry = model.Timezone(
-        id = id,
-        identifier = identifier,
-        abbreviation = abbreviation,
-        utc_offset_minutes = utc_offset_minutes,
-        has_dst = has_dst
-    )
+    timezone_entry = model.Timezone(id = id,
+                                    identifier = identifier,
+                                    abbreviation = abbreviation,
+                                    utc_offset_minutes = utc_offset_minutes,
+                                    has_dst = has_dst)
 
     # Always add to the session
     model.db.session.add(timezone_entry)
@@ -57,12 +55,10 @@ def create_country_entry(id,
         raise ValueError(f"Invalid code: {code}")
     
 
-    country_entry = model.Country(
-        id = id,
-        code = code,
-        name = name,
-        intl_phone_code = intl_phone_code,
-    )
+    country_entry = model.Country(id = id,
+                                  code = code,
+                                  name = name,
+                                  intl_phone_code = intl_phone_code)
 
     # Always add to the session
     model.db.session.add(country_entry)
@@ -75,7 +71,11 @@ def create_country_entry(id,
 
 
 
-def create_state_entry(code, name, timezone_id, country_id, commit=True):
+def create_state_entry(code,
+                       name,
+                       timezone_id,
+                       country_id,
+                       commit=True):
     
     # Check to make sure that the value is in the Enum list
     if code not in [e.value for e in model.StateCodes]:
@@ -85,12 +85,10 @@ def create_state_entry(code, name, timezone_id, country_id, commit=True):
     if name not in [e.value for e in model.StateNames]:
         raise ValueError(f"Invalid name: {name}")
 
-    state_entry = model.State(
-        code = code,
-        name = name,
-        timezone_id = timezone_id,
-        country_id = country_id
-    )
+    state_entry = model.State(code = code,
+                              name = name,
+                              timezone_id = timezone_id,
+                              country_id = country_id)
 
     # Always add to the session
     model.db.session.add(state_entry)
@@ -139,20 +137,18 @@ def create_financial_entry(currency_id: int,
     """Create and return a new financial_entry entry."""
 
     financial_entry = model.FinancialEntry(currency_id=currency_id,
-                                          amount=amount)
+                                           amount=amount)
     
     # Add financial_entry to the session for flush
     model.db.session.add(financial_entry)
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FinancialEntry'],
-        related_entity_id=financial_entry.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['FinancialEntry'],
+                                     related_entity_id=financial_entry.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
 
     # Add the audit_entry to the session
     model.db.session.add(audit_entry)
@@ -183,18 +179,16 @@ def create_audit_entry(operation_type,
         raise ValueError("Either related_entity_id or related_entity_hash must be provided.")
 
     time_stamp = datetime.utcnow()
-    audit_entry = model.AuditEntry(
-        operation_type=operation_type,
-        auditable_entity_type=auditable_entity_type,
-        related_entity_id=related_entity_id,
-        related_entity_hash=related_entity_hash,
-        related_composite_id=related_composite_id,  # For composite Foreign Keys
-        details=audit_details,
-        created_by=created_by_user_id,
-        created_at=time_stamp,
-        last_edited_by=created_by_user_id,
-        last_edited_at=time_stamp
-    )
+    audit_entry = model.AuditEntry(operation_type=operation_type,
+                                   auditable_entity_type=auditable_entity_type,
+                                   related_entity_id=related_entity_id,
+                                   related_entity_hash=related_entity_hash,
+                                   related_composite_id=related_composite_id,  # For composite Foreign Keys
+                                   details=audit_details,
+                                   created_by=created_by_user_id,
+                                   created_at=time_stamp,
+                                   last_edited_by=created_by_user_id,
+                                   last_edited_at=time_stamp)
     # Always add to the session
     model.db.session.add(audit_entry)
     
@@ -220,10 +214,8 @@ def create_global_settings(deployment_fingerprint,
     if not currency:
         raise ValueError(f"Invalid currency ID: {default_currency_id}")
 
-    global_settings = model.GlobalSettings(
-        deployment_fingerprint=deployment_fingerprint,
-        default_currency_id=default_currency_id
-    )
+    global_settings = model.GlobalSettings(deployment_fingerprint=deployment_fingerprint,
+                                           default_currency_id=default_currency_id)
 
     # Add the global_setting to the session
     model.db.session.add(global_settings)
@@ -234,13 +226,11 @@ def create_global_settings(deployment_fingerprint,
         # Flush to get the, now created, id for this entity for the AuditEntry
         model.db.session.flush()
 
-        audit_entry = create_audit_entry(
-            operation_type=model.OperationType.CREATE.value,
-            auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
-            related_entity_id=global_settings.id,
-            created_by_user_id=created_by_user_id,
-            audit_details=audit_details
-        )
+        audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                         auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
+                                         related_entity_id=global_settings.id,
+                                         created_by_user_id=created_by_user_id,
+                                         audit_details=audit_details)
 
         # Add the audit_entry to the session
         model.db.session.add(audit_entry)
@@ -280,13 +270,11 @@ def create_color(name,
         # Flush to get id for this entity for the AuditEntry
         model.db.session.flush()
 
-        audit_entry = create_audit_entry(
-            operation_type=model.OperationType.CREATE.value,
-            auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
-            related_entity_id=color.id,
-            created_by_user_id=created_by_user_id,
-            audit_details=audit_details
-        )
+        audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                         auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
+                                         related_entity_id=color.id,
+                                         created_by_user_id=created_by_user_id,
+                                         audit_details=audit_details)
 
         # Add the audit_entry to the session
         model.db.session.add(audit_entry)
@@ -313,12 +301,10 @@ def create_ui_theme(name,
                     commit=True):
     """Create and return a UI Theme."""
 
-    uiTheme = model.UiTheme(
-        name=name,
-        description=description,
-        primary_color_id=primary_color_id,
-        secondary_color_id=secondary_color_id
-    )
+    uiTheme = model.UiTheme(name=name,
+                            description=description,
+                            primary_color_id=primary_color_id,
+                            secondary_color_id=secondary_color_id)
 
     # Always add to the session
     model.db.session.add(uiTheme)
@@ -329,13 +315,11 @@ def create_ui_theme(name,
         # Flush to get id for this entity for the AuditEntry
         model.db.session.flush()
 
-        audit_entry = create_audit_entry(
-            operation_type=model.OperationType.CREATE.value,
-            auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
-            related_entity_id=uiTheme.id,
-            created_by_user_id=created_by_user_id,
-            audit_details=audit_details
-        )
+        audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                         auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
+                                         related_entity_id=uiTheme.id,
+                                         created_by_user_id=created_by_user_id,
+                                         audit_details=audit_details)
 
         # Add the audit_entry to the session
         model.db.session.add(audit_entry)
@@ -368,12 +352,10 @@ def create_user_settings(currency_id,
         raise ValueError(f"Invalid currency ID: {currency_id}")
     
 
-    user_settings = model.UserSettings(
-        id=id,
-        currency_id=currency_id,
-        time_format_is_24h=time_format_is_24h,
-        ui_theme_id=ui_theme_id
-    )
+    user_settings = model.UserSettings(id=id,
+                                       currency_id=currency_id,
+                                       time_format_is_24h=time_format_is_24h,
+                                       ui_theme_id=ui_theme_id)
 
     # Always add to the session
     model.db.session.add(user_settings)
@@ -384,13 +366,11 @@ def create_user_settings(currency_id,
         # Flush to get id for this entity for the AuditEntry
         model.db.session.flush()
 
-        audit_entry = create_audit_entry(
-            operation_type=model.OperationType.CREATE.value,
-            auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserSettings'],
-            related_entity_id=user_settings.id,
-            created_by_user_id=created_by_user_id,
-            audit_details=audit_details
-        )
+        audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                         auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserSettings'],
+                                         related_entity_id=user_settings.id,
+                                         created_by_user_id=created_by_user_id,
+                                         audit_details=audit_details)
 
         # Add the audit_entry to the session
         model.db.session.add(audit_entry)
@@ -424,16 +404,14 @@ def create_bootstrap_user(password_hash,
                           id=None):
     """Create and return a new bootstrap user for DB initialization."""
 
-    bootstrap_user_settings = create_user_settings(
-        id=id,
-        currency_id=currency_id,
-        time_format_is_24h=time_format_is_24h,
-        ui_theme_id=ui_theme_id,
-        audit=audit,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details,
-        commit=False
-        )
+    bootstrap_user_settings = create_user_settings(id=id,
+                                                   currency_id=currency_id,
+                                                   time_format_is_24h=time_format_is_24h,
+                                                   ui_theme_id=ui_theme_id,
+                                                   audit=audit,
+                                                   created_by_user_id=created_by_user_id,
+                                                   audit_details=audit_details,
+                                                   commit=False)
 
     ## They already get added in the create method
     # model.db.session.add(user_settings)
@@ -441,17 +419,15 @@ def create_bootstrap_user(password_hash,
     # Flush to get id for this entity for the User
     model.db.session.flush()
 
-    bootstrap_user = model.User(
-        id=id,
-        password_hash=password_hash, 
-        first_name=first_name,
-        middle_name=middle_name,
-        last_name=last_name,
-        nickname=nickname,
-        nickname_preferred=nickname_preferred,
-        user_settings_id=bootstrap_user_settings.id,
-        last_login=last_login
-        )
+    bootstrap_user = model.User(id=id,
+                                password_hash=password_hash, 
+                                first_name=first_name,
+                                middle_name=middle_name,
+                                last_name=last_name,
+                                nickname=nickname,
+                                nickname_preferred=nickname_preferred,
+                                user_settings_id=bootstrap_user_settings.id,
+                                last_login=last_login)
 
 
     # Add user to the session for flush
@@ -462,14 +438,11 @@ def create_bootstrap_user(password_hash,
     # # Flush to get id for this entity for the AuditEntry
     # model.db.session.flush()
 
-
-    # user_audit_entry = create_audit_entry(
-    #     operation_type=model.OperationType.CREATE.value,
-    #     auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
-    #     related_entity_id=user.id,
-    #     created_by_user_id=created_by_user_id,
-    #     details=audit_details
-    # )
+    # user_audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+    #                                       auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
+    #                                       related_entity_id=user.id,
+    #                                       created_by_user_id=created_by_user_id,
+    #                                       details=audit_details)
 
     # # Add the user_audit_entry to the session
     # model.db.session.add(user_audit_entry)
@@ -607,15 +580,13 @@ def create_email_address(emailable_entity_type: model.EmailableEntityTypes, #Typ
                          commit=True):
     """Create and return a new email address."""
     
-    email_address = model.EmailAddress(
-        emailable_entity_type=emailable_entity_type,
-        entity_id=entity_id,
-        email_type=email_type,
-        email_address=email_address,
-        is_verified=is_verified,
-        is_primary=is_primary,
-        is_shared=is_shared
-    )
+    email_address = model.EmailAddress(emailable_entity_type=emailable_entity_type,
+                                       entity_id=entity_id,
+                                       email_type=email_type,
+                                       email_address=email_address,
+                                       is_verified=is_verified,
+                                       is_primary=is_primary,
+                                       is_shared=is_shared)
 
     # Add email_address to the session for flush
     model.db.session.add(email_address)
@@ -664,13 +635,11 @@ def create_file_attachment(attachable_entity_type: model.AttachableEntityTypes, 
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    file_attachment_audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachment'],
-        related_entity_id=file_attachment.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    file_attachment_audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachment'],
+                                                     related_entity_id=file_attachment.id,
+                                                     created_by_user_id=created_by_user_id,
+                                                     audit_details=audit_details)
 
     # Add the user_audit_entry to the session
     model.db.session.add(file_attachment_audit_entry)
@@ -699,14 +668,12 @@ def create_user_role(user_id,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserRole'],
-        related_entity_id=user_role.user_id,
-        related_composite_id=user_role.role_id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserRole'],
+                                     related_entity_id=user_role.user_id,
+                                     related_composite_id=user_role.role_id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
 
     # Add the audit_entry to the session
     model.db.session.add(audit_entry)
@@ -735,13 +702,11 @@ def create_role(name, description,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Role'],
-        related_entity_id=role.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Role'],
+                                     related_entity_id=role.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
 
     # Add the audit_entry to the session
     model.db.session.add(audit_entry)
@@ -769,14 +734,12 @@ def create_role_permission(role_id,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['RolePermission'],
-        related_entity_id=role_permission.role_id,
-        related_composite_id=role_permission.permission_id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['RolePermission'],
+                                     related_entity_id=role_permission.role_id,
+                                     related_composite_id=role_permission.permission_id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
 
     # Add the audit_entry to the session
     model.db.session.add(audit_entry)
@@ -804,13 +767,11 @@ def create_permission(name,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Permission'],
-        related_entity_id=permission.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Permission'],
+                                     related_entity_id=permission.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
 
     # Add audit_entry to the session
     model.db.session.add(audit_entry)
@@ -823,21 +784,51 @@ def create_permission(name,
 
 
 
-def create_timezone():
-    """Create and return a new timezone entry."""
-    pass
 
-def create_country():
-    """Create and return a new country entry."""
-    pass
-
-def create_state():
-    """Create and return a new state entry."""
-    pass
-
-def create_address():
+def create_address(name: str,
+                   type: model.AddressType,
+                   street: str,
+                   city: str,
+                   state_id: int,
+                   zip: str,
+                   country_id: int,
+                   created_by_user_id: int,
+                   audit_details: Optional[str] = None,
+                   commit: bool = True):
     """Create and return a new address entry."""
-    pass
+
+
+    address = model.Address(name=name,
+                            type=type,
+                            street=street,
+                            city=city,
+                            state_id=state_id,
+                            zip=zip,
+                            country_id=country_id)
+    
+    # Add address to the session for flush
+    model.db.session.add(address)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Address'],
+        related_entity_id=address.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return address, audit_entry
+
+
 
 def create_areas(name: str,
                  created_by_user_id: int,
@@ -881,7 +872,7 @@ def create_areas(name: str,
 
 def create_manufacturer(name: str,
                         created_by_user_id: int,
-                        aaudit_details: Optional[str] = None,
+                        audit_details: Optional[str] = None,
                         manufacturer_area_id: Optional[int] = None,
                         website: Optional[str] = None,
                         commit: bool = True):
@@ -913,11 +904,11 @@ def create_manufacturer(name: str,
 
 
 def create_category(name: str,
-                   color_id: int,
-                   created_by_user_id: int,
-                   parent_category_id: Optional[int] = None,
-                   audit_details: Optional[str] = None,
-                   commit: bool = True):
+                    color_id: int,
+                    created_by_user_id: int,
+                    parent_category_id: Optional[int] = None,
+                    audit_details: Optional[str] = None,
+                    commit: bool = True):
     """Create and return a new category entry."""
 
     category = model.Category(parent_category_id=parent_category_id,
@@ -929,10 +920,76 @@ def create_category(name: str,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Category'],
+                                     related_entity_id=category.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return category, audit_entry
+
+
+
+def create_asset(manufacturer_id: int,
+                 model_name: str,
+                 inventory_number: int,
+                 created_by_user_id: int,
+                 model_number: Optional[int] = None,
+                 category_id: Optional[int] = None,
+                 storage_area_id: Optional[int] = None,
+                 purchase_date: Optional[datetime] = None,
+                 purchase_price_id: Optional[int] = None,
+                 msrp_id: Optional[int] = None,
+                 residual_value_id: Optional[int] = None,
+                 parent_asset_id: Optional[int] = None,
+                 is_kit_root: bool = False,
+                 is_attachment: bool = False,
+                 serial_number: Optional[int] = None,
+                 description: Optional[str] = None,
+                 is_available: bool = True,
+                 online_item_page: Optional[str] = None,
+                 warranty_starts: Optional[datetime] = None,
+                 warranty_ends: Optional[datetime] = None,
+                 audit_details: Optional[str] = None,
+                 commit: bool = True):
+    """Create and return a new asset entry."""
+
+    asset = model.Asset(manufacturer_id=manufacturer_id,
+                        model_number=model_number,
+                        model_name=model_name,
+                        category_id=category_id,
+                        storage_area_id=storage_area_id,
+                        purchase_date=purchase_date,
+                        purchase_price_id=purchase_price_id,
+                        msrp_id=msrp_id,
+                        residual_value_id=residual_value_id,
+                        parent_asset_id=parent_asset_id,
+                        is_kit_root=is_kit_root,
+                        is_attachment=is_attachment,
+                        serial_number=serial_number,
+                        inventory_number=inventory_number,
+                        description=description,
+                        is_available=is_available,
+                        online_item_page=online_item_page,
+                        warranty_starts=warranty_starts,
+                        warranty_ends=warranty_ends)
+    
+    # Add asset to the session for flush
+    model.db.session.add(asset)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
     audit_entry = create_audit_entry(
         operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Category'],
-        related_entity_id=category.id,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['Asset'],
+        related_entity_id=asset.id,
         created_by_user_id=created_by_user_id,
         audit_details=audit_details
     )
@@ -944,7 +1001,9 @@ def create_category(name: str,
     if commit:
         model.db.session.commit()
     
-    return category, audit_entry
+    return asset, audit_entry
+
+
 
 
 
