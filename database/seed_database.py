@@ -11,6 +11,7 @@ import random
 from random import choice, randint
 from datetime import datetime
 from sqlalchemy import text
+from itertools import product
 
 import crud
 import model
@@ -20,10 +21,11 @@ from backend_utils import utils
 import server
 
 
-version_number = 0.2
+version_number = 0.4
 program_name = "PARM Database Seeder 3,000,000"
 
 db_init_message = "Generated automatically upon database creation."
+number_of_users_to_generate = 15
 
 
 # Drop and create database
@@ -525,50 +527,111 @@ def populate_roles(created_by_user_id=0, permission_id_mapping={}):
 
 
 
-
-
-
-def populate_users():
-
+def populate_user_roles(number_of_users_to_generate, audit_details):
     try:
 
-        audit_detail = "Created in 10 user loop."
+        # Assign Account Owner
+        crud.create_user_role(
+                user_id=1,
+                role_id=1,
+                created_by_user_id=0,
+                audit_details="Account Owner Creation",
+                commit=True
+            )
 
-        user1, _, _, _ = crud.create_user("password",
-                                          "John",
-                                          "Doe",
-                                          1,
-                                          0,
-                                          False,
-                                          audit_detail,
-                                          2
-                                          )
+        for user_id in range(1, number_of_users_to_generate + 1):
+            role_id = random.randint(2, 11)
+            created_by_user_id = random.randint(1, number_of_users_to_generate)
+            audit_details = audit_details
+
+            crud.create_user_role(
+                user_id=user_id,
+                role_id=role_id,
+                created_by_user_id=created_by_user_id,
+                audit_details=audit_details,
+                commit=True
+            )
         
-        user1_phone_number, _ = crud.create_phone_number(model.PhoneableEntityTypes.USER.value,
-                                                         user1.id,
-                                                         model.PhoneType.PERSONAL.value,
-                                                         True,
-                                                         1,
-                                                         479,
-                                                         1234567,
-                                                         user1.id,
-                                                         audit_detail
-                                                         )
-        
-        user1_email_address, _ = crud.create_email_address(model.EmailableEntityTypes.USER.value,
-                                                         1,
-                                                         model.PhoneType.PERSONAL.value,
-                                                         "john.doe@gmail.com",
-                                                         user1.id,
-                                                         audit_detail
-                                                         )
-
-
+        utils.successMessage()
+    
     except Exception as e:
         # If any error occurs, rollback the changes
         model.db.session.rollback()
         utils.errorMessage(e)
 
+
+
+
+def populate_users(number_of_users_to_generate):
+    first_names = ["John", "Jane", "Alice", "Bob", "Emily", "Tom", "Lucy", "Mark", "Sophia", "Jack"]
+    last_names = ["Doe", "Smith", "Brown", "Williams", "Jones", "Davis", "Garcia", "Miller", "Wilson", "Anderson"]
+    all_names = list(product(first_names, last_names))
+    area_codes = [479, 501, 870, 212, 305, 415, 713, 802, 907, 808]  # Replace with actual area codes if needed
+
+    audit_detail = "Created in user loop."
+
+    # Initial Account Owner = id 1
+    _, _, _, _ = crud.create_user("password",
+                                     first_name="Big",
+                                     last_name="Boss",
+                                     currency_id=1,
+                                     created_by_user_id=0,
+                                     time_format_is_24h=False,
+                                     audit_details="One off Account Owner",
+                                     ui_theme_id=2,
+                                     nickname="Bossman",
+                                     nickname_preferred=True
+                                     )
+
+    try:
+        for i in range(number_of_users_to_generate):
+            if len(all_names) == 0:
+                break
+            
+            creator_id = i + 1
+
+            first_name, last_name = random.choice(all_names)
+            all_names.remove((first_name, last_name))
+
+            area_code = random.choice(area_codes)
+            phone_number = random.randint(1000000, 9999999)
+            email = f"{first_name.lower()}.{last_name.lower()}@gmail.com"
+
+            user, _, _, _ = crud.create_user("password",
+                                             first_name,
+                                             last_name,
+                                             1,
+                                             creator_id,
+                                             False,
+                                             audit_detail,
+                                             2
+                                             )
+            
+            _, _ = crud.create_phone_number(model.PhoneableEntityTypes.USER.value,
+                                            user.id,
+                                            model.PhoneType.PERSONAL.value,
+                                            True,
+                                            1,
+                                            area_code,
+                                            phone_number,
+                                            creator_id,
+                                            audit_detail
+                                            )
+            
+            _, _ = crud.create_email_address(model.EmailableEntityTypes.USER.value,
+                                             user.id,
+                                             model.PhoneType.PERSONAL.value,
+                                             email,
+                                             creator_id,
+                                             audit_detail
+                                             )
+            
+        utils.successMessage()
+
+    except Exception as e:
+        # If any error occurs, rollback the changes
+        model.db.session.rollback()
+        utils.errorMessage(e)
 
 
 
@@ -610,10 +673,12 @@ def main():
                                      bootstrap_user.id)
 
 
-    populate_users()
+    populate_users(number_of_users_to_generate)
 
     permission_mapping = populate_permissions()
     populate_roles(permission_id_mapping=permission_mapping)
+
+    populate_user_roles(number_of_users_to_generate, db_init_message)
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
