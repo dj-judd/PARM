@@ -1,4 +1,5 @@
 __pycache__/
 env/
-backend-utils/database/data/raw_images
-backend-utils/database/data/processed_images
+database/data/raw_images
+database/data/processed_images
+.env

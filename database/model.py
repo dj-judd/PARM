@@ -10,8 +10,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # Create a Flask-SQLAlchemy instance to handle database interactions
 db = SQLAlchemy()
-# # Get the underlying engine from the Flask-SQLAlchemy instance for direct manipulation
-# engine = db.engine
+
 
 
 # Python Enum

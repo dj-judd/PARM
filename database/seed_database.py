@@ -1,9 +1,13 @@
 """Script to seed database."""
 
-import hashlib
 import os
-import json
 import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import hashlib
+import json
+import random
 from random import choice, randint
 from datetime import datetime
 from sqlalchemy import text
@@ -11,20 +15,9 @@ from sqlalchemy import text
 import crud
 import model
 import permissions
+
+from backend_utils import utils
 import server
-
-# Modify sys.path to include the parent directory
-sys.path.append('..')
-import utils
-from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
-
-# # Turn off SQL output before seeding
-# model.db.engine.echo = False
-
-# Your seeding logic here...
-
-# # Optionally turn on SQL output after seeding
-# model.engine.echo = True
 
 
 version_number = 0.2
@@ -228,7 +221,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         primary_color_01_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                related_entity_id = p_color_01_id,
-                                                               details = db_init_message,
+                                                               audit_details = db_init_message,
                                                                created_by_user_id = bootstrap_user_id,
                                                                commit = False
                                                                )
@@ -236,7 +229,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         secondary_color_01_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                  auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                  related_entity_id = s_color_01_id,
-                                                                 details = db_init_message,
+                                                                 audit_details = db_init_message,
                                                                  created_by_user_id = bootstrap_user_id,
                                                                  commit = False
                                                                  )
@@ -244,7 +237,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         primary_color_02_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                related_entity_id = p_color_02_id,
-                                                               details = db_init_message,
+                                                               audit_details = db_init_message,
                                                                created_by_user_id = bootstrap_user_id,
                                                                commit = False
                                                                )
@@ -252,7 +245,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         secondary_color_02_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                  auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                  related_entity_id = s_color_02_id,
-                                                                 details = db_init_message,
+                                                                 audit_details = db_init_message,
                                                                  created_by_user_id = bootstrap_user_id,
                                                                  commit = False
                                                                  )
@@ -260,7 +253,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         light_theme_ui_theme_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                    auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
                                                                    related_entity_id = light_ui_id,
-                                                                   details = db_init_message,
+                                                                   audit_details = db_init_message,
                                                                    created_by_user_id = bootstrap_user_id,
                                                                    commit = False
                                                                    )
@@ -268,7 +261,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         dark_theme_ui_theme_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                   auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
                                                                   related_entity_id = dark_ui_id,
-                                                                  details = db_init_message,
+                                                                  audit_details = db_init_message,
                                                                   created_by_user_id = bootstrap_user_id,
                                                                   commit = False
                                                                   )
@@ -276,7 +269,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         global_settings_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                               auditable_entity_type = model.CLASS_TO_ENUM_MAP['GlobalSettings'],
                                                               related_entity_hash = global_settings_fingerprint,
-                                                              details = db_init_message,
+                                                              audit_details = db_init_message,
                                                               created_by_user_id = bootstrap_user_id,
                                                               commit = False
                                                               )
@@ -284,7 +277,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         bootstrap_user_settings_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                       auditable_entity_type = model.CLASS_TO_ENUM_MAP['UserSettings'],
                                                                       related_entity_id = bootstrap_user_settings_id,
-                                                                      details = db_init_message,
+                                                                      audit_details = db_init_message,
                                                                       created_by_user_id = bootstrap_user_id,
                                                                       commit = False
                                                                       )
@@ -292,7 +285,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
         bootstrap_user_audit_entry = crud.create_audit_entry(operation_type = model.OperationType.CREATE.value,
                                                              auditable_entity_type = model.CLASS_TO_ENUM_MAP['User'],
                                                              related_entity_id = bootstrap_user_id,
-                                                             details = db_init_message,
+                                                             audit_details = db_init_message,
                                                              created_by_user_id = bootstrap_user_id,
                                                              commit = False
                                                              )
@@ -539,22 +532,37 @@ def populate_users():
 
     try:
 
-        crud.create_user("password",
-                         "John",
-                         "Doe",
-                         1,
-                         0,
-                         False,
-                         "1st Normal User after Bootstrap",
-                         2,
-                         None,
-                         None,
-                         None,
-                         None,
-                         commit=True,
-                         )
+        audit_detail = "Created in 10 user loop."
 
-        pass
+        user1, _, _, _ = crud.create_user("password",
+                                          "John",
+                                          "Doe",
+                                          1,
+                                          0,
+                                          False,
+                                          audit_detail,
+                                          2
+                                          )
+        
+        user1_phone_number, _ = crud.create_phone_number(model.PhoneableEntityTypes.USER.value,
+                                                         user1.id,
+                                                         model.PhoneType.PERSONAL.value,
+                                                         True,
+                                                         1,
+                                                         479,
+                                                         1234567,
+                                                         user1.id,
+                                                         audit_detail
+                                                         )
+        
+        user1_email_address, _ = crud.create_email_address(model.EmailableEntityTypes.USER.value,
+                                                         1,
+                                                         model.PhoneType.PERSONAL.value,
+                                                         "john.doe@gmail.com",
+                                                         user1.id,
+                                                         audit_detail
+                                                         )
+
 
     except Exception as e:
         # If any error occurs, rollback the changes

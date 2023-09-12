@@ -1,17 +1,15 @@
 """CRUD operations."""
 
-# from sqlalchemy import func
-# from model import db, User, Asset, Rating, connect_to_db
 import os
 import sys
 import model
+
 from datetime import datetime
 
+from backend_utils import utils
+from backend_utils.utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
-# Modify sys.path to include the parent directory
-sys.path.append('..')
-import utils
-from utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
+
 
 def create_timezone_entry(id,
                           identifier,
@@ -130,12 +128,12 @@ def create_currency_entry(id, name, symbol, iso_code, exchange_rate, commit=True
 
 
 def create_audit_entry(operation_type,
-                       auditable_entity_type,
+                       auditable_entity_type: model.AuditableEntityTypes, #Type hint
                        created_by_user_id,
                        related_entity_id=None,
                        related_entity_hash=None,
                        related_composite_id=None,
-                       details=None,
+                       audit_details=None,
                        commit=True):
     """Create and return a new audit info entry."""
 
@@ -153,7 +151,7 @@ def create_audit_entry(operation_type,
         related_entity_id=related_entity_id,
         related_entity_hash=related_entity_hash,
         related_composite_id=related_composite_id,  # For composite Foreign Keys
-        details=details,
+        details=audit_details,
         created_by=created_by_user_id,
         created_at=time_stamp,
         last_edited_by=created_by_user_id,
@@ -167,7 +165,6 @@ def create_audit_entry(operation_type,
         model.db.session.commit()
 
     return audit_entry
-
 
 
 
@@ -204,7 +201,7 @@ def create_global_settings(deployment_fingerprint,
             auditable_entity_type=model.CLASS_TO_ENUM_MAP['GlobalSettings'],
             related_entity_id=global_settings.id,
             created_by_user_id=created_by_user_id,
-            details=audit_details
+            audit_details=audit_details
         )
 
         # Add the audit_entry to the session
@@ -250,7 +247,7 @@ def create_color(name,
             auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
             related_entity_id=color.id,
             created_by_user_id=created_by_user_id,
-            details=audit_details
+            audit_details=audit_details
         )
 
         # Add the audit_entry to the session
@@ -299,7 +296,7 @@ def create_ui_theme(name,
             auditable_entity_type=model.CLASS_TO_ENUM_MAP['Color'],
             related_entity_id=uiTheme.id,
             created_by_user_id=created_by_user_id,
-            details=audit_details
+            audit_details=audit_details
         )
 
         # Add the audit_entry to the session
@@ -314,7 +311,6 @@ def create_ui_theme(name,
         return uiTheme, audit_entry
     else:
         return uiTheme
-
 
 
 
@@ -355,7 +351,7 @@ def create_user_settings(currency_id,
             auditable_entity_type=model.CLASS_TO_ENUM_MAP['UserSettings'],
             related_entity_id=user_settings.id,
             created_by_user_id=created_by_user_id,
-            details=audit_details
+            audit_details=audit_details
         )
 
         # Add the audit_entry to the session
@@ -503,7 +499,7 @@ def create_user(password_hash,
         auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
         related_entity_id=user.id,
         created_by_user_id=created_by_user_id,
-        details=audit_details
+        audit_details=audit_details
     )
 
     # Add the user_audit_entry to the session
@@ -518,42 +514,24 @@ def create_user(password_hash,
 
 
 
-def create_phone_number(phone_type: model.PhoneType, #Type hint,
+def create_phone_number(phoneable_entity_type: model.PhoneableEntityTypes, #Type hint
+                        entity_id,
+                        phone_type: model.PhoneType, #Type hint,
                         is_cell,
                         country_code,
                         area_code,
                         phone_number,
                         created_by_user_id,
-                        audit_details,
+                        audit_details=None,
                         extension=None,
                         is_verified=False,
                         is_primary=False,
-                        associated_user_id=None,
-                        associated_manufacturer_id=None,
                         commit=True):
-    """
-    Create and return a phone number. If `user_id` is provided, it's associated with a user, 
-    if `manufacturer_id` is provided, it's associated with a manufacturer.
-    """
+    """Create and return a phone number."""
 
-    if associated_user_id is None and associated_manufacturer_id is None:
-        raise ValueError("Either user_id or manufacturer_id should be provided")
-    elif associated_user_id is not None and associated_manufacturer_id is not None:
-        raise ValueError("Both user_id and manufacturer_id cannot be provided simultaneously")
-
-    phone_number_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
-                                                  created_by_user_id,
-                                                  audit_details)
-    
-
-    phone_number_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
-                                                  model.CLASS_TO_ENUM_MAP['PhoneNumber'],  # or however you get the enum value
-                                                  new_phone_number.id,  # or however you get the related entity id
-                                                  created_by_user_id,
-                                                  audit_details)
-
-
-    new_phone_number = model.PhoneNumber(
+    phone_number = model.PhoneNumber(
+        phoneable_entity_type=phoneable_entity_type,
+        entity_id=entity_id,
         phone_type=phone_type,
         is_cell=is_cell,
         country_code=country_code,
@@ -561,96 +539,78 @@ def create_phone_number(phone_type: model.PhoneType, #Type hint,
         phone_number=phone_number,
         extension=extension,
         is_verified=is_verified,
-        is_primary=is_primary,
-        audit_info_entry_id=phone_number_audit_entry.id # Reusing the same audit entry for association
+        is_primary=is_primary
     )
 
-    model.db.session.add(new_phone_number)
-    model.db.session.add(phone_number_audit_entry)
-
-    # After adding to the session to get the phone_number's id after flush
+    # Add phone_number to the session for flush
+    model.db.session.add(phone_number)
+    # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    if associated_user_id:
-        user_phone_number_association = model.UserPhoneNumber(
-            user_id=associated_user_id,
-            phone_number_id=new_phone_number.id,
-            audit_info_entry_id=phone_number_audit_entry.id # Reusing the same audit entry for association
-        )
-        model.db.session.add(user_phone_number_association)
+    phone_number_audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['PhoneNumber'],
+        related_entity_id=phone_number.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
 
-    elif associated_manufacturer_id:
-        manufacturer_phone_number_association = model.BrandPhoneNumber(
-            manufacturer_id=associated_manufacturer_id,
-            phone_number_id=new_phone_number.id,
-            audit_info_entry_id=phone_number_audit_entry.id # Reusing the same audit entry for association
-        )
-        model.db.session.add(manufacturer_phone_number_association)
+    # Add the user_audit_entry to the session
+    model.db.session.add(phone_number_audit_entry)
+
 
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
-    return new_phone_number, phone_number_audit_entry
+    return phone_number, phone_number_audit_entry
 
 
 
-def create_email_address(email_type: model.EmailType, #Type hint
+def create_email_address(emailable_entity_type: model.EmailableEntityTypes, #Type hint
+                         entity_id,
+                         email_type: model.EmailType, #Type hint,email_type: model.EmailType, #Type hint
                          email_address, 
                          created_by_user_id,
+                         audit_details=None,
                          is_verified=False, 
                          is_primary=None, 
                          is_shared=None, 
-                         audit_details=None,
-                         associated_user_id=None,
-                         associated_manufacturer_id=None, 
                          commit=True):
     """Create and return a new email address."""
     
-    # Create an audit entry for the creation of the email address
-    email_audit_entry = create_audit_entry(model.OperationType.CREATE.value,
-                                          created_by_user_id,
-                                          audit_details)
-
-    new_email_address = model.EmailAddress(
+    email_address = model.EmailAddress(
+        emailable_entity_type=emailable_entity_type,
+        entity_id=entity_id,
         email_type=email_type,
         email_address=email_address,
         is_verified=is_verified,
         is_primary=is_primary,
-        is_shared=is_shared,
-        audit_info_entry_id=email_audit_entry.id # Reusing the same audit entry for association
+        is_shared=is_shared
     )
 
-    # Always add to the session
-    model.db.session.add(new_email_address)
-    model.db.session.add(email_audit_entry)
-
-    # After adding to the session to get the email_address's id after flush
+    # Add email_address to the session for flush
+    model.db.session.add(email_address)
+    # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    if associated_user_id:
-        user_email_association = model.UserEmailAddress(
-            user_id=associated_user_id,
-            email_address_id=new_email_address.id,
-            audit_info_entry_id=email_audit_entry.id  # Reusing the same audit entry for association
-        )
-        model.db.session.add(user_email_association)
-    
-    elif associated_manufacturer_id:
-        manufacturer_email_association = model.BrandEmailAddress(
-            manufacturer_id=associated_manufacturer_id,
-            email_address_id=new_email_address.id,
-            audit_info_entry_id=email_audit_entry.id  # Reusing the same audit entry for association
-        )
-        model.db.session.add(manufacturer_email_association)
+    email_audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['EmailAddress'],
+        related_entity_id=email_address.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(email_audit_entry)
+
 
     # Commit only if commit=True
     if commit:
         model.db.session.commit()
 
-    return new_email_address, email_audit_entry
-
-
+    return email_address, email_audit_entry
 
 
 
@@ -677,7 +637,7 @@ def create_user_role(user_id,
         related_entity_id=user_role.user_id,
         related_composite_id=user_role.role_id,
         created_by_user_id=created_by_user_id,
-        details=audit_details
+        audit_details=audit_details
     )
 
     # Add the audit_entry to the session
@@ -690,7 +650,6 @@ def create_user_role(user_id,
         model.db.session.commit()
     
     return user_role, audit_entry
-
 
 
 
@@ -715,7 +674,7 @@ def create_role(name, description,
         auditable_entity_type=model.CLASS_TO_ENUM_MAP['Role'],
         related_entity_id=role.id,
         created_by_user_id=created_by_user_id,
-        details=audit_details
+        audit_details=audit_details
     )
 
     # Add the audit_entry to the session
@@ -726,7 +685,6 @@ def create_role(name, description,
         model.db.session.commit()
     
     return role, audit_entry
-
 
 
 
@@ -753,7 +711,7 @@ def create_role_permission(role_id,
         related_entity_id=role_permission.role_id,
         related_composite_id=role_permission.permission_id,
         created_by_user_id=created_by_user_id,
-        details=audit_details
+        audit_details=audit_details
     )
 
     # Add the audit_entry to the session
@@ -764,8 +722,6 @@ def create_role_permission(role_id,
         model.db.session.commit()
     
     return role_permission, audit_entry
-
-
 
 
 
@@ -791,7 +747,7 @@ def create_permission(name,
         auditable_entity_type=model.CLASS_TO_ENUM_MAP['Permission'],
         related_entity_id=permission.id,
         created_by_user_id=created_by_user_id,
-        details=audit_details
+        audit_details=audit_details
     )
 
     # Add audit_entry to the session
@@ -802,9 +758,6 @@ def create_permission(name,
         model.db.session.commit()
     
     return permission, audit_entry
-
-
-
 
 
 
@@ -827,7 +780,6 @@ def read_global_settings():
         }
     else:
         return None
-
 
 
 
