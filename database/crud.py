@@ -460,14 +460,12 @@ def create_user(password_hash,
                 commit=True):
     """Create and return a new user."""
 
-    user_settings, user_settings_audit_entry = create_user_settings(
-        currency_id=currency_id,
-        time_format_is_24h=time_format_is_24h,
-        ui_theme_id=ui_theme_id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details,
-        commit=False
-        )
+    user_settings, user_settings_audit_entry = create_user_settings(currency_id=currency_id,
+                                                                    time_format_is_24h=time_format_is_24h,
+                                                                    ui_theme_id=ui_theme_id,
+                                                                    created_by_user_id=created_by_user_id,
+                                                                    audit_details=audit_details,
+                                                                    commit=False)
 
     ## Always add to the session
     ## They already get added in the create method
@@ -476,16 +474,14 @@ def create_user(password_hash,
     # Flush to get id for this entity for the AuditEntry & User
     model.db.session.flush()
 
-    user = model.User(
-        password_hash=password_hash, 
-        first_name=first_name,
-        middle_name=middle_name,
-        last_name=last_name,
-        nickname=nickname,
-        nickname_preferred=nickname_preferred,
-        user_settings_id=user_settings.id,
-        last_login=last_login
-        )
+    user = model.User(password_hash=password_hash, 
+                      first_name=first_name,
+                      middle_name=middle_name,
+                      last_name=last_name,
+                      nickname=nickname,
+                      nickname_preferred=nickname_preferred,
+                      user_settings_id=user_settings.id,
+                      last_login=last_login)
 
 
     # Add user to the session for flush
@@ -494,13 +490,11 @@ def create_user(password_hash,
     model.db.session.flush()
 
 
-    user_audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
-        related_entity_id=user.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    user_audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                          auditable_entity_type=model.CLASS_TO_ENUM_MAP['User'],
+                                          related_entity_id=user.id,
+                                          created_by_user_id=created_by_user_id,
+                                          audit_details=audit_details)
 
     # Add the user_audit_entry to the session
     model.db.session.add(user_audit_entry)
@@ -529,31 +523,27 @@ def create_phone_number(phoneable_entity_type: model.PhoneableEntityTypes, #Type
                         commit=True):
     """Create and return a phone number."""
 
-    phone_number = model.PhoneNumber(
-        phoneable_entity_type=phoneable_entity_type,
-        entity_id=entity_id,
-        phone_type=phone_type,
-        is_cell=is_cell,
-        country_code=country_code,
-        area_code=area_code,
-        phone_number=phone_number,
-        extension=extension,
-        is_verified=is_verified,
-        is_primary=is_primary
-    )
+    phone_number = model.PhoneNumber(phoneable_entity_type=phoneable_entity_type,
+                                     entity_id=entity_id,
+                                     phone_type=phone_type,
+                                     is_cell=is_cell,
+                                     country_code=country_code,
+                                     area_code=area_code,
+                                     phone_number=phone_number,
+                                     extension=extension,
+                                     is_verified=is_verified,
+                                     is_primary=is_primary)
 
     # Add phone_number to the session for flush
     model.db.session.add(phone_number)
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    phone_number_audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['PhoneNumber'],
-        related_entity_id=phone_number.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    phone_number_audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                  auditable_entity_type=model.CLASS_TO_ENUM_MAP['PhoneNumber'],
+                                                  related_entity_id=phone_number.id,
+                                                  created_by_user_id=created_by_user_id,
+                                                  audit_details=audit_details)
 
     # Add the user_audit_entry to the session
     model.db.session.add(phone_number_audit_entry)
@@ -594,13 +584,11 @@ def create_email_address(emailable_entity_type: model.EmailableEntityTypes, #Typ
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    email_audit_entry = create_audit_entry(
-        operation_type=model.OperationType.CREATE.value,
-        auditable_entity_type=model.CLASS_TO_ENUM_MAP['EmailAddress'],
-        related_entity_id=email_address.id,
-        created_by_user_id=created_by_user_id,
-        audit_details=audit_details
-    )
+    email_audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                           auditable_entity_type=model.CLASS_TO_ENUM_MAP['EmailAddress'],
+                                           related_entity_id=email_address.id,
+                                           created_by_user_id=created_by_user_id,
+                                           audit_details=audit_details)
 
     # Add the user_audit_entry to the session
     model.db.session.add(email_audit_entry)
@@ -614,6 +602,50 @@ def create_email_address(emailable_entity_type: model.EmailableEntityTypes, #Typ
 
 
 
+
+def create_file_attachment(attachable_entity_type: model.AttachableEntityTypes, #Type hint
+                           entity_id,
+                           file_path, 
+                           file_type: model.FileType,
+                           file_category: model.FileCategory,
+                           created_by_user_id,
+                           audit_details=None,
+                           image_size: model.ImageSize =None, 
+                           commit=True):
+    """Create and return a new file attachment."""
+    
+    file_attachment = model.FileAttachment(attachable_entity_type=attachable_entity_type,
+                                           entity_id=entity_id,
+                                           file_path=file_path,
+                                           file_type=file_type,
+                                           file_category=file_category,
+                                           image_size=image_size)
+
+    # Add file_attachment to the session for flush
+    model.db.session.add(file_attachment)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    file_attachment_audit_entry = create_audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachment'],
+        related_entity_id=file_attachment.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(file_attachment_audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return file_attachment, file_attachment_audit_entry
+
+
+
 def create_user_role(user_id,
                      role_id,
                      created_by_user_id,
@@ -621,10 +653,8 @@ def create_user_role(user_id,
                      commit=True):
     """Create and return a new user role entry."""
 
-    user_role = model.UserRole(
-        user_id=user_id,
-        role_id=role_id
-    )
+    user_role = model.UserRole(user_id=user_id,
+                               role_id=role_id)
     
     # Add user_role to the session for flush
     model.db.session.add(user_role)
@@ -659,10 +689,8 @@ def create_role(name, description,
                 commit=True):
     """Create and return a new role entry."""
 
-    role = model.Role(
-        name=name,
-        description=description
-    )
+    role = model.Role(name=name,
+                      description=description)
     
     # Add role to the session for flush
     model.db.session.add(role)
@@ -695,10 +723,8 @@ def create_role_permission(role_id,
                            commit=True):
     """Create and return a new role permission entry."""
     
-    role_permission = model.RolePermission(
-        role_id=role_id,
-        permission_id=permission_id
-    )
+    role_permission = model.RolePermission(role_id=role_id,
+                                           permission_id=permission_id)
     
     # Add role_permission to the session for flush
     model.db.session.add(role_permission)
@@ -732,10 +758,8 @@ def create_permission(name,
                       commit=True):
     """Create and return a new permission entry."""
     
-    permission = model.Permission(
-        name=name,
-        description=description
-    )
+    permission = model.Permission(name=name,
+                                  description=description)
 
     # Add permission to the session for flush
     model.db.session.add(permission)
@@ -759,6 +783,39 @@ def create_permission(name,
     
     return permission, audit_entry
 
+
+
+def create_manufacturer(name,
+                        created_by_user_id,
+                        audit_details=None,
+                        manufacturer_area_id=None,
+                        website=None,
+                        commit=True):
+    """Create and return a new manufacturer."""
+
+    manufacturer = model.Manufacturer(name=name,
+                                      manufacturer_area_id=manufacturer_area_id,
+                                      website=website)
+    
+    # Add manufacturer to the session for flush
+    model.db.session.add(manufacturer)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Manufacturer'],
+                                     related_entity_id=manufacturer.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return manufacturer, audit_entry
 
 
 
