@@ -719,11 +719,11 @@ def create_role(name, description,
 
 
 
-def create_role_permission(role_id,
-                           permission_id,
-                           created_by_user_id,
-                           audit_details=None,
-                           commit=True):
+def create_role_permission(role_id: int,
+                           permission_id: int,
+                           created_by_user_id: int,
+                           audit_details: Optional[str] = None,
+                           commit: bool = True):
     """Create and return a new role permission entry."""
     
     role_permission = model.RolePermission(role_id=role_id,
@@ -1042,6 +1042,74 @@ def create_asset_location_log(asset_id: int,
 
 
 
+def create_flag(name: str,
+                color_id: int,
+                created_by_user_id: int,
+                description: Optional[str] = None,
+                makes_unavailable: bool = False,
+                audit_details: Optional[str] = None,
+                commit: bool = True):
+    """Create and return a flag entry."""
+    
+    flag = model.Flag(name=name,
+                      description=description,
+                      color_id=color_id,
+                      makes_unavailable=makes_unavailable)
+
+    # Add comment to the session for flush
+    model.db.session.add(flag)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Flag'],
+                                                     related_entity_id=flag.id,
+                                                     created_by_user_id=created_by_user_id,
+                                                     audit_details=audit_details)
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return flag, audit_entry
+
+
+
+
+def create_asset_flag(asset_id: int,
+                      flag_id: int,
+                      created_by_user_id: int,
+                      audit_details: Optional[str] = None,
+                      commit: bool = True):
+    """Create and return a new Asset Flag entry."""
+    
+    asset_flag = model.AssetFlag(asset_id=asset_id,
+                                 flag_id=flag_id)
+    
+    # Add role_permission to the session for flush
+    model.db.session.add(asset_flag)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['AssetFlag'],
+                                     related_entity_id=asset_flag.asset_id,
+                                     related_composite_id=asset_flag.flag_id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return asset_flag, audit_entry
 
 
 
