@@ -305,7 +305,7 @@ def populate_timezones():
         
         # Iterate over each timezone in the JSON file
         for timezone in timezones:
-            tz = crud.Create.timezone(id=timezone['id'],
+            tz = crud.create.timezone(id=timezone['id'],
                                       identifier=timezone['identifier'],
                                       abbreviation=timezone['abbreviation'],
                                       utc_offset_minutes=timezone['utc_offset_minutes'],
