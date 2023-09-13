@@ -3,6 +3,7 @@
 import os
 import sys
 import model
+from permissions import has_permission, PermissionsType
 
 from datetime import datetime
 from typing import Optional, List
@@ -1420,6 +1421,32 @@ class Read:
         
         audit_entries = model.db.session.query(model.AuditEntry).all()
         return audit_entries if audit_entries else None
+    
+
+
+    @staticmethod
+    def reservation_by_id(user_id, reservation_id):
+        """Fetch and return a Reservation by its id, or None if no matching entry is found."""
+        if has_permission(user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            reservation = model.db.session.query(model.Reservation).filter_by(id=reservation_id).first()
+            return reservation if reservation else None
+        else:
+            return None
+
+    @staticmethod
+    def reservations_all(user_id):
+        """Fetch and return all entries from the Reservation table, or None if the table is empty."""
+        query = model.db.session.query(model.Reservation)
+
+        if has_permission(user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            reservations = query.all()
+        else:
+            reservations = query.filter_by(is_archived=False).all()
+
+        return reservations if reservations else None
+
+
+
 
 
 

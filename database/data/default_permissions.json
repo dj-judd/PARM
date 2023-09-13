@@ -15,6 +15,11 @@
           "permission": "can_archive_assets",
           "name": "Can Archive Assets",
           "description": "Allow marking an asset as archived."
+        },
+        {
+          "permission": "can_view_archived_assets",
+          "name": "Can View Archived Assets",
+          "description": "Allow viewing of assets marked as archived."
         }
       ],
       "users": [
@@ -37,6 +42,11 @@
           "permission": "can_assign_role_to_users",
           "name": "Can Assign Role to Users",
           "description": "Allow assigning roles to users."
+        },
+        {
+          "permission": "can_view_archived_users",
+          "name": "Can View Archived Users",
+          "description": "Allow viewing of users marked as archived."
         }
       ],
       "roles": [
@@ -59,6 +69,11 @@
           "permission": "can_assign_permission_to_roles",
           "name": "Can Assign Permission to Roles",
           "description": "Allow assigning permissions to roles."
+        },
+        {
+          "permission": "can_view_archived_roles",
+          "name": "Can View Archived Roles",
+          "description": "Allow viewing of roles marked as archived."
         }
       ],
       "areas": [
@@ -76,6 +91,11 @@
           "permission": "can_archive_areas",
           "name": "Can Archive Areas",
           "description": "Allow marking an area as archived."
+        },
+        {
+          "permission": "can_view_archived_areas",
+          "name": "Can View Archived Areas",
+          "description": "Allow viewing of areas marked as archived."
         }
       ],
       "reservations": [
@@ -93,6 +113,11 @@
           "permission": "can_archive_reservations",
           "name": "Can Archive Reservations",
           "description": "Allow marking a reservation as archived."
+        },
+        {
+          "permission": "can_view_archived_reservations",
+          "name": "Can View Archived Reservations",
+          "description": "Allow viewing of reservations marked as archived."
         }
       ],
       "comments": [
@@ -127,6 +152,11 @@
             "permission": "can_clear_flags",
             "name": "Can Clear Flags",
             "description": "Allow clearing flagged issues."
+        },
+        {
+          "permission": "can_view_archived_flags",
+          "name": "Can View Archived Flags",
+          "description": "Allow viewing of flags marked as archived."
         }
        ]
     }
