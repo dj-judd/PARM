@@ -129,7 +129,7 @@ reservation_status_enum = ENUM(
 
 
 # Python Enum
-class ScanCodeType(PyEnum):
+class AssetCodeType(PyEnum):
     BARCODE =   "BARCODE"
     QR =        "QR"
     NFC =       "NFC"
@@ -137,7 +137,7 @@ class ScanCodeType(PyEnum):
 
 # PostgreSQL ENUMs:
 asset_code_type_enum = ENUM(
-    *[e.value for e in ScanCodeType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
+    *[e.value for e in AssetCodeType],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
     name='asset_code_type'
 )
 
