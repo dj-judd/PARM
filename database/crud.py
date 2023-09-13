@@ -1005,7 +1005,6 @@ def create_asset(manufacturer_id: int,
 
 
 
-
 def create_asset_tag(asset_id: int,
                      code_type: model.AssetCodeType,
                      data: str,
@@ -1041,7 +1040,6 @@ def create_asset_tag(asset_id: int,
 
 
 
-
 def create_asset_location_log(asset_id: int,
                               latitude: int,
                               longitude: int,
@@ -1074,7 +1072,6 @@ def create_asset_location_log(asset_id: int,
         model.db.session.commit()
 
     return asset_location_log, audit_entry
-
 
 
 
@@ -1115,7 +1112,6 @@ def create_flag(name: str,
 
 
 
-
 def create_asset_flag(asset_id: int,
                       flag_id: int,
                       created_by_user_id: int,
@@ -1146,8 +1142,6 @@ def create_asset_flag(asset_id: int,
         model.db.session.commit()
     
     return asset_flag, audit_entry
-
-
 
 
 
@@ -1188,7 +1182,6 @@ def create_custom_property(name: str,
 
 
 
-
 def create_asset_custom_property(asset_id: int,
                                  custom_property_id: int,
                                  data_value: str,
@@ -1224,6 +1217,79 @@ def create_asset_custom_property(asset_id: int,
 
 
 
+def create_reservation(reserved_for: int,
+                       area_id: int,
+                       created_by_user_id: int,
+                       planned_checkout_time: Optional[datetime] = None,
+                       planned_checkin_time: Optional[datetime] = None,
+                       checkout_time: Optional[datetime] = None,
+                       checkin_time: Optional[datetime] = None,
+                       is_indefinite: bool = False,
+                       audit_details: Optional[str] = None,
+                       commit: bool = True):
+    """Create and return a reservation entry."""
+    
+    reservation = model.Reservation(reserved_for=reserved_for,
+                                    area_id=area_id,
+                                    planned_checkout_time=planned_checkout_time,
+                                    planned_checkin_time=planned_checkin_time,
+                                    checkout_time=checkout_time,
+                                    checkin_time=checkin_time,
+                                    is_indefinite=is_indefinite)
+
+    # Add comment to the session for flush
+    model.db.session.add(reservation)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Reservation'],
+                                                     related_entity_id=reservation.id,
+                                                     created_by_user_id=created_by_user_id,
+                                                     audit_details=audit_details)
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return reservation, audit_entry
+
+
+
+def create_reservation_asset(reservation_id: int,
+                             asset_id: int,
+                             created_by_user_id: int,
+                             audit_details: Optional[str] = None,
+                             commit: bool = True):
+    """Create and return a new Reservation Asset entry."""
+    
+    reservation_asset = model.ReservationAsset(reservation_id=reservation_id,
+                                               asset_id=asset_id)
+    
+    # Add role_permission to the session for flush
+    model.db.session.add(reservation_asset)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['ReservationAsset'],
+                                     related_entity_id=reservation_asset.reservation_id,
+                                     related_composite_id=reservation_asset.asset_id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return reservation_asset, audit_entry
 
 
 
