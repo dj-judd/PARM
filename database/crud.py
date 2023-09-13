@@ -5,13 +5,14 @@ import sys
 import model
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
+from sqlalchemy import desc
 
 from backend_utils import utils
 from backend_utils.utils import UNDERLINED, GREEN_BOLD, YELLOW_BOLD, RED_BOLD, RESET
 
 
-
+# CREATE
 class Create:
 
     @staticmethod
@@ -1379,28 +1380,50 @@ class Create:
 
 
 
-
-
 # READ
-
-
-
-
-
 class Read:
 
     @staticmethod
     def global_settings():
-        """Fetch default settings from the global_settings table."""
-        global_settings = model.db.session.query(model.GlobalSettings).first()
+        """Fetch and return the first entry from the global_settings table, or None if no entry exists."""
         
-        if global_settings:
-            return {
-                "deployment_fingerprint": global_settings.deployment_fingerprint,
-                "default_currency_id": global_settings.default_currency_id
-            }
-        else:
-            return None
+        global_settings = model.db.session.query(model.GlobalSettings).first()
+        return global_settings if global_settings else None
+
+
+
+    @staticmethod
+    def audit_entry_by_id(audit_entry_id: int):
+        """Fetch and return an AuditEntry by its id, or None if no matching entry is found."""
+        
+        audit_entry = model.db.session.query(model.AuditEntry).filter_by(id=audit_entry_id).first()
+        return audit_entry if audit_entry else None
+    
+    @staticmethod
+    def audit_entries_by_ids(audit_entry_ids: List[int]):
+        """Fetch and return a list of AuditEntries by their ids, or None if no matching entry is found."""
+        
+        audit_entries = model.db.session.query(model.AuditEntry).filter(model.AuditEntry.id.in_(audit_entry_ids)).all()
+        return audit_entries if audit_entries else None
+    
+    def audit_entry_most_recent_for_entity(auditable_entity_type, related_entity_id):
+        """Fetch and return the most recent AuditEntry for a specific entity type and id, or None if no matching entry is found."""
+        
+        most_recent_entry = model.db.session.query(model.AuditEntry).filter_by(auditable_entity_type=auditable_entity_type,
+                                                                               related_entity_id=related_entity_id
+                                    ).order_by(desc(model.AuditEntry.created_at)).first()
+        return most_recent_entry if most_recent_entry else None
+
+    @staticmethod
+    def audit_entries_all():
+        """Fetch and return all entries from the AuditEntry table, or None if the table is empty."""
+        
+        audit_entries = model.db.session.query(model.AuditEntry).all()
+        return audit_entries if audit_entries else None
+
+
+
+
 
 
 
