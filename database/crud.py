@@ -1431,8 +1431,8 @@ class Read:
 
     @staticmethod
     def reservation_by_id(requesting_user_id: int,
-                        reservation_id: int,
-                        include_archived: bool = False):
+                          reservation_id: int,
+                          include_archived: bool = False):
         """Fetch and return a Reservation by its id, or None if no matching entry is found."""
         
         # Alias for the AuditEntry table
@@ -1499,8 +1499,8 @@ class Read:
 
     @staticmethod
     def reservations_all(requesting_user_id: int,
-                        include_archived: bool = False,
-                        just_archived: bool = False):
+                         include_archived: bool = False,
+                         just_archived: bool = False):
         """Fetch and return all entries from the Reservation table, or None if the table is empty."""
 
         # Raise error if both flags are True
