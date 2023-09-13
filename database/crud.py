@@ -619,7 +619,7 @@ def create_file_attachment(attachable_entity_type: model.AttachableEntityTypes, 
                            file_category: model.FileCategory,
                            created_by_user_id,
                            audit_details=None,
-                           image_size: model.ImageSize =None, 
+                           image_size: model.ImageSize = None, 
                            commit=True):
     """Create and return a new file attachment."""
     
@@ -653,11 +653,11 @@ def create_file_attachment(attachable_entity_type: model.AttachableEntityTypes, 
 
 
 
-def create_user_role(user_id,
-                     role_id,
-                     created_by_user_id,
-                     audit_details=None,
-                     commit=True):
+def create_user_role(user_id: int,
+                     role_id: int,
+                     created_by_user_id: int,
+                     audit_details: Optional[str] = None,
+                     commit: bool = True):
     """Create and return a new user role entry."""
 
     user_role = model.UserRole(user_id=user_id,
@@ -752,11 +752,11 @@ def create_role_permission(role_id,
 
 
 
-def create_permission(name,
-                      description,
-                      created_by_user_id,
-                      audit_details=None,
-                      commit=True):
+def create_permission(name: str,
+                      description: str,
+                      created_by_user_id: int,
+                      audit_details: Optional[str] = None,
+                      commit: bool = True):
     """Create and return a new permission entry."""
     
     permission = model.Permission(name=name,
@@ -1002,6 +1002,88 @@ def create_asset(manufacturer_id: int,
         model.db.session.commit()
     
     return asset, audit_entry
+
+
+
+
+
+
+
+
+
+
+
+def create_comment(commentable_entity_type: model.CommentableEntityTypes, #Type hint
+                   entity_id: int,
+                   comment_data: str,
+                   created_by_user_id: int,
+                   parent_comment_id: Optional[int] = None,
+                   audit_details: Optional[str] = None,
+                   commit: bool = True):
+    """Create and return a new comment entry."""
+    
+    comment = model.Comment(parent_comment_id=parent_comment_id,
+                            commentable_entity_type=commentable_entity_type,
+                            entity_id=entity_id,
+                            comment_data=comment_data)
+
+    # Add comment to the session for flush
+    model.db.session.add(comment)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Comment'],
+                                                     related_entity_id=comment.id,
+                                                     created_by_user_id=created_by_user_id,
+                                                     audit_details=audit_details)
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return comment, audit_entry
+
+
+
+
+def create_reaction(user_id: int,
+                    comment_id: int,
+                    reaction_type: model.ReactionType,
+                    created_by_user_id: int,
+                    audit_details: Optional[str] = None,
+                    commit: bool = True):
+    """Create and return a new reaction entry."""
+
+    reaction = model.Reaction(user_id=user_id,
+                              role_id=comment_id,
+                              reaction_type=reaction_type)
+    
+    # Add reaction to the session for flush
+    model.db.session.add(reaction)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['Reaction'],
+                                     related_entity_id=reaction.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return reaction, audit_entry
 
 
 

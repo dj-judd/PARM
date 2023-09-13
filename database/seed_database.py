@@ -647,6 +647,7 @@ def main():
 
     populate_states()
 
+
     primary_color_01 , secondary_color_01, primary_color_02, secondary_color_02 = populate_initial_colors()
 
     light_theme, dark_theme = populate_initial_ui_themes(primary_color_01.id, secondary_color_01.id, primary_color_02.id, secondary_color_02.id)
@@ -680,6 +681,14 @@ def main():
 
     populate_user_roles(number_of_users_to_generate, db_init_message)
 
+    crud.create_address("mom's hosue",
+                    model.AddressType.RESIDENTIAL.value,
+                    "2107 SE 9th St.",
+                    "Bentonville",
+                    4,
+                    "72712-8000",
+                    1,
+                    0)
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
 
