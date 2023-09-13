@@ -1115,6 +1115,81 @@ def create_asset_flag(asset_id: int,
 
 
 
+def create_custom_property(name: str,
+                           data_type: model.CustomPropertyDataType,
+                           created_by_user_id: int,
+                           prefix: Optional[str] = None,
+                           suffix: Optional[str] = None,
+                           audit_details: Optional[str] = None,
+                           commit: bool = True):
+    """Create and return a Custom Property entry."""
+    
+    custom_property = model.CustomProperty(name=name,
+                                           prefix=prefix,
+                                           suffix=suffix,
+                                           data_type=data_type)
+
+    # Add comment to the session for flush
+    model.db.session.add(custom_property)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['CustomProperty'],
+                                     related_entity_id=custom_property.id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return custom_property, audit_entry
+
+
+
+
+def create_asset_custom_property(asset_id: int,
+                                 custom_property_id: int,
+                                 data_value: str,
+                                 created_by_user_id: int,
+                                 audit_details: Optional[str] = None,
+                                 commit: bool = True):
+    """Create and return a new Asset Custom Property entry."""
+    
+    asset_custom_property = model.AssetCustomProperty(asset_id=asset_id,
+                                                      custom_property_id=custom_property_id,
+                                                      data_value=data_value)
+    
+    # Add role_permission to the session for flush
+    model.db.session.add(asset_custom_property)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['AssetCustomProperty'],
+                                     related_entity_id=asset_custom_property.asset_id,
+                                     related_composite_id=asset_custom_property.custom_property_id,
+                                     created_by_user_id=created_by_user_id,
+                                     audit_details=audit_details)
+
+    # Add the audit_entry to the session
+    model.db.session.add(audit_entry)
+    
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+    
+    return asset_custom_property, audit_entry
+
+
+
+
+
 
 def create_comment(commentable_entity_type: model.CommentableEntityTypes, #Type hint
                    entity_id: int,
