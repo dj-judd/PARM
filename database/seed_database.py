@@ -45,23 +45,23 @@ model.db.create_all()
 def populate_initial_colors():
     try:
 
-        primary_color_01 = crud.Create.color("Paper White | Default",
+        primary_color_01 = crud.create.color("Paper White | Default",
                                              "#f0eae7",
                                              audit=False,
                                              commit=False)
         
-        secondary_color_01 = crud.Create.color("Sky Blue | Default",
+        secondary_color_01 = crud.create.color("Sky Blue | Default",
                                                "17baeb",
                                                audit=False,
                                                commit=False)
         
 
-        primary_color_02 = crud.Create.color("Dark Gray | Default",
+        primary_color_02 = crud.create.color("Dark Gray | Default",
                                              "#0f0d12",
                                              audit=False,
                                              commit=False)
         
-        secondary_color_02 = crud.Create.color("Hot Red | Default",
+        secondary_color_02 = crud.create.color("Hot Red | Default",
                                                "#eb315d",
                                                audit=False,
                                                commit=False)        
@@ -82,14 +82,14 @@ def populate_initial_colors():
 def populate_initial_ui_themes(primary_color_01_id, secondary_color_01_id, primary_color_02_id, secondary_color_02_id):
     try:
 
-        light_ui_theme = crud.Create.ui_theme("Light Theme",
+        light_ui_theme = crud.create.ui_theme("Light Theme",
                                               "Clean & Cultured",
                                               primary_color_01_id,
                                               secondary_color_01_id,
                                               audit=False,
                                               commit=False)
         
-        dark_ui_theme = crud.Create.ui_theme("Dark Theme",
+        dark_ui_theme = crud.create.ui_theme("Dark Theme",
                                              "Cyberpunk Styling",
                                              primary_color_02_id,
                                              secondary_color_02_id,
@@ -117,7 +117,7 @@ def populate_initial_global_settings(deployment_fingerprint=None,
         else:
             deployment_fingerprint = generate_deployment_fingerprint(deployment_fingerprint)
 
-        global_settings = crud.Create.global_settings(deployment_fingerprint=deployment_fingerprint,
+        global_settings = crud.create.global_settings(deployment_fingerprint=deployment_fingerprint,
                                                       default_currency_id=default_currency_id,
                                                       audit=False,
                                                       commit=False)
@@ -147,7 +147,7 @@ def populate_boostrap_user(password_hash,
                            last_login=None):
     try:
 
-        bootstrap_user, bootstrap_user_settings = crud.Create.bootstrap_user(id=0,
+        bootstrap_user, bootstrap_user_settings = crud.create.bootstrap_user(id=0,
                                                     password_hash=password_hash,
                                                     first_name=first_name,
                                                     last_name=last_name,
@@ -212,63 +212,63 @@ def populate_bootstrap_audit_entries(p_color_01_id,
                                      bootstrap_user_id):
     
     try:
-        primary_color_01_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        primary_color_01_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                related_entity_id = p_color_01_id,
                                                                audit_details = db_init_message,
                                                                created_by_user_id = bootstrap_user_id,
                                                                commit = False)
 
-        secondary_color_01_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        secondary_color_01_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                  auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                  related_entity_id = s_color_01_id,
                                                                  audit_details = db_init_message,
                                                                  created_by_user_id = bootstrap_user_id,
                                                                  commit = False)
         
-        primary_color_02_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        primary_color_02_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                related_entity_id = p_color_02_id,
                                                                audit_details = db_init_message,
                                                                created_by_user_id = bootstrap_user_id,
                                                                commit = False)
         
-        secondary_color_02_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        secondary_color_02_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                  auditable_entity_type = model.CLASS_TO_ENUM_MAP['Color'],
                                                                  related_entity_id = s_color_02_id,
                                                                  audit_details = db_init_message,
                                                                  created_by_user_id = bootstrap_user_id,
                                                                  commit = False)
         
-        light_theme_ui_theme_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        light_theme_ui_theme_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                    auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
                                                                    related_entity_id = light_ui_id,
                                                                    audit_details = db_init_message,
                                                                    created_by_user_id = bootstrap_user_id,
                                                                    commit = False)
         
-        dark_theme_ui_theme_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        dark_theme_ui_theme_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                   auditable_entity_type = model.CLASS_TO_ENUM_MAP['UiTheme'],
                                                                   related_entity_id = dark_ui_id,
                                                                   audit_details = db_init_message,
                                                                   created_by_user_id = bootstrap_user_id,
                                                                   commit = False)
         
-        global_settings_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        global_settings_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                               auditable_entity_type = model.CLASS_TO_ENUM_MAP['GlobalSettings'],
                                                               related_entity_hash = global_settings_fingerprint,
                                                               audit_details = db_init_message,
                                                               created_by_user_id = bootstrap_user_id,
                                                               commit = False)
         
-        bootstrap_user_settings_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        bootstrap_user_settings_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                                       auditable_entity_type = model.CLASS_TO_ENUM_MAP['UserSettings'],
                                                                       related_entity_id = bootstrap_user_settings_id,
                                                                       audit_details = db_init_message,
                                                                       created_by_user_id = bootstrap_user_id,
                                                                       commit = False)
         
-        bootstrap_user_audit_entry = crud.Create.audit_entry(operation_type = model.OperationType.CREATE.value,
+        bootstrap_user_audit_entry = crud.create.audit_entry(operation_type = model.OperationType.CREATE.value,
                                                              auditable_entity_type = model.CLASS_TO_ENUM_MAP['User'],
                                                              related_entity_id = bootstrap_user_id,
                                                              audit_details = db_init_message,
@@ -332,7 +332,7 @@ def populate_countries():
         
         # Iterate over each country in the JSON file
         for country in countries:
-            entry = crud.Create.country(id=country['id'],
+            entry = crud.create.country(id=country['id'],
                                         code=country['code'],
                                         intl_phone_code=country['intl_phone_code'],
                                         name=country['name'],
@@ -357,7 +357,7 @@ def populate_states():
     try:
         
         for state in states_data:
-            state_entry = crud.Create.state(code=state["code"],
+            state_entry = crud.create.state(code=state["code"],
                                             name=state["name"],
                                             timezone_id=state["timezone_id"],
                                             country_id=state["country_id"],
@@ -382,7 +382,7 @@ def populate_currencies():
         
         # Iterate over each currency in the JSON file
         for currency in currencies:
-            entry = crud.Create.currency(id=currency['id'],
+            entry = crud.create.currency(id=currency['id'],
                                          name=currency['name'],
                                          symbol=currency['symbol'],
                                          iso_code=currency['iso_code'],
@@ -425,7 +425,7 @@ def populate_permissions(created_by_user_id=0):
         for category, permissions in permissions_data.items():
             for permission in permissions:
                 # Create the permission using crud.py's function
-                new_permission, _ = crud.Create.permission(name=permission["permission"],
+                new_permission, _ = crud.create.permission(name=permission["permission"],
                                                            description=permission["description"],
                                                            created_by_user_id=created_by_user_id,
                                                            audit_details=f"Seeding permission: {permission['permission']}",
@@ -463,7 +463,7 @@ def populate_roles(created_by_user_id=0,
         # Iterate over each role in the JSON
         for role in roles_data:
             # Create the role using crud.py's function
-            new_role, _ = crud.Create.role(name=role["name"],
+            new_role, _ = crud.create.role(name=role["name"],
                                            description=role["description"],
                                            created_by_user_id=created_by_user_id,
                                            audit_details=f"Seeding role: {role['name']}",
@@ -476,7 +476,7 @@ def populate_roles(created_by_user_id=0,
             for permission_code in role["permissions"]:
                 permission_id = permission_id_mapping.get(permission_code)
                 if permission_id:
-                    crud.Create.role_permission(role_id=new_role.id,
+                    crud.create.role_permission(role_id=new_role.id,
                                                 permission_id=permission_id,
                                                 created_by_user_id=created_by_user_id,
                                                 audit_details=f"Assigning permission {permission_code} to role {role['name']}",
@@ -506,7 +506,7 @@ def populate_user_roles(number_of_users_to_generate,
     try:
 
         # Assign Account Owner
-        crud.Create.user_role(user_id=1,
+        crud.create.user_role(user_id=1,
                               role_id=1,
                               created_by_user_id=0,
                               audit_details="Account Owner Creation",
@@ -517,7 +517,7 @@ def populate_user_roles(number_of_users_to_generate,
             created_by_user_id = random.randint(1, number_of_users_to_generate)
             audit_details = audit_details
 
-            crud.Create.user_role(user_id=user_id,
+            crud.create.user_role(user_id=user_id,
                                   role_id=role_id,
                                   created_by_user_id=created_by_user_id,
                                   audit_details=audit_details,
@@ -542,7 +542,7 @@ def populate_users(number_of_users_to_generate):
     audit_detail = "Created in user loop."
 
     # Initial Account Owner = id 1
-    _, _, _, _ = crud.Create.user("password",
+    _, _, _, _ = crud.create.user("password",
                                   first_name="Big",
                                   last_name="Boss",
                                   currency_id=1,
@@ -567,7 +567,7 @@ def populate_users(number_of_users_to_generate):
             phone_number = random.randint(1000000, 9999999)
             email = f"{first_name.lower()}.{last_name.lower()}@gmail.com"
 
-            user, _, _, _ = crud.Create.user("password",
+            user, _, _, _ = crud.create.user("password",
                                              first_name,
                                              last_name,
                                              1,
@@ -577,7 +577,7 @@ def populate_users(number_of_users_to_generate):
                                              2
                                              )
             
-            _, _ = crud.Create.phone_number(model.PhoneableEntityTypes.USER.value,
+            _, _ = crud.create.phone_number(model.PhoneableEntityTypes.USER.value,
                                             user.id,
                                             model.PhoneType.PERSONAL.value,
                                             True,
@@ -588,7 +588,7 @@ def populate_users(number_of_users_to_generate):
                                             audit_detail
                                             )
             
-            _, _ = crud.Create.email_address(model.EmailableEntityTypes.USER.value,
+            _, _ = crud.create.email_address(model.EmailableEntityTypes.USER.value,
                                              user.id,
                                              model.PhoneType.PERSONAL.value,
                                              email,
@@ -651,7 +651,7 @@ def main():
 
     populate_user_roles(number_of_users_to_generate, db_init_message)
 
-    crud.Create.address("mom's hosue",
+    crud.create.address("mom's hosue",
                         model.AddressType.RESIDENTIAL.value,
                         "2107 SE 9th St.",
                         "Bentonville",
