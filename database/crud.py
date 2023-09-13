@@ -1407,7 +1407,8 @@ class Read:
         audit_entries = model.db.session.query(model.AuditEntry).filter(model.AuditEntry.id.in_(audit_entry_ids)).all()
         return audit_entries if audit_entries else None
     
-    def audit_entry_most_recent_for_entity(auditable_entity_type, related_entity_id):
+    def audit_entry_most_recent_for_entity(auditable_entity_type: model.AuditableEntityTypes,
+                                           related_entity_id: int):
         """Fetch and return the most recent AuditEntry for a specific entity type and id, or None if no matching entry is found."""
         
         most_recent_entry = model.db.session.query(model.AuditEntry).filter_by(auditable_entity_type=auditable_entity_type,
@@ -1424,21 +1425,41 @@ class Read:
     
 
 
+
+
     @staticmethod
-    def reservation_by_id(user_id, reservation_id):
+    def reservation_by_id(requesting_user_id: int,
+                          reservation_id: int):
         """Fetch and return a Reservation by its id, or None if no matching entry is found."""
-        if has_permission(user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+        
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
             reservation = model.db.session.query(model.Reservation).filter_by(id=reservation_id).first()
             return reservation if reservation else None
         else:
             return None
+        
+    @staticmethod
+    def reservations_by_ids(requesting_user_id: int,
+                            reservation_ids: List[int]):
+        """Fetch and return a list of Reservations by their ids, or None if no matching entry is found."""
+        
+        query = model.db.session.query(model.Reservation).filter(model.Reservation.id.in_(reservation_ids))
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            reservations = query.all()
+        else:
+            reservations = query.filter_by(is_archived=False).all()
+
+        return reservations if reservations else None
+
 
     @staticmethod
-    def reservations_all(user_id):
+    def reservations_all(requesting_user_id: int):
         """Fetch and return all entries from the Reservation table, or None if the table is empty."""
+        
         query = model.db.session.query(model.Reservation)
 
-        if has_permission(user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
             reservations = query.all()
         else:
             reservations = query.filter_by(is_archived=False).all()

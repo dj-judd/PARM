@@ -51,7 +51,8 @@ class PermissionsType(Enum):
     CAN_VIEW_ARCHIVED_FLAGS = "can_view_archived_flags"
 
 
-def has_permission(user_id, required_permission):
+def has_permission(user_id: int,
+                   required_permission: PermissionsType):
     # Fetch the user and their roles
     user = model.db.session.query(model.User).options(
         joinedload(model.User.role_relationships)
