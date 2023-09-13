@@ -1006,6 +1006,41 @@ def create_asset(manufacturer_id: int,
 
 
 
+def create_asset_location_log(asset_id: int,
+                              latitude: int,
+                              longitude: int,
+                              created_by_user_id: int,
+                              audit_details: Optional[str] = None,
+                              commit: bool = True):
+    """Create and return a new asset_location_log entry."""
+    
+    asset_location_log = model.AssetLocationLog(asset_id=asset_id,
+                                                latitude=latitude,
+                                                longitude=longitude)
+
+    # Add comment to the session for flush
+    model.db.session.add(asset_location_log)
+    # Flush to get id for this entity for the AuditEntry
+    model.db.session.flush()
+
+    audit_entry = create_audit_entry(operation_type=model.OperationType.CREATE.value,
+                                                     auditable_entity_type=model.CLASS_TO_ENUM_MAP['AssetLocationLog'],
+                                                     related_entity_id=asset_location_log.id,
+                                                     created_by_user_id=created_by_user_id,
+                                                     audit_details=audit_details)
+
+    # Add the user_audit_entry to the session
+    model.db.session.add(audit_entry)
+
+
+    # Commit only if commit=True
+    if commit:
+        model.db.session.commit()
+
+    return asset_location_log, audit_entry
+
+
+
 
 
 
