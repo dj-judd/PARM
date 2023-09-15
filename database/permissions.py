@@ -50,9 +50,16 @@ class PermissionsType(Enum):
     CAN_CLEAR_FLAGS = "can_clear_flags"
     CAN_VIEW_ARCHIVED_FLAGS = "can_view_archived_flags"
 
+    # Audits
+    CAN_CREATE_AUDITS = "can_create_audits"
+    CAN_VIEW_AUDITS = "can_view_audits"
+    CAN_VIEW_ALL_AUDITS = "can_view_all_audits"
+    CAN_UPDATE_AUDITS = "can_update_audits"
+    CAN_DELETE_AUDITS = "can_delete_audits"
+
 
 def has_permission(user_id: int,
-                   required_permission: PermissionsType):
+                   required_permission: PermissionsType) -> bool:
     # Fetch the user and their roles
     user = model.db.session.query(model.User).options(
         joinedload(model.User.role_relationships)

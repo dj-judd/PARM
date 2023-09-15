@@ -26,7 +26,13 @@
                 "can_archive_comments",
                 "can_view_archived_comments",
                 "can_flag_issues",
-                "can_clear_flags"
+                "can_clear_flags",
+ 
+                "can_create_audits",
+                "can_read_audits",
+                "can_read_all_audits",
+                "can_update_audits",
+                "can_delete_audits"
             ]
         },
         {
@@ -53,7 +59,13 @@
                 "can_create_comments",
                 "can_update_own_comments",
                 "can_archive_comments",
-                "can_view_archived_comments"
+                "can_view_archived_comments",
+
+                "can_create_audits",
+                "can_read_audits",
+                "can_read_all_audits",
+                "can_update_audits",
+                "can_delete_audits"
             ]
         },
         {
@@ -121,6 +133,13 @@
             "description": "Can flag issues but not clear them.",
             "permissions": [
                 "can_flag_issues"
+            ]
+        },
+        {
+            "name": "Audit Access",
+            "description": "Has access to read audits.",
+            "permissions": [
+                "can_read_audits"
             ]
         },
         {

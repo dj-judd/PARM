@@ -158,6 +158,33 @@
           "name": "Can View Archived Flags",
           "description": "Allow viewing of flags marked as archived."
         }
+       ],
+       "audits": [
+        {
+          "permission": "can_create_audits",
+          "name": "Can Create Audits",
+          "description": "Allow creating new audits."
+        },
+        {
+          "permission": "can_view_audits",
+          "name": "Can Read Audits",
+          "description": "Allow viewing audits."
+        },
+        {
+          "permission": "can_view_all_audits",
+          "name": "Can Read All Audits",
+          "description": "Allow viewing all audits at once."
+        },
+        {
+          "permission": "can_update_audits",
+          "name": "Can Update Audits",
+          "description": "Allow updating existing audits."
+        },
+        {
+          "permission": "can_delete_audits",
+          "name": "Can Delete Audits",
+          "description": "Allow deleting existing audits."
+        }
        ]
     }
   }

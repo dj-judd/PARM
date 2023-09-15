@@ -4,6 +4,8 @@ import time
 import threading
 import inspect
 
+from typing import Optional
+
 
 # ANSI codes for colors and text attributes
 UNDERLINED = "\033[4m"
@@ -61,7 +63,9 @@ def openingText(program_name, version_number):
     print()
 
 
-def errorMessage(e, origin_file=None, line_number=None):
+def errorMessage(e,
+                 origin_file: Optional[str]=None,
+                 line_number: Optional[int]=None):
     if origin_file is None or line_number is None:
         current_frame = inspect.currentframe()
         outer_frame = inspect.getouterframes(current_frame, 2)
