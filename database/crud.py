@@ -7,10 +7,9 @@ import update
 import delete
 import archive
 
-from typing import Type, Tuple
-from sqlalchemy import and_
+from typing import Optional, Type, Tuple
+from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session, Query, aliased
-
 
 class Utils:
     @staticmethod
@@ -55,6 +54,16 @@ class Utils:
         # Default: include only non-archived records
         else:
             return query.filter(latest_audit.is_archived == False)  # Return query filtered to exclude archived records
+        
+    # @staticmethod
+    # def audit_entry_most_recent_for_entity(auditable_entity_type: model.AuditableEntityTypes,
+    #                                        related_entity_id: int) -> Optional[model.AuditEntry]:
+    #     """Fetch and return the most recent AuditEntry for a specific entity type and id, or None if no matching entry is found."""
+    #     most_recent_entry = model.db.session.query(model.AuditEntry).filter_by(
+    #         auditable_entity_type=auditable_entity_type,
+    #         related_entity_id=related_entity_id
+    #     ).order_by(desc(model.AuditEntry.created_at)).first()
+    #     return most_recent_entry if most_recent_entry else None
 
 
 

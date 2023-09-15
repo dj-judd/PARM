@@ -22,28 +22,43 @@ def global_settings():
 
 
 
-def audit_entry_by_id(audit_entry_id: int):
+def audit_entry_by_id(requesting_user_id: int,
+                      audit_entry_id: int):
     """Fetch and return an AuditEntry by its id, or None if no matching entry is found."""
     
-    audit_entry = model.db.session.query(model.AuditEntry).filter_by(id=audit_entry_id).first()
-    return audit_entry if audit_entry else None
+    if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_AUDITS.value):
+        audit_entry = model.db.session.query(model.AuditEntry).filter_by(id=audit_entry_id).first()
+
+        return audit_entry if audit_entry else None
+
+    return PermissionError()
 
 
-def audit_entries_by_ids(audit_entry_ids: List[int]):
+def audit_entries_by_ids(requesting_user_id: int,
+                         audit_entry_ids: List[int]):
     """Fetch and return a list of AuditEntries by their ids, or None if no matching entry is found."""
     
-    audit_entries = model.db.session.query(model.AuditEntry).filter(model.AuditEntry.id.in_(audit_entry_ids)).all()
-    return audit_entries if audit_entries else None
+    if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_AUDITS.value):
+        audit_entries = model.db.session.query(model.AuditEntry).filter(model.AuditEntry.id.in_(audit_entry_ids)).all()
+        
+        return audit_entries if audit_entries else None
+
+    return PermissionError()
 
 
-def audit_entry_most_recent_for_entity(auditable_entity_type: model.AuditableEntityTypes,
-                                        related_entity_id: int):
+def audit_entry_most_recent_for_entity(requesting_user_id: int,
+                                       auditable_entity_type: model.AuditableEntityTypes,
+                                       related_entity_id: int):
     """Fetch and return the most recent AuditEntry for a specific entity type and id, or None if no matching entry is found."""
     
-    most_recent_entry = model.db.session.query(model.AuditEntry).filter_by(auditable_entity_type=auditable_entity_type,
-                                                                            related_entity_id=related_entity_id
-                                ).order_by(desc(model.AuditEntry.created_at)).first()
-    return most_recent_entry if most_recent_entry else None
+    if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_AUDITS.value):
+        most_recent_entry = model.db.session.query(model.AuditEntry).filter_by(auditable_entity_type=auditable_entity_type,
+                                                                                related_entity_id=related_entity_id
+                                    ).order_by(desc(model.AuditEntry.created_at)).first()
+        
+        return most_recent_entry if most_recent_entry else None
+    
+    return PermissionError()
 
 
 def audit_entries_all(requesting_user_id: int):
@@ -52,8 +67,10 @@ def audit_entries_all(requesting_user_id: int):
     # Check if requesting user has access to view all of the audits at once.
     if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ALL_AUDITS.value):
         audit_entries = model.db.session.query(model.AuditEntry).all()
+
         return audit_entries if audit_entries else None
-    return
+    
+    return PermissionError()
 
 
 
