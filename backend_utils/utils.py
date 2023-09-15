@@ -12,9 +12,11 @@ UNDERLINED = "\033[4m"
 RED = '\033[31m'           # Red
 RED_BOLD = '\033[1;31m'    # Bold and Red
 YELLOW = '\033[33m'        # Yellow
-YELLOW_BOLD = '\033[1;33m'  # Bold and Yellow
+YELLOW_BOLD = '\033[1;33m' # Bold and Yellow
 GREEN = '\033[32m'         # Green
 GREEN_BOLD = '\033[1;32m'  # Bold and Green
+BLUE = '\033[34m'          # Blue
+BLUE_BOLD = '\033[1;34m'   # Bold and Blue
 RESET = '\033[0m'          # Reset to default
 
 
@@ -64,20 +66,35 @@ def openingText(program_name, version_number):
 
 
 def errorMessage(e,
-                 origin_file: Optional[str]=None,
-                 line_number: Optional[int]=None):
+                 origin_file: Optional[str] = None,
+                 line_number: Optional[int] = None):
     if origin_file is None or line_number is None:
         current_frame = inspect.currentframe()
         outer_frame = inspect.getouterframes(current_frame, 2)
-        
+
         # Get the caller's file name
         origin_file = outer_frame[1][1]
 
+        # Get the basename of the file
+        filename = os.path.basename(origin_file)
+
         # Get the line number in the caller
         line_number = outer_frame[1][2]
-        
-    print(f"\n{RED_BOLD}Error occurred!{RESET} in {YELLOW}{os.path.basename(origin_file)}{RESET} on {UNDERLINED}Line {line_number}{RESET}")
-    print(f"{e}\n")
+
+        # Get the name of the caller function
+        caller_name = inspect.stack()[1].function
+
+        # Get type of object that the caller function is bound to
+        frame = inspect.stack()[1]
+        bound_to_type = frame[0].f_globals.get(frame[3])
+        if inspect.ismethod(bound_to_type):
+            object_type = type(bound_to_type).__name__
+        else:
+            object_type = "Method"
+
+    print(f"\n{RED_BOLD}Error occurred!{RESET} on {UNDERLINED}Line {line_number}{RESET} in {YELLOW}{filename}{RESET}.")
+    print(f"{BLUE}{object_type}{RESET} {YELLOW}{caller_name}{RESET} failed.\n")
+    print(f"{e}\n\n")
 
 
 def successMessage():

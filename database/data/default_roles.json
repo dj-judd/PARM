@@ -29,8 +29,8 @@
                 "can_clear_flags",
  
                 "can_create_audits",
-                "can_read_audits",
-                "can_read_all_audits",
+                "can_view_audits",
+                "can_view_all_audits",
                 "can_update_audits",
                 "can_delete_audits"
             ]
@@ -62,8 +62,8 @@
                 "can_view_archived_comments",
 
                 "can_create_audits",
-                "can_read_audits",
-                "can_read_all_audits",
+                "can_view_audits",
+                "can_view_all_audits",
                 "can_update_audits",
                 "can_delete_audits"
             ]
@@ -137,14 +137,14 @@
         },
         {
             "name": "Audit Access",
-            "description": "Has access to read audits.",
+            "description": "Has access to view audits.",
             "permissions": [
-                "can_read_audits"
+                "can_view_audits"
             ]
         },
         {
             "name": "Guest",
-            "description": "Can read everything but has no permissions to create, edit, or archive.",
+            "description": "Can view everything but has no permissions to create, edit, or archive.",
             "permissions": []
         }
     ]

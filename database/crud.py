@@ -9,21 +9,21 @@ import archive
 
 from typing import Type, Tuple
 from sqlalchemy import and_
-from sqlalchemy.orm import Session, Query, AliasedClass, aliased
+from sqlalchemy.orm import Session, Query, aliased
 
 
 class Utils:
     @staticmethod
     def get_query_with_audit_join(session: Session, 
                                   entity: Type[model.AuditableBase],
-                                  auditable_entity_type: model.AuditableEntityTypes) -> Tuple[Query, AliasedClass]:
+                                  auditable_entity_type: model.AuditableEntityTypes) -> Tuple[Query, Type]:
         """Creates a query for the specified entity type with an outer join on AuditEntry."""
 
         # Create an alias for AuditEntry to keep track of the latest audit for the entity
         latest_audit = aliased(entity.AuditEntry)
 
         # Initialize the query with the specified entity
-        query = session.query(entity)
+        query = model.db.session.query(entity)
 
         # Perform an outer join with the latest_audit alias
         # Filter the join by auditable entity type and related entity ID
@@ -35,7 +35,7 @@ class Utils:
 
     @staticmethod
     def filter_by_archived_status(query: Query, 
-                                  latest_audit: AliasedClass, 
+                                  latest_audit: Type, 
                                   include_archived: bool, 
                                   just_archived: bool) -> Query:
         """

@@ -710,7 +710,7 @@ def role(name: str,
     # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    role_audit_entry = role_audit_entry(operation_type=model.OperationType.CREATE.value,
+    role_audit_entry = audit_entry(operation_type=model.OperationType.CREATE.value,
                                         auditable_entity_type=model.CLASS_TO_ENUM_MAP['Role'],
                                         related_entity_id=role.id,
                                         created_by_user_id=created_by_user_id,

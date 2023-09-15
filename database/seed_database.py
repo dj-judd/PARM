@@ -15,7 +15,6 @@ from itertools import product
 
 import crud
 import model
-import permissions
 
 from backend_utils import utils
 import server
@@ -417,7 +416,9 @@ def populate_permissions(created_by_user_id=0):
         # Open and load the default_permissions.json file
         with open('data/default_permissions.json', 'r') as file:
             permissions_data = json.load(file)["default_permissions"]
-        
+
+            print(f"{utils.YELLOW_BOLD}Permissions Data: {utils.RESET}{permissions_data}\n")  #DEBUG
+
         # permission_id_mapping dictionary to store permission name and its corresponding ID
         permission_id_mapping = {}
 
@@ -438,6 +439,7 @@ def populate_permissions(created_by_user_id=0):
 
         # Commit all the permissions at once
         model.db.session.commit()
+        print(f"{utils.YELLOW}Permission ID Mapping: {utils.RESET}{permission_id_mapping}\n")  # DEBUG
         utils.successMessage()
 
         # Return the permission_id_mapping to be used elsewhere if needed
@@ -475,12 +477,16 @@ def populate_roles(created_by_user_id=0,
             # Assigning permissions to the role
             for permission_code in role["permissions"]:
                 permission_id = permission_id_mapping.get(permission_code)
+                print(f"\nTrying to assign permission {utils.YELLOW}{permission_code}{utils.RESET} to role {utils.BLUE}{role['name']}{utils.RESET}") #  DEBUG
                 if permission_id:
+                    print(f"Assigning permission {utils.GREEN}{permission_code}{utils.RESET} to role {utils.BLUE}{role['name']}{utils.RESET}\n\n")  #  DEBUG
                     crud.create.role_permission(role_id=new_role.id,
                                                 permission_id=permission_id,
                                                 created_by_user_id=created_by_user_id,
-                                                audit_details=f"Assigning permission {permission_code} to role {role['name']}",
+                                                audit_details=f"\n\n {utils.YELLOW}Assigning permission {permission_code}{utils.RESET} to role {utils.BLUE}{role['name']}{utils.RESET}\n\n",
                                                 commit=False)
+                else:                                                  # DEBUG
+                    print(f"Permission {utils.YELLOW}{permission_code} {utils.RED_BOLD}not found{utils.RESET}\n\n")   # DEBUG
 
             
             # Adding the created role's ID to the role_id_mapping
@@ -512,7 +518,7 @@ def populate_user_roles(number_of_users_to_generate,
                               audit_details="Account Owner Creation",
                               commit=True)
 
-        for user_id in range(1, number_of_users_to_generate + 1):
+        for user_id in range(2, number_of_users_to_generate + 1):
             role_id = random.randint(2, 11)
             created_by_user_id = random.randint(1, number_of_users_to_generate)
             audit_details = audit_details
