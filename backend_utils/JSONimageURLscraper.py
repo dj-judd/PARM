@@ -56,7 +56,7 @@ def main():
     with open(json_file_path, 'r') as file:
         data = json.load(file)
 
-    save_directory = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend-utils/database/data/raw_images"
+    save_directory = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images"
 
     # Ensure the save directory exists
     if not os.path.exists(save_directory):
