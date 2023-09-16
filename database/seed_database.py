@@ -2,6 +2,7 @@
 
 import os
 import sys
+import csv
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -666,6 +667,40 @@ def populate_categories(created_by_user_id: int = 0):
 
 
 
+def add_category_ids_to_csv(input_csv_filename,
+                            category_id_mapping = "data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
+                            output_csv_filename=None):
+    if output_csv_filename is None:
+        output_csv_filename = f"{input_csv_filename.split('.')[0]}_categoryIDadded.csv"
+        
+    try:
+        with open(input_csv_filename, mode='r') as infile, open(output_csv_filename, mode='w', newline='') as outfile:
+            reader = csv.DictReader(infile)
+            fieldnames = reader.fieldnames + ['category_id']
+            writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+
+            writer.writeheader()
+
+            for row in reader:
+                category_name = row.get("Category")
+                parent_name = row.get("Category Parent")
+                
+                composite_key = f"{category_name}-{parent_name}" if parent_name else category_name
+                
+                if composite_key:
+                    category_id = category_id_mapping.get(composite_key)
+                    if category_id is not None:
+                        row['category_id'] = category_id
+
+                writer.writerow(row)
+                
+        print(f"Output written to {output_csv_filename}")
+        return output_csv_filename
+
+    except Exception as e:
+        utils.errorMessage(e)
+
+
 
 
 def main():
@@ -722,7 +757,9 @@ def main():
                         1,
                         0)
     
-    populate_categories()
+    category_mapping = populate_categories()
+
+    add_category_ids_to_csv(category_mapping)
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
