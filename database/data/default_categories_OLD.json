@@ -1,0 +1,140 @@
+{
+    "Default Categories": {
+      "Uncategorized":{},
+      "Video": {
+        "Cameras": {
+          "Drones": {
+            "Accessories": {}
+          },
+          "Accessories": {}
+          },
+        "Camera Supports": {
+          "Tripods": {
+            "Accessories": {}
+          },
+          "Gimbals": {
+            "Accessories": {}
+          }
+        },
+        "Lenses": {
+          "Primes": {},
+          "Zooms": {}
+        },
+        "Cables": {
+          "HDMI": {},
+          "HD-SDI": {},
+          "DisplayPort": {},
+          "Accessories": {}
+        },
+        "Displays": {
+          "Desktop": {},
+          "Field": {},
+          "EVF": {},
+          "Accessories": {}
+        },
+        "Switchers": {}
+      },
+      "Audio": {
+        "Microphones": {
+          "XLR": {},
+          "3.5mm | 1/8in": {},
+          "Accessories": {}
+        },
+        "Cables": {
+          "XLR": {},
+          "6.35mm | 1/4in": {},
+          "3.5mm | 1/8in": {},
+          "Adapters": {}
+        },
+        "Wireless": {},
+        "Recorders": {},
+        "Interfaces": {},
+        "Communications": {
+          "Radios": {}
+        },
+        "Speakers": {}
+      },
+      "Lighting": {
+        "Modifiers": {
+          "Reflectors & Diffusion": {
+            "Holders": {}
+          },
+          "Softboxes": {
+            "Bowens Mount": {}
+          },
+          "Barndoors": {
+            "Bowens Mount": {}
+          },
+          "Snoots": {
+            "Bowens Mount": {}
+          },
+          "Projection Lenses": {
+            "Bowens Mount": {}
+          }
+        },
+        "Lights": {
+          "Accessories": {}
+        }
+      },
+      "Grip": {
+        "Stands": {
+          "Light Stands": {
+            "Rollable": {},
+            "Foldable": {},
+            "Accessories": {}
+          },
+          "C-Stands": {},
+          "Mic Stands": {},
+          "Accessories": {}
+        },
+        "Baby Pin Accessories": {},
+        "Sandbags": {},
+        "Stage/Studio": {
+          "Backdrops": {},
+          "Apple Boxes": {}
+        }
+      },
+      "Computer": {
+        "iPads": {
+          "Accessories": {}
+        },
+        "Desktops": {},
+        "Laptops": {},
+        "Accessories": {}
+      },
+      "Power": {
+        "Batteries": {
+          "V-Mount": {
+            "Chargers": {}
+          },
+          "Gold Mount": {
+            "Chargers": {}
+          },
+          "NP-F": {
+            "Chargers": {}
+          },
+          "BP-U30": {
+            "Chargers": {}
+          },
+          "LP-E6NH": {
+            "Chargers": {}
+          },
+          "Mini 2": {
+            "Chargers": {}
+          },
+          "Mavic 3": {
+            "Chargers": {}
+          },
+          "Ronin 2": {}
+        },
+        "Cables": {
+          "Extension Cords": {}
+        },
+        "Accessories": {}
+      },
+      "Storage & Transport": {
+        "Cases": {},
+        "Carts": {}
+      }
+    }
+  }

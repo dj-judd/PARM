@@ -611,6 +611,46 @@ def populate_users(number_of_users_to_generate):
 
 
 
+def populate_categories(created_by_user_id: int = 0,
+                        color_id_mapping={}):
+    try:
+        # Open and load the JSON file containing category and color data
+        with open('data/default_categories.json', 'r') as file:
+            data = json.load(file)
+
+        category_id_mapping = {}
+
+        # Populate colors
+        for color in data["colors"]:
+            new_color, _ = crud.create.color(name=color["color_name"],
+                                             hex_value=color["hex_value"],
+                                             created_by_user_id=created_by_user_id,
+                                             audit_details=f"Seeding color: {color['color_name']}",
+                                             commit=False)
+            model.db.session.flush()
+            color_id_mapping[color["color_name"]] = new_color.id
+
+        # Populate categories
+        for category in data["categories"]:
+            color_id = color_id_mapping.get(category["color"])
+            new_category, _ = crud.create.category(name=category["name"],
+                                                   color_id=color_id,
+                                                   created_by_user_id=created_by_user_id,
+                                                   audit_details=f"Seeding category: {category['name']}",
+                                                   commit=False)
+            model.db.session.flush()
+            category_id_mapping[category["name"]] = new_category.id
+
+        model.db.session.commit()
+        return category_id_mapping
+
+    except Exception as e:
+        model.db.session.rollback()
+        print(f"An error occurred: {e}")
+        return {}
+
+
+
 
 def main():
     utils.openingText(program_name, version_number)
@@ -665,6 +705,9 @@ def main():
                         "72712-8000",
                         1,
                         0)
+    
+    populate_categories()
+
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
 

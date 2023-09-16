@@ -802,7 +802,7 @@ class Color(AuditableBase):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
-    hex_value = db.Column(db.String(7), nullable=False, unique=True)
+    hex_value = db.Column(db.String(9), nullable=False, unique=True)
         
     def __repr__(self):
         return f'<Color id={self.id} name={self.name} hex_value={self.hex_value}>'
