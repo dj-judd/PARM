@@ -50,7 +50,7 @@ def populate_initial_colors():
                                              commit=False)
         
         secondary_color_01 = crud.create.color("Sky Blue | Default",
-                                               "17baeb",
+                                               "#17baeb",
                                                audit=False,
                                                commit=False)
         
@@ -611,43 +611,59 @@ def populate_users(number_of_users_to_generate):
 
 
 
-def populate_categories(created_by_user_id: int = 0,
-                        color_id_mapping={}):
+def populate_categories(created_by_user_id: int = 0):
     try:
-        # Open and load the JSON file containing category and color data
         with open('data/default_categories.json', 'r') as file:
-            data = json.load(file)
-
+            data = json.load(file)["Default Categories"]
+        
+        color_id_mapping = {}
         category_id_mapping = {}
+        
+        def process_category(category_data, parent_category_id=None):
+            color_name = category_data["color_name"]
+            color_hex_value = category_data["color_hex_value"]
 
-        # Populate colors
-        for color in data["colors"]:
-            new_color, _ = crud.create.color(name=color["color_name"],
-                                             hex_value=color["hex_value"],
-                                             created_by_user_id=created_by_user_id,
-                                             audit_details=f"Seeding color: {color['color_name']}",
-                                             commit=False)
-            model.db.session.flush()
-            color_id_mapping[color["color_name"]] = new_color.id
+            if color_name not in color_id_mapping:
+                new_color, _ = crud.create.color(name=color_name,
+                                                 hex_value=color_hex_value,
+                                                 created_by_user_id=created_by_user_id,
+                                                 audit_details=f"Seeding color: {color_name}",
+                                                 commit=False)
+                model.db.session.flush()
+                color_id_mapping[color_name] = new_color.id
 
-        # Populate categories
-        for category in data["categories"]:
-            color_id = color_id_mapping.get(category["color"])
-            new_category, _ = crud.create.category(name=category["name"],
+            color_id = color_id_mapping[color_name]
+
+            if parent_category_id is None:
+                print(f"Root category: {utils.BLUE}{category_data['name']}{utils.RESET}")  # DEBUG
+            
+            new_category, _ = crud.create.category(name=category_data["name"],
                                                    color_id=color_id,
+                                                   parent_category_id=parent_category_id,
                                                    created_by_user_id=created_by_user_id,
-                                                   audit_details=f"Seeding category: {category['name']}",
+                                                   audit_details=f"Seeding category: {category_data['name']}",
                                                    commit=False)
             model.db.session.flush()
-            category_id_mapping[category["name"]] = new_category.id
+            category_id_mapping[category_data["name"]] = new_category.id
+            
+            for subcategory_name, subcategory_data in category_data.items():
+                if subcategory_name not in ["name", "color_name", "color_hex_value"]:
+                    print(f"\nTrying to assign subcategory {utils.YELLOW}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}")  #  DEBUG
+                    process_category(subcategory_data, new_category.id)
+                    print(f"Assigning subcategory {utils.GREEN}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}\n")  #  DEBUG
+                else:
+                    print(f"Field {utils.YELLOW}{subcategory_name}{utils.RESET} is not a subcategory")  # DEBUG
+        
+        for category_name, category_data in data.items():
+            process_category(category_data)
 
         model.db.session.commit()
         return category_id_mapping
 
     except Exception as e:
         model.db.session.rollback()
-        print(f"An error occurred: {e}")
-        return {}
+        utils.errorMessage(e)
+
 
 
 

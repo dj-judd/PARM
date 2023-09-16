@@ -1,23 +1,16 @@
 [
     {
-        "id": 0,
-        "name": "Default Theme",
-        "description": "This is the default theme.",
-        "primary_color": 0,
-        "secondary_color": 1
-    },
-    {
         "id": 1,
-        "name": "Canadian Dollar",
-        "symbol": "Can$",
-        "iso_code": "CAD",
-        "exchange_rate": 1.360252
+        "name": "Default Light Theme",
+        "description": "This is the default light theme.",
+        "primary_color": 1,
+        "secondary_color": 2
     },
     {
         "id": 2,
-        "name": "Mexican Peso",
-        "symbol": "Mex$",
-        "iso_code": "MXN",
-        "exchange_rate": 16.78694
+        "name": "Default Dark Theme",
+        "description": "This is the default dark theme.",
+        "primary_color": 3,
+        "secondary_color": 4
     }
 ]

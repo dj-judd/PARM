@@ -3,376 +3,376 @@
       "Uncategorized": {
         "name": "Uncategorized",
         "color_name": "Transparent White",
-        "color": "ffffff00"
+        "color_hex_value": "#ffffff00"
       },
       "Video": {
         "name": "Video",
         "color_name": "Red",
-        "color": "ff0000",
+        "color_hex_value": "#ff0000",
         "Cameras": {
           "name": "Cameras",
           "color_name": "Red",
-          "color": "ff0000",
+          "color_hex_value": "#ff0000",
           "Drones": {
             "name": "Drones",
             "color_name": "Red",
-            "color": "ff0000",
+            "color_hex_value": "#ff0000",
             "Accessories": {
               "name": "Accessories",
               "color_name": "Red",
-              "color": "ff0000"
+              "color_hex_value": "#ff0000"
             }
           },
           "Accessories": {
             "name": "Accessories",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           }
         },
         "Camera Supports": {
           "name": "Camera Supports",
           "color_name": "Red",
-          "color": "ff0000",
+          "color_hex_value": "#ff0000",
           "Tripods": {
             "name": "Tripods",
             "color_name": "Red",
-            "color": "ff0000",
+            "color_hex_value": "#ff0000",
             "Accessories": {
               "name": "Accessories",
               "color_name": "Red",
-              "color": "ff0000"
+              "color_hex_value": "#ff0000"
             }
           },
           "Gimbals": {
             "name": "Gimbals",
             "color_name": "Red",
-            "color": "ff0000",
+            "color_hex_value": "#ff0000",
             "Accessories": {
               "name": "Accessories",
               "color_name": "Red",
-              "color": "ff0000"
+              "color_hex_value": "#ff0000"
             }
           }
         },
         "Lenses": {
           "name": "Lenses",
           "color_name": "Red",
-          "color": "ff0000",
+          "color_hex_value": "#ff0000",
           "Primes": {
             "name": "Primes",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "Zooms": {
             "name": "Zooms",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           }
         },
         "Cables": {
           "name": "Cables",
           "color_name": "Red",
-          "color": "ff0000",
+          "color_hex_value": "#ff0000",
           "HDMI": {
             "name": "HDMI",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "HD-SDI": {
             "name": "HD-SDI",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "DisplayPort": {
             "name": "DisplayPort",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "Accessories": {
             "name": "Accessories",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           }
         },
         "Displays": {
           "name": "Displays",
           "color_name": "Red",
-          "color": "ff0000",
+          "color_hex_value": "#ff0000",
           "Desktop": {
             "name": "Desktop",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "Field": {
             "name": "Field",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "EVF": {
             "name": "EVF",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           },
           "Accessories": {
             "name": "Accessories",
             "color_name": "Red",
-            "color": "ff0000"
+            "color_hex_value": "#ff0000"
           }
         },
         "Switchers": {
           "name": "Switchers",
           "color_name": "Red",
-          "color": "ff0000"
+          "color_hex_value": "#ff0000"
         }
       },
       "Audio": {
         "name": "Audio",
         "color_name": "Blue",
-        "color": "0000ff",
+        "color_hex_value": "#0000ff",
         "Microphones": {
           "name": "Microphones",
           "color_name": "Blue",
-          "color": "0000ff",
+          "color_hex_value": "#0000ff",
           "XLR": {
             "name": "XLR",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           },
           "3.5mm | 1/8in": {
             "name": "3.5mm | 1/8in",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           },
           "Accessories": {
             "name": "Accessories",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           }
         },
         "Cables": {
           "name": "Cables",
           "color_name": "Blue",
-          "color": "0000ff",
+          "color_hex_value": "#0000ff",
           "XLR": {
             "name": "XLR",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           },
           "6.35mm | 1/4in": {
             "name": "6.35mm | 1/4in",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           },
           "3.5mm | 1/8in": {
             "name": "3.5mm | 1/8in",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           },
           "Adapters": {
             "name": "Adapters",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           }
         },
         "Wireless": {
           "name": "Wireless",
           "color_name": "Blue",
-          "color": "0000ff"
+          "color_hex_value": "#0000ff"
         },
         "Recorders": {
           "name": "Recorders",
           "color_name": "Blue",
-          "color": "0000ff"
+          "color_hex_value": "#0000ff"
         },
         "Interfaces": {
           "name": "Interfaces",
           "color_name": "Blue",
-          "color": "0000ff"
+          "color_hex_value": "#0000ff"
         },
         "Communications": {
           "name": "Communications",
           "color_name": "Blue",
-          "color": "0000ff",
+          "color_hex_value": "#0000ff",
           "Radios": {
             "name": "Radios",
             "color_name": "Blue",
-            "color": "0000ff"
+            "color_hex_value": "#0000ff"
           }
         },
         "Speakers": {
           "name": "Speakers",
           "color_name": "Blue",
-          "color": "0000ff"
+          "color_hex_value": "#0000ff"
         }
       },
       "Lighting": {
         "name": "Lighting",
         "color_name": "Yellow",
-        "color": "ffff00",
+        "color_hex_value": "#ffff00",
         "Modifiers": {
           "name": "Modifiers",
           "color_name": "Yellow",
-          "color": "ffff00",
+          "color_hex_value": "#ffff00",
           "Reflectors & Diffusion": {
             "name": "Reflectors & Diffusion",
             "color_name": "Yellow",
-            "color": "ffff00",
+            "color_hex_value": "#ffff00",
             "Holders": {
               "name": "Holders",
               "color_name": "Yellow",
-              "color": "ffff00"
+              "color_hex_value": "#ffff00"
             }
           },
           "Softboxes": {
             "name": "Softboxes",
             "color_name": "Yellow",
-            "color": "ffff00",
+            "color_hex_value": "#ffff00",
             "Bowens Mount": {
               "name": "Bowens Mount",
               "color_name": "Yellow",
-              "color": "ffff00"
+              "color_hex_value": "#ffff00"
             }
           },
           "Barndoors": {
             "name": "Barndoors",
             "color_name": "Yellow",
-            "color": "ffff00",
+            "color_hex_value": "#ffff00",
             "Bowens Mount": {
               "name": "Bowens Mount",
               "color_name": "Yellow",
-              "color": "ffff00"
+              "color_hex_value": "#ffff00"
             }
           },
           "Snoots": {
             "name": "Snoots",
             "color_name": "Yellow",
-            "color": "ffff00",
+            "color_hex_value": "#ffff00",
             "Bowens Mount": {
               "name": "Bowens Mount",
               "color_name": "Yellow",
-              "color": "ffff00"
+              "color_hex_value": "#ffff00"
             }
           },
           "Projection Lenses": {
             "name": "Projection Lenses",
             "color_name": "Yellow",
-            "color": "ffff00",
+            "color_hex_value": "#ffff00",
             "Bowens Mount": {
               "name": "Bowens Mount",
               "color_name": "Yellow",
-              "color": "ffff00"
+              "color_hex_value": "#ffff00"
             }
           }
         },
         "Lights": {
           "name": "Lights",
           "color_name": "Yellow",
-          "color": "ffff00",
+          "color_hex_value": "#ffff00",
           "Accessories": {
             "name": "Accessories",
             "color_name": "Yellow",
-            "color": "ffff00"
+            "color_hex_value": "#ffff00"
           }
         }
       },
       "Grip": {
         "name": "Grip",
         "color_name": "Green",
-        "color": "00ff00",
+        "color_hex_value": "#00ff00",
         "Stands": {
           "name": "Stands",
           "color_name": "Green",
-          "color": "00ff00",
+          "color_hex_value": "#00ff00",
           "Light Stands": {
             "name": "Light Stands",
             "color_name": "Green",
-            "color": "00ff00",
+            "color_hex_value": "#00ff00",
             "Rollable": {
               "name": "Rollable",
               "color_name": "Green",
-              "color": "00ff00"
+              "color_hex_value": "#00ff00"
             },
             "Foldable": {
               "name": "Foldable",
               "color_name": "Green",
-              "color": "00ff00"
+              "color_hex_value": "#00ff00"
             },
             "Accessories": {
               "name": "Accessories",
               "color_name": "Green",
-              "color": "00ff00"
+              "color_hex_value": "#00ff00"
             }
           },
           "C-Stands": {
             "name": "C-Stands",
             "color_name": "Green",
-            "color": "00ff00"
+            "color_hex_value": "#00ff00"
           },
           "Mic Stands": {
             "name": "Mic Stands",
             "color_name": "Green",
-            "color": "00ff00"
+            "color_hex_value": "#00ff00"
           },
           "Accessories": {
             "name": "Accessories",
             "color_name": "Green",
-            "color": "00ff00"
+            "color_hex_value": "#00ff00"
           }
         },
         "Baby Pin Accessories": {
           "name": "Baby Pin Accessories",
           "color_name": "Green",
-          "color": "00ff00"
+          "color_hex_value": "#00ff00"
         },
         "Sandbags": {
           "name": "Sandbags",
           "color_name": "Green",
-          "color": "00ff00"
+          "color_hex_value": "#00ff00"
         },
         "Stage/Studio": {
           "name": "Stage/Studio",
           "color_name": "Green",
-          "color": "00ff00",
+          "color_hex_value": "#00ff00",
           "Backdrops": {
             "name": "Backdrops",
             "color_name": "Green",
-            "color": "00ff00"
+            "color_hex_value": "#00ff00"
           },
           "Apple Boxes": {
             "name": "Apple Boxes",
             "color_name": "Green",
-            "color": "00ff00"
+            "color_hex_value": "#00ff00"
           }
         }
       },
       "Computer": {
         "name": "Computer",
         "color_name": "Purple",
-        "color": "8000ff",
+        "color_hex_value": "#8000ff",
         "iPads": {
           "name": "iPads",
           "color_name": "Purple",
-          "color": "8000ff",
+          "color_hex_value": "#8000ff",
           "Accessories": {
             "name": "Accessories",
             "color_name": "Purple",
-            "color": "8000ff"
+            "color_hex_value": "#8000ff"
           }
         },
         "Desktops": {
           "name": "Desktops",
           "color_name": "Purple",
-          "color": "8000ff"
+          "color_hex_value": "#8000ff"
         },
         "Laptops": {
           "name": "Laptops",
           "color_name": "Purple",
-          "color": "8000ff"
+          "color_hex_value": "#8000ff"
         },
         "Accessories": {
           "name": "Accessories",
           "color_name": "Purple",
-          "color": "8000ff"
+          "color_hex_value": "#8000ff"
         }
       }
     }
