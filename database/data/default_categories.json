@@ -374,6 +374,117 @@
           "color_name": "Purple",
           "color_hex_value": "#8000ff"
         }
+      },
+      "Power": {
+        "name": "Computer",
+        "color_name": "Orange",
+        "color_hex_value": "#ff8000",
+        "Batteries": {
+          "name": "Batteries",
+          "color_name": "Orange",
+          "color_hex_value": "#ff8000",
+          "V-Mount": {
+            "name": "V-Mount",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "Gold Mount": {
+            "name": "Gold Mount",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "NP-F": {
+            "name": "NP-F",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "BP-U30": {
+            "name": "BP-U30",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "LP-E6NH": {
+            "name": "LP-E6NH",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "Mini 2": {
+            "name": "Mini 2",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "Mavic 3": {
+            "name": "Mavic 3",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000",
+            "Chargers": {
+              "name": "Chargers",
+              "color_name": "Orange",
+              "color_hex_value": "#ff8000"
+            }
+          },
+          "Ronin 2": {
+            "name": "Ronin 2",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000"
+          }
+        },
+        "Cables": {
+          "name": "Cables",
+          "color_name": "Orange",
+          "color_hex_value": "#ff8000",
+          "Extension Cords": {
+            "name": "Extension Cords",
+            "color_name": "Orange",
+            "color_hex_value": "#ff8000"
+          }
+        }
+      },
+      "Storage & Transport": {
+        "name": "Storage & Transport",
+        "color_name": "Gray",
+        "color_hex_value": "#999999",
+        "Cases": {
+          "name": "Cases",
+          "color_name": "Gray",
+          "color_hex_value": "#999999"
+          },
+        "Carts": {
+            "name": "Carts",
+            "color_name": "Gray",
+            "color_hex_value": "#999999"
+          }
+            
       }
     }
   }

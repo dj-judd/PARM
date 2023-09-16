@@ -729,8 +729,8 @@ def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_m
     try:
         with open(csv_file_path, 'r') as csv_file, open(output_csv_file_path, 'w', newline='') as output_csv_file:
             csv_reader = csv.DictReader(csv_file)
-            fieldnames = csv_reader.fieldnames
-            
+            fieldnames = csv_reader.fieldnames.copy()  # make a copy to prevent unwanted modification
+
             if "category_id" not in fieldnames:
                 category_index = fieldnames.index("Category")
                 fieldnames.insert(category_index + 1, "category_id")
@@ -739,19 +739,21 @@ def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_m
             csv_writer.writeheader()
 
             for row in csv_reader:
+                row_copy = row.copy()  # make a copy to prevent unwanted modification
+
                 category = row.get("Category", None)
                 parent_category = row.get("Category Parent", None)
-                
-                # Ensure the parent category matches before assigning the category ID
-                if category_parent_mapping.get(category) == parent_category:
-                    category_id = category_id_mapping.get(category, "N/A")
-                else:
-                    category_id = "N/A"
-                
-                row["category_id"] = category_id
-                
-                csv_writer.writerow(row)
-                
+
+                # Lookup in the parent mapping first
+                category_id = category_parent_mapping.get((parent_category, category), None)
+
+                # If not found, lookup in the flat mapping
+                if category_id is None:
+                    category_id = category_id_mapping.get(category, "Uncategorized")
+
+                row_copy["category_id"] = category_id
+                csv_writer.writerow(row_copy)
+
         return f"Successfully added category_id to {output_csv_file_path}"
     except Exception as e:
         utils.errorMessage(e)
@@ -816,13 +818,14 @@ def main():
     
     category_id_mapping, category_parent_mapping = populate_categories()
 
-    print(category_id_mapping)
-    print(category_parent_mapping)
+    print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
+    print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")
 
 
     append_category_id_to_csv("data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
                               "data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.csv",
-                              category_id_mapping)
+                              category_id_mapping,
+                              category_parent_mapping)
 
 
     # TODO: Create 10 Reservations for each user
