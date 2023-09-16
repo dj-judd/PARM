@@ -612,6 +612,61 @@ def populate_users(number_of_users_to_generate):
 
 
 
+# def populate_categories(created_by_user_id: int = 0):
+#     try:
+#         with open('data/default_categories.json', 'r') as file:
+#             data = json.load(file)["Default Categories"]
+        
+#         color_id_mapping = {}
+#         category_id_mapping = {}
+        
+#         def process_category(category_data, parent_category_id=None):
+#             color_name = category_data["color_name"]
+#             color_hex_value = category_data["color_hex_value"]
+
+#             if color_name not in color_id_mapping:
+#                 new_color, _ = crud.create.color(name=color_name,
+#                                                  hex_value=color_hex_value,
+#                                                  created_by_user_id=created_by_user_id,
+#                                                  audit_details=f"Seeding color: {color_name}",
+#                                                  commit=False)
+#                 model.db.session.flush()
+#                 color_id_mapping[color_name] = new_color.id
+
+#             color_id = color_id_mapping[color_name]
+
+#             if parent_category_id is None:
+#                 print(f"Root category: {utils.BLUE}{category_data['name']}{utils.RESET}")  # DEBUG
+            
+#             new_category, _ = crud.create.category(name=category_data["name"],
+#                                                    color_id=color_id,
+#                                                    parent_category_id=parent_category_id,
+#                                                    created_by_user_id=created_by_user_id,
+#                                                    audit_details=f"Seeding category: {category_data['name']}",
+#                                                    commit=False)
+#             model.db.session.flush()
+#             category_id_mapping[category_data["name"]] = new_category.id
+            
+#             for subcategory_name, subcategory_data in category_data.items():
+#                 if subcategory_name not in ["name", "color_name", "color_hex_value"]:
+#                     print(f"\nTrying to assign subcategory {utils.YELLOW}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}")  #  DEBUG
+#                     process_category(subcategory_data, new_category.id)
+#                     print(f"Assigning subcategory {utils.GREEN}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}\n")  #  DEBUG
+#                 else:
+#                     print(f"Field {utils.YELLOW}{subcategory_name}{utils.RESET} is not a subcategory")  # DEBUG
+        
+#         for category_name, category_data in data.items():
+#             process_category(category_data)
+
+#         model.db.session.commit()
+#         return category_id_mapping
+
+#     except Exception as e:
+#         model.db.session.rollback()
+#         utils.errorMessage(e)
+
+
+
 def populate_categories(created_by_user_id: int = 0):
     try:
         with open('data/default_categories.json', 'r') as file:
@@ -619,8 +674,9 @@ def populate_categories(created_by_user_id: int = 0):
         
         color_id_mapping = {}
         category_id_mapping = {}
+        category_parent_mapping = {}
         
-        def process_category(category_data, parent_category_id=None):
+        def process_category(category_data, parent_category_name=None, parent_category_id=None):
             color_name = category_data["color_name"]
             color_hex_value = category_data["color_hex_value"]
 
@@ -646,11 +702,12 @@ def populate_categories(created_by_user_id: int = 0):
                                                    commit=False)
             model.db.session.flush()
             category_id_mapping[category_data["name"]] = new_category.id
+            category_parent_mapping[(parent_category_name, category_data["name"])] = new_category.id
             
             for subcategory_name, subcategory_data in category_data.items():
                 if subcategory_name not in ["name", "color_name", "color_hex_value"]:
                     print(f"\nTrying to assign subcategory {utils.YELLOW}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}")  #  DEBUG
-                    process_category(subcategory_data, new_category.id)
+                    process_category(subcategory_data, category_data["name"], new_category.id)
                     print(f"Assigning subcategory {utils.GREEN}{subcategory_name}{utils.RESET} to category {utils.BLUE}{category_data['name']}{utils.RESET}\n")  #  DEBUG
                 else:
                     print(f"Field {utils.YELLOW}{subcategory_name}{utils.RESET} is not a subcategory")  # DEBUG
@@ -659,7 +716,7 @@ def populate_categories(created_by_user_id: int = 0):
             process_category(category_data)
 
         model.db.session.commit()
-        return category_id_mapping
+        return category_id_mapping, category_parent_mapping
 
     except Exception as e:
         model.db.session.rollback()
@@ -667,38 +724,38 @@ def populate_categories(created_by_user_id: int = 0):
 
 
 
-def add_category_ids_to_csv(input_csv_filename,
-                            category_id_mapping = "data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
-                            output_csv_filename=None):
-    if output_csv_filename is None:
-        output_csv_filename = f"{input_csv_filename.split('.')[0]}_categoryIDadded.csv"
-        
+
+def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_mapping, category_parent_mapping):
     try:
-        with open(input_csv_filename, mode='r') as infile, open(output_csv_filename, mode='w', newline='') as outfile:
-            reader = csv.DictReader(infile)
-            fieldnames = reader.fieldnames + ['category_id']
-            writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+        with open(csv_file_path, 'r') as csv_file, open(output_csv_file_path, 'w', newline='') as output_csv_file:
+            csv_reader = csv.DictReader(csv_file)
+            fieldnames = csv_reader.fieldnames
+            
+            if "category_id" not in fieldnames:
+                category_index = fieldnames.index("Category")
+                fieldnames.insert(category_index + 1, "category_id")
 
-            writer.writeheader()
+            csv_writer = csv.DictWriter(output_csv_file, fieldnames=fieldnames)
+            csv_writer.writeheader()
 
-            for row in reader:
-                category_name = row.get("Category")
-                parent_name = row.get("Category Parent")
+            for row in csv_reader:
+                category = row.get("Category", None)
+                parent_category = row.get("Category Parent", None)
                 
-                composite_key = f"{category_name}-{parent_name}" if parent_name else category_name
+                # Ensure the parent category matches before assigning the category ID
+                if category_parent_mapping.get(category) == parent_category:
+                    category_id = category_id_mapping.get(category, "N/A")
+                else:
+                    category_id = "N/A"
                 
-                if composite_key:
-                    category_id = category_id_mapping.get(composite_key)
-                    if category_id is not None:
-                        row['category_id'] = category_id
-
-                writer.writerow(row)
+                row["category_id"] = category_id
                 
-        print(f"Output written to {output_csv_filename}")
-        return output_csv_filename
-
+                csv_writer.writerow(row)
+                
+        return f"Successfully added category_id to {output_csv_file_path}"
     except Exception as e:
         utils.errorMessage(e)
+
 
 
 
@@ -757,9 +814,16 @@ def main():
                         1,
                         0)
     
-    category_mapping = populate_categories()
+    category_id_mapping, category_parent_mapping = populate_categories()
 
-    add_category_ids_to_csv(category_mapping)
+    print(category_id_mapping)
+    print(category_parent_mapping)
+
+
+    append_category_id_to_csv("data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
+                              "data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.csv",
+                              category_id_mapping)
+
 
     # TODO: Create 10 Reservations for each user
     # for n in range(10):
