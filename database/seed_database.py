@@ -17,7 +17,7 @@ from itertools import product
 import crud
 import model
 
-from backend_utils import utils
+from backend_tools import utils
 import server
 
 
@@ -725,54 +725,115 @@ def populate_categories(created_by_user_id: int = 0):
 
 
 
-def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_mapping, category_parent_mapping):
+# def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_mapping, category_parent_mapping):
+#     try:
+#         with open(csv_file_path, 'r') as csv_file, open(output_csv_file_path, 'w', newline='') as output_csv_file:
+#             csv_reader = csv.DictReader(csv_file)
+#             fieldnames = csv_reader.fieldnames.copy()  # make a copy to prevent unwanted modification
+
+#             if "category_id" not in fieldnames:
+#                 category_index = fieldnames.index("Category")
+#                 fieldnames.insert(category_index + 1, "category_id")
+
+#             csv_writer = csv.DictWriter(output_csv_file, fieldnames=fieldnames)
+#             csv_writer.writeheader()
+
+#             for row in csv_reader:
+#                 row_copy = row.copy()  # make a copy to prevent unwanted modification
+
+#                 category = row.get("Category", None)
+#                 parent_category = row.get("Category Parent", None)
+
+#                 # Lookup in the parent mapping first
+#                 category_id = category_parent_mapping.get((parent_category, category), None)
+
+#                 # If not found, lookup in the flat mapping
+#                 if category_id is None:
+#                     category_id = category_id_mapping.get(category, "Uncategorized")
+
+#                 row_copy["category_id"] = category_id
+#                 csv_writer.writerow(row_copy)
+
+#         return f"Successfully added category_id to {output_csv_file_path}"
+#     except Exception as e:
+#         utils.errorMessage(e)
+
+
+def populate_assets(created_by_user_id: int = 0):
     try:
-        with open(csv_file_path, 'r') as csv_file, open(output_csv_file_path, 'w', newline='') as output_csv_file:
-            csv_reader = csv.DictReader(csv_file)
-            fieldnames = csv_reader.fieldnames.copy()  # make a copy to prevent unwanted modification
-
-            if "category_id" not in fieldnames:
-                category_index = fieldnames.index("Category")
-                fieldnames.insert(category_index + 1, "category_id")
-
-            csv_writer = csv.DictWriter(output_csv_file, fieldnames=fieldnames)
-            csv_writer.writeheader()
-
-            for row in csv_reader:
-                row_copy = row.copy()  # make a copy to prevent unwanted modification
-
-                category = row.get("Category", None)
-                parent_category = row.get("Category Parent", None)
-
-                # Lookup in the parent mapping first
-                category_id = category_parent_mapping.get((parent_category, category), None)
-
-                # If not found, lookup in the flat mapping
-                if category_id is None:
-                    category_id = category_id_mapping.get(category, "Uncategorized")
-
-                row_copy["category_id"] = category_id
-                csv_writer.writerow(row_copy)
-
-        return f"Successfully added category_id to {output_csv_file_path}"
-    except Exception as e:
-        utils.errorMessage(e)
+        # Create an initial "Unknown" manufacturer
+        unknown_manufacturer, _ = crud.create.manufacturer("Unknown", created_by_user_id)
+        model.db.session.flush()
+        unknown_manufacturer_id = unknown_manufacturer.id
 
 
-def populate_assets(category_id_mapping,
-                    created_by_user_id: int = 0):
-    try:
-        with open('data/default_categories.json', 'r') as file:
-            data = json.load(file)["Default Categories"]
+        with open('data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.json', 'r') as file:
+            data = json.load(file)
         
-        color_id_mapping = {}
-        category_id_mapping = {}
-        category_parent_mapping = {}
+        for item in data:
+            # Create Manufacturer and Flush to get ID
+            manufacturer_name = item.get("Manufacturer")
+            if manufacturer_name:
+                manufacturer, _ = crud.create.manufacturer(manufacturer_name, created_by_user_id)
+                model.db.session.flush()
+                manufacturer_id = manufacturer.id
+            else:
+                manufacturer_id = unknown_manufacturer_id
 
+            # Create Financial Entries and Flush to get IDs
+            purchase_price_id = msrp_id = residual_value_id = None
+
+            if item.get("Purchase Price"):
+                purchase_price, _ = crud.create.financial_entry(1, int(item["Purchase Price"]), created_by_user_id)
+                model.db.session.flush()
+                purchase_price_id = purchase_price.id
+
+            if item.get("MSRP"):
+                msrp, _ = crud.create.financial_entry(1, int(item["MSRP"]), created_by_user_id)
+                model.db.session.flush()
+                msrp_id = msrp.id
+
+            if item.get("Residual Value"):
+                residual_value, _ = crud.create.financial_entry(1, int(item["Residual Value"]), created_by_user_id)
+                model.db.session.flush()
+                residual_value_id = residual_value.id
+
+            # Prepare fields for Asset creation
+            model_name = item.get("Model")
+            inventory_number = int(item.get("Item Number", 0))
+            model_number = item.get("Model Number")
+            category_id = int(item.get("category_id", 0))
+            online_item_page = item.get("Hyperlink")
+
+            # Create Asset
+            asset, _ = crud.create.asset(
+                manufacturer_id,
+                model_name,
+                inventory_number,
+                created_by_user_id,
+                model_number=model_number,
+                category_id=category_id,
+                purchase_price_id=purchase_price_id,
+                msrp_id=msrp_id,
+                residual_value_id=residual_value_id,
+                online_item_page=online_item_page
+            )
+
+            # Create asset_location_log
+            latitude, longitude = map(float, item.get("Geo", "0,0").split(", "))
+            crud.create.asset_location_log(
+                asset.id,
+                latitude,
+                longitude,
+                created_by_user_id
+            )
+            
+            model.db.session.commit()
 
     except Exception as e:
         model.db.session.rollback()
         utils.errorMessage(e)
+
 
 
 
