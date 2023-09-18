@@ -78,22 +78,26 @@ def successMessage():
     print(f"{GREEN_BOLD}Success!{RESET} {YELLOW}{caller_name}{RESET} finished {GREEN}successfully.{RESET}")
 
 
-def sanitize_name(filename):
+def sanitize_name(name):
+    if name is None:
+        return None
+    
     # Replace apostrophes (') with "ft"
-    filename = filename.replace('\'', 'ft')
+    name = name.replace('\'', 'ft')
     
     # Replace double quotes (") with "in"
-    filename = filename.replace('"', 'in')
+    name = name.replace('"', 'in')
     
     # Remove invalid characters
-    filename = re.sub(r'[\\/*?:<>|]', '_', filename)  
+    name = re.sub(r'[\\/*?:<>|]', '_', name)  
     
     # Replace spaces with underscores
-    filename = filename.replace(' ', '_')
+    name = name.replace(' ', '_')
     
     # Remove leading or trailing whitespace
-    filename = filename.strip()
-    return filename
+    name = name.strip()
+    
+    return name
 
 
 class ImageURLScaping:

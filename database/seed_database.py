@@ -795,7 +795,7 @@ def populate_assets(created_by_user_id: int = 0):
 
             if item.get("Purchase Price"):
                 purchase_price, _ = crud.create.financial_entry(1,
-                                                                int(item["Purchase Price"]),
+                                                                float(item["Purchase Price"]),
                                                                 created_by_user_id,
                                                                 db_init_message,
                                                                 commit = False)
@@ -804,7 +804,7 @@ def populate_assets(created_by_user_id: int = 0):
 
             if item.get("MSRP"):
                 msrp, _ = crud.create.financial_entry(1,
-                                                      int(item["MSRP"]),
+                                                      float(item["MSRP"]),
                                                       created_by_user_id,
                                                       db_init_message,
                                                       commit = False)
@@ -813,7 +813,7 @@ def populate_assets(created_by_user_id: int = 0):
 
             if item.get("Residual Value"):
                 residual_value, _ = crud.create.financial_entry(1,
-                                                                int(item["Residual Value"]),
+                                                                float(item["Residual Value"]),
                                                                 created_by_user_id,
                                                                 db_init_message,
                                                                 commit = False)
@@ -821,12 +821,20 @@ def populate_assets(created_by_user_id: int = 0):
                 residual_value_id = residual_value.id
 
             # Prepare fields for Asset creation
-            model_name = utils.sanitize_name(item.get("Model"))
+
+            model_name = utils.sanitize_name(item.get("Name"))
+            model_number = utils.sanitize_name(item.get("Model"))
             inventory_number = int(item.get("Item Number") or 1)
-            model_number = item.get("Model Number")
-            category_id = int(item.get("category_id") or 1)
             online_item_page = item.get("Hyperlink")
-            description = item.get("Description")
+            description = utils.sanitize_name(item.get("Description"))
+            category_id_str = item.get("category_id")
+            if category_id_str == "Uncategorized":
+                category_id = 1
+            elif category_id_str and category_id_str.isdigit():
+                category_id = int(category_id_str)
+            else:
+                category_id = 1
+
 
             # Create Asset
             asset, _ = crud.create.asset(manufacturer_id,
@@ -839,16 +847,20 @@ def populate_assets(created_by_user_id: int = 0):
                                          msrp_id = msrp_id,
                                          residual_value_id = residual_value_id,
                                          online_item_page = online_item_page,
-                                         description = description)
+                                         description = description,
+                                         audit_details = db_init_message,
+                                         commit = False)
 
             # Create asset_location_log
-            latitude, longitude = map(float, item.get("Geo", "0,0").split(", "))
-            crud.create.asset_location_log(asset.id,
-                                           latitude,
-                                           longitude,
-                                           created_by_user_id,
-                                           db_init_message,
-                                           commit = False)
+            geo_value = item.get("Geo", None)
+            if geo_value:
+                latitude, longitude = map(float, geo_value.split(", "))
+                crud.create.asset_location_log(asset.id,
+                                            latitude,
+                                            longitude,
+                                            created_by_user_id,
+                                            db_init_message,
+                                            commit=False)
         
         utils.successMessage()
         model.db.session.commit()
