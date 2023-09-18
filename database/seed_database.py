@@ -3,6 +3,7 @@
 import os
 import sys
 import csv
+import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
@@ -672,7 +673,8 @@ def populate_categories(created_by_user_id: int = 0):
 
 
 
-def populate_assets(created_by_user_id: int = 0):
+def populate_assets(created_by_user_id: int = 0,
+                    image_population: bool = False):
     try:
         # Create an initial "Unknown" manufacturer
         unknown_manufacturer, _ = crud.create.manufacturer(name="Unknown",
@@ -779,48 +781,49 @@ def populate_assets(created_by_user_id: int = 0):
                                             commit=False)
                 
 
-            model.db.session.flush()
-            asset_id = asset.id
+            if image_population:
+                model.db.session.flush()
+                asset_id = asset.id
 
-            # Get the image from the JSON entry
-            image_to_downloaded = item.get("Image Url")
+                # Get the image from the JSON entry
+                image_to_downloaded = item.get("Image Url")
 
-            # Check that there's somthing there
-            if image_to_downloaded:
+                # Check that there's somthing there
+                if image_to_downloaded:
 
-                # Check if it's already been downloaded
-                if model_name not in downloaded_images:
-                    image = utils.ImageURLScaping.download_image(image_to_downloaded)
-                    print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
+                    # Check if it's already been downloaded
+                    if model_name not in downloaded_images:
+                        image = utils.ImageURLScaping.download_image(image_to_downloaded)
+                        print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
 
-                    raw_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images"
-                    processed_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images"
+                        raw_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images"
+                        processed_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images"
 
 
-                    # Loop through image_size_map
-                    for label, max_size in utils.ImageProcessing.image_size_map.items():
-                        output_path, image_size = utils.ImageProcessing.generate_single_image_variation(image,
-                                                                                                        raw_image_output,
-                                                                                                        processed_image_output,
-                                                                                                        model_name,
-                                                                                                        label,
-                                                                                                        max_size)
+                        # Loop through image_size_map
+                        for label, max_size in utils.ImageProcessing.image_size_map.items():
+                            output_path, image_size = utils.ImageProcessing.generate_single_image_variation(image,
+                                                                                                            raw_image_output,
+                                                                                                            processed_image_output,
+                                                                                                            model_name,
+                                                                                                            label,
+                                                                                                            max_size)
 
-                        crud.create.file_attachment(model.AttachableEntityTypes.ASSET.value,
-                                                    asset_id,
-                                                    output_path,
-                                                    model.FileType.JPEG.value,
-                                                    model.FileCategory.IMAGE.value,
-                                                    created_by_user_id,
-                                                    db_init_message,
-                                                    image_size = image_size,
-                                                    commit=False)
-    
-                    print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
-                    downloaded_images.add(model_name)
+                            crud.create.file_attachment(model.AttachableEntityTypes.ASSET.value,
+                                                        asset_id,
+                                                        output_path,
+                                                        model.FileType.JPEG.value,
+                                                        model.FileCategory.IMAGE.value,
+                                                        created_by_user_id,
+                                                        db_init_message,
+                                                        image_size = image_size,
+                                                        commit=False)
+        
+                        print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
+                        downloaded_images.add(model_name)
 
-                else:
-                    print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
+                    else:
+                        print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
 
                 
 
@@ -836,7 +839,7 @@ def populate_assets(created_by_user_id: int = 0):
 
 
 
-def main():
+def main(image_population=False):
     utils.openingText(program_name, version_number)
 
     populate_timezones()
@@ -892,23 +895,14 @@ def main():
     
     category_id_mapping, category_parent_mapping = populate_categories()
 
-    populate_assets()
+    populate_assets(image_population = image_population)
 
-    # print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
-    # print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")
-
-
-    # append_category_id_to_csv("data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
-    #                           "data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.csv",
-    #                           category_id_mapping,
-    #                           category_parent_mapping)
-
-
-    # TODO: Create 10 Reservations for each user
-    # for n in range(10):
-
-    # return
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='Run the main program with optional arguments.')
+    parser.add_argument('--image_population', action='store_true', help='Enable image population.')
+
+    args = parser.parse_args()
+
+    main(image_population=args.image_population)
