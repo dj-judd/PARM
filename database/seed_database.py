@@ -759,6 +759,21 @@ def append_category_id_to_csv(csv_file_path, output_csv_file_path, category_id_m
         utils.errorMessage(e)
 
 
+def populate_assets(category_id_mapping,
+                    created_by_user_id: int = 0):
+    try:
+        with open('data/default_categories.json', 'r') as file:
+            data = json.load(file)["Default Categories"]
+        
+        color_id_mapping = {}
+        category_id_mapping = {}
+        category_parent_mapping = {}
+
+
+    except Exception as e:
+        model.db.session.rollback()
+        utils.errorMessage(e)
+
 
 
 
@@ -818,14 +833,14 @@ def main():
     
     category_id_mapping, category_parent_mapping = populate_categories()
 
-    print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
-    print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")
+    # print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
+    # print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")
 
 
-    append_category_id_to_csv("data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
-                              "data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.csv",
-                              category_id_mapping,
-                              category_parent_mapping)
+    # append_category_id_to_csv("data/Cheqroom_Item_Export-2023-08-12 21_06_57.csv",
+    #                           "data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.csv",
+    #                           category_id_mapping,
+    #                           category_parent_mapping)
 
 
     # TODO: Create 10 Reservations for each user
