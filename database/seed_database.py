@@ -779,6 +779,9 @@ def populate_assets(created_by_user_id: int = 0):
                                             commit=False)
                 
 
+            model.db.session.flush()
+            asset_id = asset.id
+
             # Get the image from the JSON entry
             image_to_downloaded = item.get("Image Url")
 
@@ -789,17 +792,37 @@ def populate_assets(created_by_user_id: int = 0):
                 if model_name not in downloaded_images:
                     image = utils.ImageURLScaping.download_image(image_to_downloaded)
                     print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
-                    
-                    utils.ImageProcessing.generate_image_variations(image,
-                                                                    "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images",
-                                                                    "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images",
-                                                                    model_name)
-                    
-                    print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
 
+                    raw_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images"
+                    processed_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images"
+
+
+                    # Loop through image_size_map
+                    for label, max_size in utils.ImageProcessing.image_size_map.items():
+                        output_path, image_size = utils.ImageProcessing.generate_single_image_variation(image,
+                                                                                                        raw_image_output,
+                                                                                                        processed_image_output,
+                                                                                                        model_name,
+                                                                                                        label,
+                                                                                                        max_size)
+
+                        crud.create.file_attachment(model.AttachableEntityTypes.ASSET.value,
+                                                    asset_id,
+                                                    output_path,
+                                                    model.FileType.JPEG.value,
+                                                    model.FileCategory.IMAGE.value,
+                                                    created_by_user_id,
+                                                    db_init_message,
+                                                    image_size = image_size,
+                                                    commit=False)
+    
+                    print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
                     downloaded_images.add(model_name)
+
                 else:
                     print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
+
+                
 
         
         utils.successMessage()

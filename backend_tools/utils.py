@@ -260,6 +260,47 @@ class ImageProcessing:
             print(f"Generated image size: {GREEN_BOLD}{label}{RESET}")
 
 
+    
+    @staticmethod
+    def generate_single_image_variation(img: Image.Image,
+                                        original_output_dir: str,
+                                        output_dir: str,
+                                        base_name: str,
+                                        label: str,
+                                        max_size: int):
+        """Generates and saves a single resized variation of a given image object."""
+
+        # Ensure the output directory exists
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+
+        if not os.path.exists(original_output_dir):
+            os.makedirs(original_output_dir)
+
+        sanitized_base_name = sanitize_name(base_name)
+        output_filename = f"{sanitized_base_name}_{label}.jpg"
+
+        if label == "0-original":
+            output_path = os.path.join(original_output_dir, output_filename)
+            img.convert("RGB").save(output_path, "JPEG", quality=90)
+            return output_path, label
+
+        output_path = os.path.join(output_dir, output_filename)
+
+        width, height = img.size
+        if width > height:
+            new_width = max_size
+            new_height = int((height / width) * max_size)
+        else:
+            new_height = max_size
+            new_width = int((width / height) * max_size)
+
+        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+        resized_img.convert("RGB").save(output_path, "JPEG", quality=90)
+        
+        return output_path, label
+
+
     @staticmethod
     def generate_image_variations(img: Image.Image,
                                   original_output_dir: str,
@@ -281,7 +322,7 @@ class ImageProcessing:
 
             if label == "0-original":
                 output_path = os.path.join(original_output_dir, output_filename)
-                img.save(output_path, "JPEG", quality=90)
+                img.convert("RGB").save(output_path, "JPEG", quality=90)
                 print(f"{GREEN_BOLD}Generated{RESET} image size: {UNDERLINED}{label}{RESET}")
                 continue
 
@@ -296,8 +337,10 @@ class ImageProcessing:
                 new_width = int((width / height) * max_size)
 
             resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-            resized_img.save(output_path, "JPEG", quality=90)
+            resized_img.convert("RGB").save(output_path, "JPEG", quality=90)
             print(f"{GREEN_BOLD}Generated{RESET} image size: {UNDERLINED}{label}{RESET}")
+
+        return output_path
 
 
     
