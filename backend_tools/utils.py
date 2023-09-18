@@ -78,7 +78,7 @@ def successMessage():
     print(f"{GREEN_BOLD}Success!{RESET} {YELLOW}{caller_name}{RESET} finished {GREEN}successfully.{RESET}")
 
 
-def sanitize_filename(filename):
+def sanitize_name(filename):
     # Replace apostrophes (') with "ft"
     filename = filename.replace('\'', 'ft')
     
@@ -133,7 +133,7 @@ class ImageURLScaping:
         # Download images
         for entry in data:
             # Sanitize the image name
-            sanitized_image_name = sanitize_filename(entry.get("Name"))
+            sanitized_image_name = sanitize_name(entry.get("Name"))
 
             # Add the sanitized name to the entry with a new key "Sanitized_Name"
             entry["Sanitized_ImageFile_Name"] = sanitized_image_name
@@ -172,7 +172,7 @@ class ImageURLScaping:
 
 
         # Sanitize the image name
-        sanitized_image_name = sanitize_filename(filename)
+        sanitized_image_name = sanitize_name(filename)
 
         image_name = sanitized_image_name
         
@@ -311,7 +311,7 @@ class ImageProcessing:
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
-        sanitized_base_name = sanitize_filename(base_name)
+        sanitized_base_name = sanitize_name(base_name)
 
         for label, max_size in ImageProcessing.image_size_map.items():
             output_filename = f"{sanitized_base_name}_{label}.jpg"

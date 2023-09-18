@@ -762,73 +762,96 @@ def populate_categories(created_by_user_id: int = 0):
 def populate_assets(created_by_user_id: int = 0):
     try:
         # Create an initial "Unknown" manufacturer
-        unknown_manufacturer, _ = crud.create.manufacturer("Unknown", created_by_user_id)
+        unknown_manufacturer, _ = crud.create.manufacturer(name="Unknown",
+                                                        created_by_user_id=created_by_user_id,
+                                                        audit_details=db_init_message,
+                                                        commit=False)
         model.db.session.flush()
         unknown_manufacturer_id = unknown_manufacturer.id
 
-
         with open('data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.json', 'r') as file:
             data = json.load(file)
-        
+
         for item in data:
             # Create Manufacturer and Flush to get ID
-            manufacturer_name = item.get("Manufacturer")
-            if manufacturer_name:
-                manufacturer, _ = crud.create.manufacturer(manufacturer_name, created_by_user_id)
-                model.db.session.flush()
-                manufacturer_id = manufacturer.id
+            manufacturer_name = utils.sanitize_name(item.get("Manufacturer") or item.get("Brand"))
+            existing_manufacturer = crud.read.Manufacturer.by_name(name=manufacturer_name)
+
+            if existing_manufacturer:
+                manufacturer_id = existing_manufacturer.id
             else:
-                manufacturer_id = unknown_manufacturer_id
+                if manufacturer_name:
+                    manufacturer, _ = crud.create.manufacturer(name=manufacturer_name,
+                                                            created_by_user_id=created_by_user_id,
+                                                            audit_details=db_init_message,
+                                                            commit=False)
+                    model.db.session.flush()
+                    manufacturer_id = manufacturer.id
+                else:
+                    manufacturer_id = unknown_manufacturer_id
 
             # Create Financial Entries and Flush to get IDs
             purchase_price_id = msrp_id = residual_value_id = None
 
             if item.get("Purchase Price"):
-                purchase_price, _ = crud.create.financial_entry(1, int(item["Purchase Price"]), created_by_user_id)
+                purchase_price, _ = crud.create.financial_entry(1,
+                                                                int(item["Purchase Price"]),
+                                                                created_by_user_id,
+                                                                db_init_message,
+                                                                commit = False)
                 model.db.session.flush()
                 purchase_price_id = purchase_price.id
 
             if item.get("MSRP"):
-                msrp, _ = crud.create.financial_entry(1, int(item["MSRP"]), created_by_user_id)
+                msrp, _ = crud.create.financial_entry(1,
+                                                      int(item["MSRP"]),
+                                                      created_by_user_id,
+                                                      db_init_message,
+                                                      commit = False)
                 model.db.session.flush()
                 msrp_id = msrp.id
 
             if item.get("Residual Value"):
-                residual_value, _ = crud.create.financial_entry(1, int(item["Residual Value"]), created_by_user_id)
+                residual_value, _ = crud.create.financial_entry(1,
+                                                                int(item["Residual Value"]),
+                                                                created_by_user_id,
+                                                                db_init_message,
+                                                                commit = False)
                 model.db.session.flush()
                 residual_value_id = residual_value.id
 
             # Prepare fields for Asset creation
-            model_name = item.get("Model")
-            inventory_number = int(item.get("Item Number", 0))
+            model_name = utils.sanitize_name(item.get("Model"))
+            inventory_number = int(item.get("Item Number") or 1)
             model_number = item.get("Model Number")
-            category_id = int(item.get("category_id", 0))
+            category_id = int(item.get("category_id") or 1)
             online_item_page = item.get("Hyperlink")
+            description = item.get("Description")
 
             # Create Asset
-            asset, _ = crud.create.asset(
-                manufacturer_id,
-                model_name,
-                inventory_number,
-                created_by_user_id,
-                model_number=model_number,
-                category_id=category_id,
-                purchase_price_id=purchase_price_id,
-                msrp_id=msrp_id,
-                residual_value_id=residual_value_id,
-                online_item_page=online_item_page
-            )
+            asset, _ = crud.create.asset(manufacturer_id,
+                                         model_name,
+                                         inventory_number,
+                                         created_by_user_id,
+                                         model_number = model_number,
+                                         category_id = category_id,
+                                         purchase_price_id = purchase_price_id,
+                                         msrp_id = msrp_id,
+                                         residual_value_id = residual_value_id,
+                                         online_item_page = online_item_page,
+                                         description = description)
 
             # Create asset_location_log
             latitude, longitude = map(float, item.get("Geo", "0,0").split(", "))
-            crud.create.asset_location_log(
-                asset.id,
-                latitude,
-                longitude,
-                created_by_user_id
-            )
-            
-            model.db.session.commit()
+            crud.create.asset_location_log(asset.id,
+                                           latitude,
+                                           longitude,
+                                           created_by_user_id,
+                                           db_init_message,
+                                           commit = False)
+        
+        utils.successMessage()
+        model.db.session.commit()
 
     except Exception as e:
         model.db.session.rollback()
@@ -893,6 +916,8 @@ def main():
                         0)
     
     category_id_mapping, category_parent_mapping = populate_categories()
+
+    populate_assets()
 
     # print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
     # print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")

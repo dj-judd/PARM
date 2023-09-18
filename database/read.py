@@ -164,3 +164,13 @@ def reservations_all(requesting_user_id: int,
 
     # Return results or None if empty
     return reservations if reservations else None
+
+
+class Manufacturer:
+
+    @staticmethod
+    def by_name(name: str):
+        """Fetch and return a Manufacturer by its name, or None if no matching entry is found."""
+        
+        manufacturer = model.db.session.query(model.Manufacturer).filter_by(name=name).first()
+        return manufacturer if manufacturer else None
