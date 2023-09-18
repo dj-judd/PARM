@@ -682,8 +682,10 @@ def populate_assets(created_by_user_id: int = 0):
         model.db.session.flush()
         unknown_manufacturer_id = unknown_manufacturer.id
 
-        with open('data/Cheqroom_Item_Export-2023-08-12 21_06_57_categoryIDadded.json', 'r') as file:
+        with open('data/Cheqroom_Item_Export-2023-08-12 21_06_57.json', 'r') as file:
             data = json.load(file)
+
+        downloaded_images = set()
 
         for item in data:
             # Create Manufacturer and Flush to get ID
@@ -735,18 +737,19 @@ def populate_assets(created_by_user_id: int = 0):
 
             # Prepare fields for Asset creation
 
-            model_name = utils.sanitize_name(item.get("Name"))
-            model_number = utils.sanitize_name(item.get("Model"))
+            model_name = item.get("Name")
+            model_number = item.get("Model")
             inventory_number = int(item.get("Item Number") or 1)
             online_item_page = item.get("Hyperlink")
-            description = utils.sanitize_name(item.get("Description"))
+            description = item.get("Description")
             category_id_str = item.get("category_id")
-            if category_id_str == "Uncategorized":
+            if category_id_str == "Uncategorized" or category_id_str is None:
                 category_id = 1
-            elif category_id_str and category_id_str.isdigit():
-                category_id = int(category_id_str)
             else:
-                category_id = 1
+                try:
+                    category_id = int(category_id_str)
+                except ValueError:
+                    category_id = 1
 
 
             # Create Asset
@@ -774,6 +777,30 @@ def populate_assets(created_by_user_id: int = 0):
                                             created_by_user_id,
                                             db_init_message,
                                             commit=False)
+                
+
+            # Get the image from the JSON entry
+            image_to_downloaded = item.get("Image Url")
+
+            # Check that there's somthing there
+            if image_to_downloaded:
+
+                # Check if it's already been downloaded
+                if model_name not in downloaded_images:
+                    image = utils.ImageURLScaping.download_image(image_to_downloaded)
+                    print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
+                    
+                    utils.ImageProcessing.generate_image_variations(image,
+                                                                    "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images",
+                                                                    "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images",
+                                                                    model_name)
+                    
+                    print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
+
+                    downloaded_images.add(model_name)
+                else:
+                    print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
+
         
         utils.successMessage()
         model.db.session.commit()
@@ -842,7 +869,7 @@ def main():
     
     category_id_mapping, category_parent_mapping = populate_categories()
 
-    # populate_assets()
+    populate_assets()
 
     # print(f"\n{utils.GREEN_BOLD}CATEGORY ID MAPPINGS: {utils.RESET}{category_id_mapping}")
     # print(f"\n{utils.GREEN_BOLD}CATEGORY PARENT ID MAPPINGS: {utils.RESET}{category_parent_mapping}")

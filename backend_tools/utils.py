@@ -5,8 +5,10 @@ import json
 import re
 import shutil
 
-from PIL import Image
 from typing import Optional
+from PIL import Image
+import requests
+from io import BytesIO
 
 
 utils_version_number = 0.3
@@ -106,7 +108,8 @@ class ImageURLScaping:
     program_name = "Image Scraper Tools"
 
 
-    def download_image(url, save_directory, filename):
+    @staticmethod
+    def download_and_save_image(url, save_directory, filename):
         response = ImageURLScaping.requests.get(url, stream=True)
         response.raise_for_status()
 
@@ -114,6 +117,16 @@ class ImageURLScaping:
         with open(filename, 'wb') as file:
             for chunk in response.iter_content(chunk_size=8192):
                 file.write(chunk)
+
+
+    @staticmethod
+    def download_image(url):
+        response = requests.get(url)
+        response.raise_for_status()
+        img_data = BytesIO(response.content)
+        img_obj = Image.open(img_data)
+
+        return img_obj
 
 
 
@@ -148,7 +161,7 @@ class ImageURLScaping:
             if image_name and image_url:
                 file_path = os.path.join(save_directory, f"{image_name}.jpg")
                 if not os.path.exists(file_path):
-                    ImageURLScaping.download_image(image_url, save_directory, image_name)
+                    ImageURLScaping.download_and_save_image(image_url, save_directory, image_name)
                     print(f"Image for {UNDERLINED}{image_name}{RESET} has been {GREEN_BOLD}downloaded{RESET}.")
                 else:
                     print(f"Image for {UNDERLINED}{image_name}{RESET} has been {YELLOW_BOLD}skipped{RESET}.")
@@ -183,14 +196,15 @@ class ImageURLScaping:
         if image_name and image_url:
             file_path = os.path.join(save_directory, f"{image_name}.jpg")
             if not os.path.exists(file_path):
-                ImageURLScaping.download_image(image_url, save_directory, image_name)
-                with Image.open(file_path) as img:
-                    for label, max_size in ImageProcessing.image_size_map.items():
-                        ImageProcessing.resize_image_from_object(img, save_directory, label)
+                img = ImageURLScaping.download_and_save_image(image_url, save_directory, image_name)
+                # with Image.open(file_path) as img:
+                #     for label, max_size in ImageProcessing.image_size_map.items():
+                #         ImageProcessing.resize_image_from_object(img, save_directory, label)
                 print(f"Image for {image_name} has been downloaded.")
             else:
                 print(f"Image for {image_name} has been skipped.")
 
+        return img
 
         # print(f"\n{GREEN_BOLD}Images Downloaded successfully!{RESET}\n\n")
 
@@ -247,29 +261,44 @@ class ImageProcessing:
 
 
     @staticmethod
-    def resize_image_from_object(img: Image.Image,
-                                 output_dir: str,
-                                 label:str):
-        """Takes an image object and resizes it."""
-        width, height = img.size
-        output_filename = label + ".jpg"
-        output_path = os.path.join(output_dir, output_filename)
+    def generate_image_variations(img: Image.Image,
+                                  original_output_dir: str,
+                                  output_dir: str,
+                                  base_name: str):
+        """Generates and saves multiple resized variations of a given image object."""
 
-        if label == "0-original":
-            img.save(output_path, "JPEG", quality=90)
-            print(f"Generated image size: {label}")
-            return
+        # Ensure the output directory exists
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-        if width > height:
-            new_width = ImageProcessing.image_size_map[label]
-            new_height = int((height / width) * ImageProcessing.image_size_map[label])
-        else:
-            new_height = ImageProcessing.image_size_map[label]
-            new_width = int((width / height) * ImageProcessing.image_size_map[label])
+        if not os.path.exists(original_output_dir):
+            os.makedirs(original_output_dir)
 
-        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-        resized_img.save(output_path, "JPEG", quality=90)
-        print(f"Generated image size: {label}")
+        sanitized_base_name = sanitize_name(base_name)
+
+        for label, max_size in ImageProcessing.image_size_map.items():
+            output_filename = f"{sanitized_base_name}_{label}.jpg"
+
+            if label == "0-original":
+                output_path = os.path.join(original_output_dir, output_filename)
+                img.save(output_path, "JPEG", quality=90)
+                print(f"{GREEN_BOLD}Generated{RESET} image size: {UNDERLINED}{label}{RESET}")
+                continue
+
+            output_path = os.path.join(output_dir, output_filename)
+
+            width, height = img.size
+            if width > height:
+                new_width = max_size
+                new_height = int((height / width) * max_size)
+            else:
+                new_height = max_size
+                new_width = int((width / height) * max_size)
+
+            resized_img = img.resize((new_width, new_height), Image.LANCZOS)
+            resized_img.save(output_path, "JPEG", quality=90)
+            print(f"{GREEN_BOLD}Generated{RESET} image size: {UNDERLINED}{label}{RESET}")
+
 
     
     @staticmethod
@@ -289,41 +318,6 @@ class ImageProcessing:
             if label == "0-original":
                 shutil.copy(original_file_path, output_path)
                 print(f"Generated image size: {label}")
-                continue
-
-            width, height = img.size
-
-            if width > height:
-                new_width = max_size
-                new_height = int((height / width) * max_size)
-            else:
-                new_height = max_size
-                new_width = int((width / height) * max_size)
-
-            resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-            resized_img.save(output_path, "JPEG", quality=90)
-            print(f"Generated image size: {label}")
-
-
-    @staticmethod
-    def generate_image_variations(img: Image.Image,
-                                  output_dir: str,
-                                  base_name: str):
-        """Generates and saves multiple resized variations of a given image object."""
-        
-        # Ensure the output directory exists
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
-        sanitized_base_name = sanitize_name(base_name)
-
-        for label, max_size in ImageProcessing.image_size_map.items():
-            output_filename = f"{sanitized_base_name}_{label}.jpg"
-            output_path = os.path.join(output_dir, output_filename)
-
-            if label == "0-original":
-                img.save(output_path, "JPEG", quality=90)
-                print(f"{GREEN_BOLD}Generated{RESET} image size: {UNDERLINED}{label}{RESET}")
                 continue
 
             width, height = img.size
