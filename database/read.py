@@ -209,8 +209,8 @@ class ReservationAsset:
         
         # Initialize the query with a join to the audit table
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.ReservationAsset,
-                                                                model.AuditableEntityTypes.RESERVATION_ASSET.value)
+                                                                   model.ReservationAsset,
+                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
         
         # Add joins for Asset and Reservation relationships to pull related data in one SQL call
         query = query.options(joinedload('asset'), joinedload('reservation'))
@@ -241,8 +241,8 @@ class ReservationAsset:
         """Retrieve all ReservationAsset entries that match the given asset ID, or none if empty."""
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.ReservationAsset,
-                                                                model.AuditableEntityTypes.RESERVATION_ASSET.value)
+                                                                   model.ReservationAsset,
+                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
         
         query = query.options(joinedload('asset'), joinedload('reservation'))
 
@@ -389,11 +389,12 @@ class Asset:
     def by_id(requesting_user_id: int,
               asset_id: int,
               include_archived: bool = False):
+        """Fetch and return an Asset by its ID, or None if no match is found."""
+
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.Asset,
-                                                                model.AuditableEntityTypes.ASSET.value)
+                                                                   model.Asset,
+                                                                   model.AuditableEntityTypes.ASSET.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('manufacturer'),
                               joinedload('category'),
                               joinedload('storage_area'),
@@ -401,12 +402,15 @@ class Asset:
                               joinedload('msrp_entry'),
                               joinedload('residual_value_entry'))
 
-        query = query.filter_by(id=asset_id).order_by(latest_audit.created_at.desc()).first()
+        query = query.filter(model.Asset.id == asset_id).order_by(latest_audit.created_at.desc()).first()
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
-            return query if include_archived or latest_audit.is_archived == False else None
+            if not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
+        else:
+            query = query.filter(latest_audit.is_archived == False)
 
-        return query if latest_audit.is_archived == False else None
+        return query
 
 
     @staticmethod
@@ -414,27 +418,29 @@ class Asset:
                asset_ids: List[int], 
                include_archived: bool = False, 
                just_archived: bool = False):
+        """Fetch and return Assets by a list of IDs, or None if no match is found."""
 
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
-        
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
-                                                                model.Asset, 
-                                                                model.AuditableEntityTypes.ASSET.value)
+                                                                   model.Asset, 
+                                                                   model.AuditableEntityTypes.ASSET.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('manufacturer'),
                               joinedload('category'),
                               joinedload('storage_area'),
                               joinedload('purchase_price_entry'),
                               joinedload('msrp_entry'),
                               joinedload('residual_value_entry'))
-                
+
         query = query.filter(model.Asset.id.in_(asset_ids)).distinct(model.Asset.id)
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
-            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
             if just_archived:
                 return None
@@ -449,6 +455,7 @@ class Asset:
                     category_ids: List[int], 
                     include_archived: bool = False, 
                     just_archived: bool = False):
+        """Fetch and return Assets by their category IDs, or None if no match is found."""
 
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
@@ -457,56 +464,62 @@ class Asset:
                                                                    model.Asset,
                                                                    model.AuditableEntityTypes.ASSET.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('manufacturer'),
-                              joinedload('category'),
-                              joinedload('storage_area'),
-                              joinedload('purchase_price_entry'),
-                              joinedload('msrp_entry'),
-                              joinedload('residual_value_entry'))
+                            joinedload('category'),
+                            joinedload('storage_area'),
+                            joinedload('purchase_price_entry'),
+                            joinedload('msrp_entry'),
+                            joinedload('residual_value_entry'))
         
         query = query.filter(model.Asset.category_id.in_(category_ids))
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
-            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
             if just_archived:
                 return None
             query = query.filter(latest_audit.is_archived == False)
-        
-        assets_by_category = query.all()
 
+        assets_by_category = query.all()
         return assets_by_category if assets_by_category else None
-    
+
 
     @staticmethod
     def all(requesting_user_id: int,
             include_archived: bool = False,
             just_archived: bool = False):
+        """Fetch and return all Assets, or None if the table is empty."""
 
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.Asset,
-                                                                model.AuditableEntityTypes.ASSET.value)
-        
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+                                                                   model.Asset,
+                                                                   model.AuditableEntityTypes.ASSET.value)
         query = query.options(joinedload('manufacturer'),
-                              joinedload('category'),
-                              joinedload('storage_area'),
-                              joinedload('purchase_price_entry'),
-                              joinedload('msrp_entry'),
-                              joinedload('residual_value_entry'))
+                            joinedload('category'),
+                            joinedload('storage_area'),
+                            joinedload('purchase_price_entry'),
+                            joinedload('msrp_entry'),
+                            joinedload('residual_value_entry'))
 
-        query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
-
-        if not has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and just_archived:
-            return None
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
+        else:
+            if just_archived:
+                return None
+            query = query.filter(latest_audit.is_archived == False)
 
         assets = query.all()
         return assets if assets else None
     
+
 
 class Manufacturer:
 
