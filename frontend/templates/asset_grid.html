@@ -72,12 +72,7 @@
         // Fetch hierarchical categories from the server using Flask's template
         const categories = {{ categories|tojson|safe }};
         
-        // Initialize the AssetsDropdown component
-        ReactDOM.render(
-            <AssetsDropdown categories={simpleCategories} />,
-            document.getElementById('react-app')
-        );
-    
+        
         // Initialize the CategoryDropdown component
         ReactDOM.render(
             <CategoryDropdown categories={categories} />,

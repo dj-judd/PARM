@@ -28,14 +28,14 @@ git clone https://github.com/yourusername/PARM.git
 pip install -r requirements.txt
 ```
 
-3. Run the Flask application
+3. Run the Flask server in `/backend`
 ```bash
-flask run
+python server.py
 ```
 
 ## Reporting 📊
 
-To run financial reports, navigate to the `Reports` section in the application.
+To run financial reports, navigate to the `Reports` section in the application. 
 
 ## Contribution 🤝
 
