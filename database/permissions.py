@@ -103,4 +103,4 @@ class PermissionError:
         if message:
             self.message = message
         else:
-            self.message = f"{utils.utils.RED_BOLD}ERROR:{utils.utils.RESET} Permissions not met."
+            self.message = f"{utils.RED_BOLD}ERROR:{utils.RESET} Permissions not met."

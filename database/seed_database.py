@@ -824,7 +824,8 @@ def populate_assets(created_by_user_id: int = 0,
 
                     else:
                         print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
-
+                else:
+                    print(f"No image to download for {utils.YELLOW_BOLD}{model_name}{utils.RESET}.")
                 
 
         

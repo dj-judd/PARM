@@ -108,6 +108,7 @@ class Reservation:
         # Return the query result only if the reservation is not archived.
         return query if latest_audit.is_archived == False else None
 
+
     @staticmethod
     def by_ids(requesting_user_id: int, 
                reservation_ids: List[int], 
@@ -175,6 +176,134 @@ class Reservation:
 
 
 
+class ReservationAsset:
+    pass
+
+
+
+class AssetTag:
+    pass
+
+
+
+class Comment:
+    pass
+
+
+
+class Reaction:
+    pass
+
+
+
+class Category:
+    pass
+
+
+
+class Color:
+    pass
+
+
+
+class CustomProperty:
+    pass
+
+
+
+class AssetCustomProperty:
+    pass
+
+
+
+class Asset:
+
+    @staticmethod
+    def by_id(requesting_user_id: int,
+              asset_id: int,
+              include_archived: bool = False):
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                model.Asset,
+                                                                model.AuditableEntityTypes.ASSET.value)
+        query = query.filter_by(id=asset_id).order_by(latest_audit.created_at.desc()).first()
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
+            return query if include_archived or latest_audit.is_archived == False else None
+
+        return query if latest_audit.is_archived == False else None
+
+
+    @staticmethod
+    def by_ids(requesting_user_id: int, 
+               asset_ids: List[int], 
+               include_archived: bool = False, 
+               just_archived: bool = False):
+
+        if include_archived and just_archived:
+            raise ValueError("Both flags cannot be True.")
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
+                                                                model.Asset, 
+                                                                model.AuditableEntityTypes.ASSET.value)
+        query = query.filter(model.Asset.id.in_(asset_ids)).distinct(model.Asset.id)
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
+            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+        else:
+            if just_archived:
+                return None
+            query = query.filter(latest_audit.is_archived == False)
+
+        assets = query.all()
+        return assets if assets else None
+
+
+    @staticmethod
+    def by_category(requesting_user_id: int, 
+                    category_ids: List[int], 
+                    include_archived: bool = False, 
+                    just_archived: bool = False):
+
+        if include_archived and just_archived:
+            raise ValueError("Both flags cannot be True.")
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                   model.Asset,
+                                                                   model.AuditableEntityTypes.ASSET.value)
+        
+        query = query.filter(model.Asset.category_id.in_(category_ids))
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
+            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+        else:
+            if just_archived:
+                return None
+            query = query.filter(latest_audit.is_archived == False)
+        
+        assets_by_category = query.all()
+
+        return assets_by_category if assets_by_category else None
+    
+    
+    @staticmethod
+    def all(requesting_user_id: int,
+            include_archived: bool = False,
+            just_archived: bool = False):
+
+        if include_archived and just_archived:
+            raise ValueError("Both flags cannot be True.")
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                model.Asset,
+                                                                model.AuditableEntityTypes.ASSET.value)
+        query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+
+        if not has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and just_archived:
+            return None
+
+        assets = query.all()
+        return assets if assets else None
+    
 
 class Manufacturer:
 
@@ -184,3 +313,103 @@ class Manufacturer:
         
         manufacturer = model.db.session.query(model.Manufacturer).filter_by(name=name).first()
         return manufacturer if manufacturer else None
+    
+
+
+class AssetFlag:
+    pass
+
+
+
+class Flag:
+    pass
+
+
+
+class Currency:
+    pass
+
+
+
+class FinancialEntry:
+    pass
+
+
+
+class AssetLocationLog:
+    pass
+
+
+
+class FileAttachment:
+    pass
+
+
+
+class EmailAddress:
+    pass
+
+
+
+class PhoneNumber:
+    pass
+
+
+
+class UiTheme:
+    pass
+
+
+
+class UserSettings:
+    pass
+
+
+
+class User:
+    pass
+
+
+
+class UserRole:
+    pass
+
+
+
+class Role:
+    pass
+
+
+
+class Permission:
+    pass
+
+
+
+class RolePermission:
+    pass
+
+
+
+class Area:
+    pass
+
+
+
+class Address:
+    pass
+
+
+
+class Country:
+    pass
+
+
+
+class Timezone:
+    pass
+
+
+
+class State:
+    pass
