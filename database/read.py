@@ -5,7 +5,7 @@ from database import crud
 from database.permissions import has_permission, PermissionsType
 from backend_tools import utils
 
-from typing import Optional, List
+from typing import Optional, List, Dict
 from sqlalchemy import desc
 from sqlalchemy.orm import joinedload, aliased
 
@@ -300,6 +300,7 @@ class Category:
 
         return model.db.session.query(model.Category).filter_by(id=category_id).first()
 
+
     @staticmethod
     def by_ids(category_ids: List[int]) -> Optional[List[object]]:
         """Fetch and return a list of Categories by their IDs, or None if no match is found."""
@@ -307,11 +308,13 @@ class Category:
         query = model.db.session.query(model.Category).filter(model.Category.id.in_(category_ids)).all()
         return query if query else None
 
+
     @staticmethod
     def by_name(category_name: str) -> Optional[object]:
         """Fetch and return a Category by its name, or None if no match is found."""
         
         return model.db.session.query(model.Category).filter_by(name=category_name).first()
+
 
     @staticmethod
     def by_parent_id(parent_id: int) -> Optional[List[object]]:
@@ -326,6 +329,35 @@ class Category:
 
         query = model.db.session.query(model.Category).all()
         return query if query else None
+    
+
+    @staticmethod
+    def all_ordered() -> Optional[Dict[int, object]]:
+        """Fetch and return all entries from the Category table ordered by hierarchy, or None if the table is empty."""
+        
+        def transform_to_hierarchical(query_result):
+            tree = {}
+            lookup = {}
+            
+            for item in query_result:
+                id = item.id
+                name = item.name
+                parent_id = item.parent_category_id
+                node = {'name': name, 'children': []}
+                lookup[id] = node
+                if parent_id is None:
+                    tree[id] = node
+                else:
+                    lookup[parent_id]['children'].append(node)
+            
+            return tree
+
+        query = model.db.session.query(model.Category).all()
+
+        if query:
+            return transform_to_hierarchical(query)
+        else:
+            return None
 
 
 

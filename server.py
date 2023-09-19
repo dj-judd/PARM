@@ -1,7 +1,7 @@
 """Server for parm app."""
 import os
 import sys
-from flask import Flask, render_template
+from flask import Flask, render_template, jsonify
 from dotenv import load_dotenv
 
 from database import crud, model, permissions
@@ -37,8 +37,9 @@ def asset_grid():
     else:
         primary_color = "#000000"  # Default white
         secondary_color = "#FFFFFF"  # Default black
-    
-    return render_template('asset_grid.html', assets=assets, primary_color=primary_color, secondary_color=secondary_color)
+
+    categories = crud.read.Category.all_ordered()
+    return render_template('asset_grid.html', assets=assets, primary_color=primary_color, secondary_color=secondary_color, categories=categories)
 
 
 if __name__ == "__main__":

@@ -32,15 +32,58 @@
     </style>
 </head>
 <body style="background-color: {{ primary_color }};">
-    <div class="container">
-        <div class="grid-container">
-            {% for asset in assets %}
-                <div class="grid-square">
-                    <p>{{ asset.model_name }}</p>
-                    <p>{{ asset.manufacturer.name }}</p>
+    <div id="category-dropdown"></div>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="text-center">
+                        <!-- Include React app container -->
+                        <div id="react-app"></div>
+                    </div>
                 </div>
-            {% endfor %}
+            </div>
+            <div class="row">
+                {% for asset in assets %}
+                    <div class="col-md-1 grid-square">
+                        <p>{{ asset.model_name }}</p>
+                        <p>{{ asset.manufacturer.name }}</p>
+                        <!-- Include category attributes if available -->
+                        {% if asset.category %}
+                            <p>Category ID: {{ asset.category.id }}</p>
+                            <p>Category Name: {{ asset.category.name }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
+    
+    <!-- Include React and ReactDOM scripts -->
+    <script src="https://unpkg.com/react@17/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+    
+    <!-- Include Babel to transpile JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Include your React component and initialize it -->
+    <script type="text/babel" src="/components/CategoryDropdown.js"></script>
+
+    <script type="text/babel">
+        // Fetch hierarchical categories from the server using Flask's template
+        const categories = {{ categories|tojson|safe }};
+        
+        // Initialize the AssetsDropdown component
+        ReactDOM.render(
+            <AssetsDropdown categories={simpleCategories} />,
+            document.getElementById('react-app')
+        );
+    
+        // Initialize the CategoryDropdown component
+        ReactDOM.render(
+            <CategoryDropdown categories={categories} />,
+            document.getElementById('category-dropdown')
+        );
+    </script>
+    
 </body>
 </html>
