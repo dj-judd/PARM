@@ -1,0 +1,811 @@
+Project parm {
+  database_type: 'PostgreSQL'
+  Note: 'Production Asset Management'
+  }
+
+Table global_settings {
+  deployment_fingerprint varchar(64) [pk, not null, note: "Primary key"]
+  default_currency_id smallint [not null, ref: > currencies.id, note: "Foreign key to default currency"]
+}
+
+
+Enum operation_types {
+  "CREATE"
+  "UPDATE"
+  "DELETE"
+  "ARCHIVE"
+  }
+
+Enum auditable_entity_types {
+  "GLOBAL_SETTINGS"
+  "UI_THEME"
+  "RESERVATION"
+  "RESERVATION_ASSET"
+  "ASSET_TAG"
+  "COMMENT"
+  "REACTION"
+  "CATEGORY" 
+  "COLOR"
+  "CUSTOM_PROPERTY"
+  "ASSET_CUSTOM_PROPERTY"
+  "ASSET"
+  "MANUFACTURER"
+  "ASSET_FLAG"
+  "FLAG"
+  "FINANCIAL_ENTRY"
+  "ASSET_LOCATION_LOG"
+  "FILE_ATTACHMENT"
+  "EMAIL_ADDRESS"
+  "PHONE_NUMBER"
+  "USER_SETTINGS"
+  "USER"
+  "USER_ROLE"
+  "ROLE"
+  "PERMISSION"
+  "ROLE_PERMISSION"
+  "AREA"
+  "ADDRESS"
+}
+
+Table audit_entries {
+  id int [pk, increment, not null, note: "Primary key"]
+  operation_type operation_types [not null, note: "Type of operation performed. Example: CREATE, UPDATE, DELETE, ARCHIVE"]
+  auditable_entity_type auditable_entity_types [not null, note: "Type of related entity"]
+  related_entity_id int [null, note: "ID of the related entity"]
+  related_entity_hash varchar(64) [null, note: "Field for Hashed IDs"]
+  related_composite_id int [null, note: "ID of a composite key, if applicable"]
+  details text [null, note: "Extra details about the operation"]
+  created_by int [not null, ref: - users.id, note: "Foreign key to user who created the record"]
+  created_at timestamp [not null, note: "Timestamp of creation"]
+  last_edited_by int [null, ref: - users.id, note: "Foreign key to last user who edited the record"]
+  last_edited_at timestamp [not null, note: "Timestamp of last edit"]
+  is_archived bool [not null, note: "Whether the record is archived"]
+  archived_at timestamp [null, note: "Timestamp of when the record was archived"]
+
+  indexes {
+    (auditable_entity_type) [name:'idx_audit_entries_related_entity_type']
+    (related_entity_id) [name:'idx_audit_entries_related_entity_id']
+    (related_entity_hash) [name:'idx_audit_entries_related_entity_hash']
+    (related_composite_id) [name:'idx_audit_entries_related_composite_id']
+    (auditable_entity_type, related_entity_id) [name:'idx_audit_entries_related_entity_type_id']
+    (auditable_entity_type, related_composite_id) [name:'idx_audit_entries_related_entity_type_composite_id']
+    (created_at) [name:'idx_audit_entries_created_at']
+    }
+}
+
+
+Table reservations {
+  id int [pk, increment, not null, note: "Primary key"]
+  reserved_for int [not null, ref: > users.id, note: "Foreign key to user the reservation is for"]
+  area_id int [not null, ref: > areas.id, note: "Foreign key to area of reservation"]
+  planned_checkout_time timestamp [null, note: "Planned time to check out"]
+  planned_checkin_time timestamp [null, note: "Planned time to check in"]
+  checkout_time timestamp [null, note: "Actual checkout time"]
+  checkin_time timestamp [null, note: "Actual check-in time"]
+  is_indefinite bool [not null, default: `false`, note: "If the reservation is going to be indefinate"]
+
+  indexes {
+    (area_id) [name:'idx_reservations_area_id']
+    (reserved_for) [name:'idx_reservations_reserved_for']
+    (planned_checkout_time) [name:'idx_reservations_planned_checkout_time']
+    (planned_checkin_time) [name:'idx_reservations_planned_checkin_time']
+    }
+}
+
+
+
+
+Table reservation_assets [note: "Join Table"] {
+  reservation_id int [not null, ref: > reservations.id]
+  asset_id int [not null, ref: > assets.id]
+
+  indexes {
+    (reservation_id) [name:'idx_reservation_assets_reservation_id']
+    (asset_id) [name:'idx_reservation_assets_asset_id']
+    (reservation_id, asset_id) [name:'idx_reservation_assets_reservation_asset']
+  }
+}
+
+Enum reservation_status {
+  "PENDING"
+  "APPROVED"
+  "CHECKED_OUT"
+  "COMPLETED"
+  "CANCELLED"
+  "DENIED"
+  }
+
+
+Enum code_types {
+  "BARCODE"
+  "QR"
+  "NFC"
+  "BLUETOOTH"
+}
+
+Table asset_tags {
+  id int [pk, increment, not null]
+  asset_id int [not null, ref: > assets.id]
+  code_type code_types [not null, note: "Type of the code (e.g., BARCODE, QR, NFC)"]
+  data varchar [not null, note: "This will contain the actual code or identifier data"]
+
+  indexes {
+    (asset_id) [name:'idx_asset_tags_asset_id']
+    (code_type) [name:'idx_asset_tags_code_type']
+    (asset_id, code_type) [name:'idx_asset_tags_asset_id_code_type']
+  }
+}
+
+
+
+Enum commentable_entity_types {
+  "COMMENT"
+  "ASSET"
+  "RESERVATION"
+  "AREA"
+  "FLAG"
+}
+
+Table comments {
+  id int [pk, increment, not null]
+  parent_comment_id int [null, ref: > comments.id, Note: "For Nesting"]
+  commentable_entity_types commentable_entity_types [not null, note: "This field will denote the type of entity (asset, reservation, image, asset_flag, etc.)"]
+  entity_id int [not null, note: "This field will store the ID of the related entity in its respective table"]
+  comment_data varchar(2048) [not null, note: "This is where the comment content goes."]
+  
+
+  indexes {
+    (commentable_entity_types) [name:'idx_comments_commentable_entity_types']
+    (entity_id) [name:'idx_comments_related_entity_id']
+    (commentable_entity_types, entity_id) [name:'idx_comments_commentable_entity_type_id']
+    (parent_comment_id) [name:'idx_comments_parent_comment_id']
+    (parent_comment_id, id) [name:'idx_comments_parent_comment_id_id']
+  }
+}
+
+
+Enum reaction_types {
+  "👍️"
+  "🤬"
+  "💀"
+}
+
+Table reactions {
+  id int [pk, increment, not null]
+  user_id int [not null, ref: > users.id, note: "The user who gave the reaction."]
+  comment_id int [not null, ref: > comments.id, note: "Which comment the reaction is for."]
+  reaction_type reaction_types [not null, note: "For standard emoji reactions like 'thumb_up', 'smile', etc."]
+
+  indexes {
+    (user_id) [name:'idx_reactions_user_id']
+    (comment_id) [name:'idx_reactions_comment_id']
+    (user_id, comment_id, reaction_type) [name:'idx_reactions_user_comment_reaction']
+  }
+}
+
+Table categories {
+  id int [pk, increment, not null]
+  parent_category_id int [null, ref: > categories.id, note: "For Nesting"]
+  name varchar(64) [not null, note: "Name of the category"]
+  color_id int [not null, ref: > colors.id, note: "Foreign key to color"]
+
+  indexes {
+    (parent_category_id) [name:'idx_categories_parent_category_id']
+    (name) [name:'idx_categories_name']
+    (parent_category_id, name) [name:'idx_categories_parent_category_name']
+  }
+}
+
+Table colors {
+  id int [pk, increment, not null]
+  name varchar(64) [not null, note: "Name for displaying with the color"]
+  hex_value CHAR(9) [not null, note: "Hex value for the color"]
+  }
+
+Table custom_properties {
+  id int [pk, increment, not null]
+  name varchar(64) [not null, note: "Name of the custom property Ex: Screensize"]
+  prefix varchar(8) [null, note: "Can't think of an example, but might as well have it. lol xD"]
+  suffix varchar(8) [null, note: "24in ... in, ', ect"]
+  data_type custom_property_data_type [not null, note: "integer, string, ect."]
+
+  indexes {
+    (data_type) [name:'idx_custom_properties_data_type']
+  }
+}
+
+
+Enum custom_property_data_type {
+  "VARCHAR"
+  "INTEGER"
+  "DECIMAL"
+  "REAL"
+  "BOOLEAN"
+  "TIMESTAMP"
+  "DATE"
+}
+
+
+Table asset_custom_properties [note: "Join Table"] {
+  asset_id int [not null, ref: > assets.id]
+  custom_property_id int [not null, ref: > custom_properties.id]
+  data_value varchar(512) [not null, note: "The actual value associated with this asset for the given property"]
+
+  indexes {
+    (asset_id) [name:'idx_asset_custom_properties_asset_id']
+    (custom_property_id) [name:'idx_asset_custom_properties_custom_property_id']
+    (asset_id, custom_property_id) [name:'idx_asset_custom_properties_asset_custom_property']
+  }
+}
+
+Table assets {
+  id int [pk, increment, not null, note: "Primary key"]
+  manufacturer_id smallint [not null, ref: > manufacturers.id, note: "Foreign key to brand"]
+  model_number varchar(64) [null, note: "Model number of the asset"]
+  model_name varchar(64) [not null, note: "Model name of the asset"]
+  category_id smallint [null, ref: > categories.id, note: "Foreign key to category"]
+  storage_area_id int [null, ref: > areas.id, note: "Foreign key to storage area"]
+  purchase_date date [null, note: "Purchase date of the asset"]
+  purchase_price_id int [null, ref: > financial_entries.id, note: "Foreign key to purchase price"]
+  msrp_id int [null, ref: > financial_entries.id, note: "Foreign key to manufacturer's suggested retail price"]
+  residual_value_id int [null, ref: > financial_entries.id, note: "Foreign key to residual value of the asset"]
+  parent_asset_id int [null, ref: > assets.id, note: "If part of a kit, reference to parent asset"]
+  is_kit_root bool [not null, note: "Indicates if the asset is the root of a kit"]
+  is_attachment bool [not null, note: "Indicates if the asset is an attachment"]
+  serial_number varchar(256) [null, note: "Serial number of the asset"]
+  inventory_number smallint [not null, note: "Inventory number of the asset"]
+  description varchar(512) [null, note: "Description of the asset"]
+  is_available bool [not null, note: "Availability status of the asset"]
+  online_item_page varchar [null, note: "Link to the asset's online page"]
+  warranty_starts date [null, note: "Start date of warranty for the asset"]
+  warranty_ends date [null, note: "End date of warranty for the asset"]
+  
+  indexes {
+    (manufacturer_id) [name:'idx_assets_manufacturer_id']
+    (category_id) [name:'idx_assets_category_id']
+    (storage_area_id) [name:'idx_assets_storage_area_id']
+    (parent_asset_id) [name:'idx_assets_parent_asset_id']
+    (is_kit_root) [name:'idx_assets_is_kit_root']
+    (is_attachment) [name:'idx_assets_is_attachment']
+    (is_available) [name:'idx_assets_is_available']
+    (inventory_number) [name:'idx_assets_inventory_number']
+    }
+}
+
+Table manufacturers {
+  id smallint [pk, increment, not null]
+  name varchar [not null, note: "Name of the brand. Ex: Canon, Nikon, BlackMagic"]
+  manufacturer_area_id int [null, ref: > areas.id, note: "Foreign key to area id"]
+  website varchar [null, note: "ex: www.blackmagicdesign.com"]
+
+  indexes {
+    (manufacturer_area_id) [name:'idx_manufacturers_manufacturer_area_id']
+    (website) [name:'idx_manufacturers_website']
+    }
+}
+
+Table asset_flags [note: "Join Table"] {
+  asset_id int [not null, ref: > assets.id]
+  flag_id int [not null, ref: > flags.id]
+
+  indexes {
+    (asset_id, flag_id) [name:'idx_asset_flags_asset_flag']
+  }
+}
+
+Table flags {
+  id int [pk, increment, not null]
+  name varchar [not null, note: "examples: needs cleaning, needs inspection, broken, missing"]
+  description varchar [null]
+  color_id int [not null, ref: > colors.id, note: "Foreign key to color"]
+  makes_unavailable bool [not null, note: "If it's damaged, it's not available to reserve"]
+
+  indexes {
+    (color_id) [name:'idx_flags_color_id']
+    (makes_unavailable) [name:'idx_flags_makes_unavailable']
+    (name) [name:'idx_flags_name']
+  }
+}
+
+
+Table currencies {
+  id smallint [pk, increment, not null, note: "Primary key"]
+  name varchar(64) [not null, note: "Currency name"]
+  symbol varchar(8) [not null, note: "Currency symbol"]
+  iso_code iso_currency_codes [not null, note: "Currency ISO code"]
+  exchange_rate decimal(10,5) [not null, note: "what is the exchange rate down to 5 decimals?"]
+
+  indexes {
+    (name) [name:'idx_currencies_name']
+    (symbol) [name:'idx_currencies_symbol']
+    (iso_code) [name:'idx_currencies_iso_code']
+  }
+}
+
+
+enum iso_currency_codes {
+  "USD"
+  "CAD"
+  "MXN"
+  }
+
+Table financial_entries {
+  id int [pk, increment, not null, note: "Primary key"]
+  currency_id smallint [not null, ref: > currencies.id, note: "Reference to currency"]
+  amount decimal(10,2) [not null, note: "Monetary amount"]
+  
+  indexes {
+    (currency_id) [name:'idx_financial_entries_currency_id']
+    (amount) [name:'idx_financial_entries_amount']
+  }
+}
+
+
+Table asset_location_logs [note:"for GEO tracking"] {
+  id int [pk, increment, not null]
+  asset_id int [not null, ref: > assets.id] // The scanned asset
+  latitude decimal(9,6) [null, note: "GPS Latitude"]
+  longitude decimal(9,6) [null, note: "GPS Longitude"]
+
+  indexes {
+    (asset_id) [name: 'idx_asset_location_logs_asset_id']
+    (latitude, longitude) [name: 'idx_asset_location_logs_lat_long']
+  }
+}
+
+
+Table file_attachments {
+  id int [pk, increment, not null]
+  attachable_entity_type attachable_entity_types [not null]
+  entity_id int [not null]
+
+  file_path varchar [not null, unique, note: "Filepath for the attachment"]
+  file_type file_types [not null]
+  file_category file_categories [not null]
+  image_size image_size [null]
+
+  indexes {
+    (attachable_entity_type) [name:'idx_file_attachments_attachable_entity_type']
+    (entity_id) [name:'idx_file_attachments_related_entity_id']
+    (attachable_entity_type, entity_id) [name:'idx_file_attachments_attachable_entity_type_id']
+    (file_type) [name:'idx_file_attachments_file_type']
+    (file_category) [name:'idx_file_attachments_file_category']
+  }
+}
+
+
+Enum attachable_entity_types {
+  "ASSET"
+  "MANUFACTURER"
+  "USER"
+  "AREA"
+  "FLAG"
+}
+
+Enum file_categories {
+  "ARCHIVE"
+  "DOCUMENT"
+  "SPREADSHEET"
+  "PRESENTATION"
+  "IMAGE"
+  "VIDEO"
+  "AUDIO"
+}
+
+Enum file_types {
+  "JPEG"          // Joint Photographic Experts Group image format
+  "PNG"           // Portable Network Graphics image format
+  "GIF"           // Graphics Interchange Format
+  "BMP"           // Bitmap image format
+  "TIFF"          // Tagged Image File Format
+  "SVG"           // Scalable Vector Graphics image format
+  "PDF"           // Portable Document Format
+  "DOC"           // Microsoft Word Document
+  "DOCX"          // Microsoft Word Open XML Document
+  "TXT"           // Plain Text
+  "RTF"           // Rich Text Format
+  "CSV"           // Comma-Separated Values
+  "XLS"           // Microsoft Excel Spreadsheet
+  "XLSX"          // Microsoft Excel Open XML Spreadsheet
+  "PPT"           // Microsoft PowerPoint Presentation
+  "PPTX"          // Microsoft PowerPoint Open XML Presentation
+  "ZIP"           // ZIP Archive
+  "RAR"           // RAR Archive
+  "7Z"            // 7-Zip Archive
+  "MP3"           // MP3 Audio format
+  "WAV"           // Waveform Audio File Format
+  "MP4"           // MP4 Video format
+  "AVI"           // Audio Video Interleave Video format
+  "MKV"           // Matroska Multimedia Container format
+  }
+
+Enum image_size {
+  "0-original"
+  "1-xsmall"
+  "2-small"
+  "3-medium"
+  "4-large"
+  "5-xlarge"
+  "6-mongo"
+  }
+
+
+Table email_addresses {
+  id int [pk, increment, not null]
+  emailable_entity_type emailable_entity_types [not null]
+  entity_id int [not null]
+  
+  email_type email_type [not null]
+  email_address varchar(64) [not null, unique]
+  is_verified bool [not null]
+  is_primary bool [null]
+  is_shared bool [null]
+
+  indexes {
+    (emailable_entity_type) [name:'idx_email_addresses_email_owner_type']
+    (entity_id) [name:'idx_email_addresses_related_owner_id']
+    (email_type, entity_id) [name:'idx_email_addresses_email_owner_type_id']
+    (is_verified) [name:'idx_email_addresses_is_verified']
+    (email_address) [name:'idx_email_addresses_email_address']
+  }
+}
+
+
+
+Enum emailable_entity_types {
+  "USER"
+  "MANUFACTURER"
+  "AREA"
+  
+}
+
+Enum email_type {
+  "PERSONAL"// Personal Email
+  "WORK"    // Work Email
+  "BUSINESS"// A business' Email
+}
+
+
+
+Table phone_numbers {
+  id int [pk, increment, not null]
+  phoneable_entity_type phoneable_entity_types [not null]
+  entity_id int [not null]
+  
+  phone_type phone_type [not null]
+  is_cell bool [not null]
+  country_code smallint [not null]
+  area_code smallint [not null]
+  phone_number int [not null]
+  extension smallint [null]
+  is_verified bool [not null]
+  is_primary bool [not null]
+
+  indexes {
+    (phone_type) [name:'idx_phone_numbers_phone_owner_type']
+    (entity_id) [name:'idx_phone_numbers_related_owner_id']
+    (phone_type, entity_id) [name:'idx_phone_numbers_phone_owner_type_id']
+    (is_verified) [name:'idx_phone_numbers_is_verified']
+    (phone_number) [name:'idx_phone_numbers_phone_number']  // New index
+  }
+}
+
+
+Enum phoneable_entity_types {
+  "USER"
+  "MANUFACTURER"
+  "AREA"
+  
+}
+
+Enum phone_owner_types {
+  "USER"
+  "COMPANY"
+}
+
+Enum phone_type {
+  "PERSONAL"
+  "WORK"
+  "OTHER"
+}
+
+
+Table ui_themes {
+  id int [pk, increment, not null]
+  name varchar(64) [not null, unique, note: "Role name"]
+  description varchar(512) [not null, note: "Description of the role"]
+  primary_color_id int [not null, ref: > colors.id]
+  secondary_color_id int [not null, ref: > colors.id]
+
+  indexes {
+    (primary_color_id) [name:'idx_ui_themes_primary_color_id']
+    (secondary_color_id) [name:'idx_ui_themes_secondary_color_id']
+  }
+}
+
+
+
+Table user_settings {
+  id int [pk, increment, not null]
+  currency_id smallint [not null, ref: > currencies.id, note: "Foreign key to default currency"]
+  time_format_is_24h bool [not null, note: "Format of time ('12hr' or '24hr')"]
+  ui_theme_id smallint [not null, ref: > ui_themes.id, note: "Foreign key to UI theme"]
+  
+  indexes {
+    (currency_id) [name:'idx_user_settings_currency_id']
+    (ui_theme_id) [name:'idx_user_settings_ui_theme_id']
+  }
+}
+
+
+
+Table users {
+  id int [pk, increment, not null, note: "Primary key"]
+  password_hash varchar(64) [not null, note: "Hashed password for user"]
+  first_name varchar(64) [not null, note: "First name of the user"]
+  middle_name varchar(64) [null, note: "Middle name of the user"]
+  last_name varchar(64) [not null, note: "Last name of the user"]
+  nickname varchar(64) [null, note: "Option nickname of the user"]
+  nickname_preferred bool [null, note: "Do they prefer to go by their nickname?"]
+  user_settings_id int [not null, ref: - user_settings.id, note: "Foreign key to user settings"]
+  last_login timestamp [null]
+
+  indexes {
+    (last_login) [name:'idx_users_last_login']
+    }
+}
+
+
+Table user_roles [note: "Join Table. Track when a user was assigned a specific role."] {
+  user_id int [not null, ref: > users.id, note: "Reference to users"]
+  role_id int [not null, ref: > roles.id, note: "Reference to roles"]
+
+  indexes {
+    (user_id) [name: 'idx_user_roles_user_id']
+    (role_id) [name: 'idx_user_roles_role_id']
+  }
+}
+
+
+Table roles {
+  id int [pk, increment, not null, note: "Primary key"]
+  name varchar(64) [not null, unique, note: "Role name"]
+  description varchar(512) [not null, note: "Description of the role"]
+}
+
+
+Table permissions {
+  id int [pk, increment, not null, note: "Primary key"]
+  name varchar(64) [not null, unique, note: "Permission name"]
+  description varchar(512) [not null, note: "Permission description"]
+}
+
+
+Table role_permissions [note: "Join Table. Track when a role was granted a particular permission."] {
+  role_id int [not null, ref: > roles.id, note: "Reference to roles"]
+  permission_id int [not null, ref: > permissions.id, note: "Reference to permissions"]
+
+  indexes {
+    (role_id) [name: 'idx_role_permissions_role_id']
+    (permission_id) [name: 'idx_role_permissions_permission_id']
+  }
+}
+
+
+Table areas [note: "This will represent different spatial areas that can contain assets. It can be nested to represent a hierarchy of areas, such as buildings, rooms, shelves, etc."] {
+  id int [pk, increment, not null, note: "Primary key"]
+  parent_area_id int [null, ref: > areas.id, note: "For nesting"]
+  name varchar(64) [not null, note: "Area name"]
+  latitude decimal(9,6) [null, note: "GPS Latitude, optional"]
+  longitude decimal(9,6) [null, note: "GPS Longitude, optional"]
+  address_id int [null, ref: > addresses.id, note: "If it has an address, what is it?"]
+
+  indexes {
+    (parent_area_id) [name: 'idx_areas_parent_area_id']
+    (name) [name: 'idx_areas_name']
+    (address_id) [name: 'idx_areas_address_id']
+  }
+}
+
+
+Table addresses {
+  id int [pk, increment, not null]
+  name varchar(64) [not null]
+  type address_type [not null]
+  street varchar [not null]
+  city varchar [not null]
+  state_id smallint [not null, ref: > states.id]
+  zip varchar(16) [not null]
+  country_id smallint [not null, ref: > countries.id]
+
+  indexes {
+    (state_id) [name: 'idx_addresses_state_id']
+    (country_id) [name: 'idx_addresses_country_id']
+    (type) [name: 'idx_addresses_type']
+  }
+}
+
+
+enum address_type {
+  "RESIDENTIAL"
+  "BUSINESS"
+  "OTHER"
+  }
+
+Table countries {
+  id smallint [pk, increment, not null]
+  code iso_country_codes [not null, note: "Country code, e.g., US, CA, MX"]
+  name varchar(64) [not null]
+  intl_phone_code smallint [not null, note: "International dialing code, e.g., 011, 052"]
+
+  indexes {
+    (code) [name: 'idx_cidx_countries_codeode']
+    (intl_phone_code) [name: 'idx_countries_intl_phone_code']
+  }
+}
+
+
+enum iso_country_codes {
+  "US"
+  "CA"
+  "MX"
+  }
+
+Table timezones {
+  id int [pk, not null]
+  identifier timezone_identifiers [not null, note: 'Full Timezone Identifier']
+  abbreviation timezone_abbreviations [not null, note: 'Timezone Abbreviation Ex: CST']
+  utc_offset_minutes smallint [not null]
+  has_dst bool [not null]
+
+  indexes {
+    (identifier) [name: 'idx_timezones_identifier']
+    (abbreviation) [name: 'idx_timezones_abbreviation']
+  }
+}
+
+
+enum timezone_identifiers {
+  "Universal Coordinated Time"
+  "America/New_York" // Eastern Time (EST) - UTC-05:00
+  "America/Chicago" // Central Time (CST) - UTC-06:00
+  "America/Denver" // Mountain Time (MST) - UTC-07:00
+  "America/Los_Angeles" // Pacific Time (PST) - UTC-08:00
+  "America/Phoenix" // Mountain Time (No DST) (MST) - UTC-07:00
+  "America/Anchorage" // Alaska Time (AKST) - UTC-09:00
+  "America/Juneau" // Alaska Time (AKST) - UTC-09:00
+  "America/Honolulu" // Hawaii Time (HST) - UTC-10:00
+  }
+
+enum timezone_abbreviations {
+  "UTC"
+  "EST"
+  "CST"
+  "MST"
+  "PST"
+  "AKST"
+  "HST"
+}
+
+Table states {
+  id smallint [pk, increment, not null]
+  code state_codes [not null]
+  name state_names [not null]
+  timezone_id int [not null, ref: > timezones.id, note: "Reference to the timezone table"]
+  country_id smallint [not null, ref: > countries.id]
+
+  indexes {
+    (timezone_id) [name: 'idx_states_timezone_id']
+    (country_id) [name: 'idx_states_country_id']
+    (code) [name: 'idx_states_code']
+    (name) [name: 'idx_states_name']
+  }
+}
+
+
+
+enum state_codes {
+  "AL" // Alabama
+  "AK" // Alaska
+  "AZ" // Arizona
+  "AR" // Arkansas
+  "CA" // California
+  "CO" // Colorado
+  "CT" // Connecticut
+  "DE" // Delaware
+  "FL" // Florida
+  "GA" // Georgia
+  "HI" // Hawaii
+  "ID" // Idaho
+  "IL" // Illinois
+  "IN" // Indiana
+  "IA" // Iowa
+  "KS" // Kansas
+  "KY" // Kentucky
+  "LA" // Louisiana
+  "ME" // Maine
+  "MD" // Maryland
+  "MA" // Massachusetts
+  "MI" // Michigan
+  "MN" // Minnesota
+  "MS" // Mississippi
+  "MO" // Missouri
+  "MT" // Montana
+  "NE" // Nebraska
+  "NV" // Nevada
+  "NH" // New Hampshire
+  "NJ" // New Jersey
+  "NM" // New Mexico
+  "NY" // New York
+  "NC" // North Carolina
+  "ND" // North Dakota
+  "OH" // Ohio
+  "OK" // Oklahoma
+  "OR" // Oregon
+  "PA" // Pennsylvania
+  "RI" // Rhode Island
+  "SC" // South Carolina
+  "SD" // South Dakota
+  "TN" // Tennessee
+  "TX" // Texas
+  "UT" // Utah
+  "VT" // Vermont
+  "VA" // Virginia
+  "WA" // Washington
+  "WV" // West Virginia
+  "WI" // Wisconsin
+  "WY" // Wyoming
+  }
+
+enum state_names {
+  "Alabama" // AL
+  "Alaska" // AK
+  "Arizona" // AZ
+  "Arkansas" // AR
+  "California" // CA
+  "Colorado" // CO
+  "Connecticut" // CT
+  "Delaware" // DE
+  "Florida" // FL
+  "Georgia" // GA
+  "Hawaii" // HI
+  "Idaho" // ID
+  "Illinois" // IL
+  "Indiana" // IN
+  "Iowa" // IA
+  "Kansas" // KS
+  "Kentucky" // KY
+  "Louisiana" // LA
+  "Maine" // ME
+  "Maryland" // MD
+  "Massachusetts" // MA
+  "Michigan" // MI
+  "Minnesota" // MN
+  "Mississippi" // MS
+  "Missouri" // MO
+  "Montana" // MT
+  "Nebraska" // NE
+  "Nevada" // NV
+  "New Hampshire" // NH
+  "New Jersey" // NJ
+  "New Mexico" // NM
+  "New York" // NY
+  "North Carolina" // NC
+  "North Dakota" // ND
+  "Ohio" // OH
+  "Oklahoma" // OK
+  "Oregon" // OR
+  "Pennsylvania" // PA
+  "Rhode Island" // RI
+  "South Carolina" // SC
+  "South Dakota" // SD
+  "Tennessee" // TN
+  "Texas" // TX
+  "Utah" // UT
+  "Vermont" // VT
+  "Virginia" // VA
+  "Washington" // WA
+  "West Virginia" // WV
+  "Wisconsin" // WI
+  "Wyoming" // WY
+  }
