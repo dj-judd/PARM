@@ -1,9 +1,8 @@
 "Read methods for DB Entities"
+from database import model
+from database import crud
 
-import model
-import crud
-
-from permissions import has_permission, PermissionsType
+from database.permissions import has_permission, PermissionsType
 from backend_tools import utils
 
 from typing import Optional, List
@@ -90,8 +89,7 @@ class Reservation:
               include_archived: bool = False):
         """Fetch and return a reservation by ID, or None if no match is found."""
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Reservation,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Reservation,
                                                                    model.AuditableEntityTypes.RESERVATION.value)
         
         query = query.options(joinedload('area'))
@@ -117,8 +115,7 @@ class Reservation:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Reservation,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Reservation,
                                                                    model.AuditableEntityTypes.RESERVATION.value)
         query = query.options(joinedload('area'))
         query = query.filter(model.Reservation.id.in_(reservation_ids))
@@ -147,8 +144,7 @@ class Reservation:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
             
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Reservation,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Reservation,
                                                                    model.AuditableEntityTypes.RESERVATION.value)
         
         query = query.options(joinedload('area'))
@@ -178,8 +174,7 @@ class Reservation:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
             
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Reservation,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Reservation,
                                                                    model.AuditableEntityTypes.RESERVATION.value)
         
         query = query.options(joinedload('area'))
@@ -208,8 +203,7 @@ class ReservationAsset:
         """Fetch and return all ReservationAsset entries that match the given reservation ID, or none if empty."""
         
         # Initialize the query with a join to the audit table
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.ReservationAsset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.ReservationAsset,
                                                                    model.AuditableEntityTypes.RESERVATION_ASSET.value)
         
         # Add joins for Asset and Reservation relationships to pull related data in one SQL call
@@ -240,8 +234,7 @@ class ReservationAsset:
                     include_archived: bool = False):
         """Retrieve all ReservationAsset entries that match the given asset ID, or none if empty."""
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.ReservationAsset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.ReservationAsset,
                                                                    model.AuditableEntityTypes.RESERVATION_ASSET.value)
         
         query = query.options(joinedload('asset'), joinedload('reservation'))
@@ -265,8 +258,7 @@ class ReservationAsset:
             include_archived: bool = False):
         """Retrieve all ReservationAsset entries that match the given list of reservation IDs and asset IDs, or none if empty."""
         
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.ReservationAsset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.ReservationAsset,
                                                                    model.AuditableEntityTypes.RESERVATION_ASSET.value)
         
         query = query.options(joinedload('asset'), joinedload('reservation'))
@@ -391,8 +383,7 @@ class Asset:
               include_archived: bool = False):
         """Fetch and return an Asset by its ID, or None if no match is found."""
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Asset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Asset,
                                                                    model.AuditableEntityTypes.ASSET.value)
         
         query = query.options(joinedload('manufacturer'),
@@ -423,8 +414,7 @@ class Asset:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
-                                                                   model.Asset, 
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Asset, 
                                                                    model.AuditableEntityTypes.ASSET.value)
         
         query = query.options(joinedload('manufacturer'),
@@ -460,8 +450,7 @@ class Asset:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Asset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Asset,
                                                                    model.AuditableEntityTypes.ASSET.value)
         
         query = query.options(joinedload('manufacturer'),
@@ -496,8 +485,7 @@ class Asset:
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.Asset,
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.Asset,
                                                                    model.AuditableEntityTypes.ASSET.value)
         query = query.options(joinedload('manufacturer'),
                             joinedload('category'),
@@ -666,7 +654,29 @@ class PhoneNumber:
 
 
 class UiTheme:
-    pass
+    
+    @staticmethod
+    def by_id(entry_id: int) -> Optional[object]:
+        """Fetch and return a UiTheme by its ID, or None if no match is found."""
+
+        return model.db.session.query(model.UiTheme).filter_by(id=entry_id).first()
+    
+    @staticmethod
+    def colors_by_id(entry_id: int) -> Optional[dict]:
+        """Fetch the primary and secondary color IDs for a UiTheme by its ID."""
+
+        theme = UiTheme.by_id(entry_id)
+
+        theme_primary_object = Color.by_id(theme.primary_color_id)
+        theme_secondary_object = Color.by_id(theme.secondary_color_id)
+
+        theme_primary_hex = theme_primary_object.hex_value
+        theme_secondary_hex = theme_secondary_object.hex_value
+
+        if theme:
+            return {"primary_color_id": theme_primary_hex,
+                    "secondary_color_id": theme_secondary_hex}
+        return None
 
 
 
@@ -675,7 +685,14 @@ class UserSettings:
     @staticmethod
     def by_id(entry_id: int) -> Optional[object]:
         """Fetch and return a UserSettings by its ID, or None if no match is found."""
+
         return model.db.session.query(model.UserSettings).filter_by(id=entry_id).first()
+    
+    @staticmethod
+    def by_user_id(user_id: int) -> Optional[object]:
+        """Fetch and return UserSettings by user ID, or None if no match is found."""
+
+        return model.db.session.query(model.UserSettings).filter_by(user_id=user_id).first()
 
 
 

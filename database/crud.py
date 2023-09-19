@@ -1,11 +1,11 @@
 """CRUD operations."""
-import model
+from database import model
 
-import create
-import read
-import update
-import delete
-import archive
+from database import create
+from database import read
+from database import update
+from database import delete
+from database import archive
 
 from typing import Optional, Type, Tuple
 from sqlalchemy import and_, desc
@@ -13,13 +13,12 @@ from sqlalchemy.orm import Session, Query, aliased
 
 class Utils:
     @staticmethod
-    def get_query_with_audit_join(session: Session, 
-                                  entity: Type[model.AuditableBase],
+    def get_query_with_audit_join(entity: Type[model.AuditableBase],
                                   auditable_entity_type: model.AuditableEntityTypes) -> Tuple[Query, Type]:
         """Creates a query for the specified entity type with an outer join on AuditEntry."""
 
         # Create an alias for AuditEntry to keep track of the latest audit for the entity
-        latest_audit = aliased(entity.AuditEntry)
+        latest_audit = aliased(model.AuditEntry)
 
         # Initialize the query with the specified entity
         query = model.db.session.query(entity)
@@ -31,6 +30,29 @@ class Utils:
         
         # Return both the query and the alias for the latest audit entry
         return query, latest_audit
+    
+
+    # @staticmethod
+    # def get_query_with_audit_join(entity: Type[model.AuditableBase],
+    #                               auditable_entity_type: model.AuditableEntityTypes) -> Tuple[Query, Type]:
+    #     """Creates a query for the specified entity type with an outer join on AuditEntry."""
+
+    #     # Create an alias for AuditEntry to keep track of the latest audit for the entity
+    #     latest_audit = aliased(model.AuditEntry)
+
+    #     # Initialize the query with the specified entity
+    #     query = model.db.session.query(entity)
+
+    #     # Perform an outer join with the latest_audit alias
+    #     # Filter the join by auditable entity type and related entity ID
+    #     query = query.outerjoin(latest_audit, and_(latest_audit.related_entity_id == entity.id,
+    #                                             latest_audit.auditable_entity_type == auditable_entity_type))
+
+    #     # Filter for non-archived entries
+    #     query = query.filter(latest_audit.is_archived == False)
+
+    #     # Return both the query and the alias for the latest audit entry
+    #     return query, latest_audit
 
     @staticmethod
     def filter_by_archived_status(query: Query, 

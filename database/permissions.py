@@ -6,7 +6,7 @@ from typing import Optional
 from sqlalchemy.orm import joinedload
 from enum import Enum
 
-import model
+from database import model
 
 class PermissionsType(Enum):
     # Assets

@@ -1,6 +1,5 @@
 "Create methods for DB Entities"
-
-import model
+from database import model
 
 from typing import Optional
 from datetime import datetime

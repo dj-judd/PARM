@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Asset Grid</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Define your CSS styles for the grid squares here */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+
+        .grid-square {
+            width: 200px;
+            height: 100px; /* 2:1 Aspect Ratio */
+            border: 2px solid {{ secondary_color }};
+            border-radius: 12px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: {{ primary_color }};
+            color: {{ secondary_color }};
+        }
+
+        .grid-square p {
+            margin: 0;
+        }
+        
+    </style>
+</head>
+<body style="background-color: {{ primary_color }};">
+    <div class="container">
+        <div class="grid-container">
+            {% for asset in assets %}
+                <div class="grid-square">
+                    <p>{{ asset.model_name }}</p>
+                    <p>{{ asset.manufacturer.name }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

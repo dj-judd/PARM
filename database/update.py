@@ -1,6 +1,6 @@
 "Update methods for DB Entities"
 
-import model
+from database import model
 from backend_tools import utils
 
 from typing import Optional
