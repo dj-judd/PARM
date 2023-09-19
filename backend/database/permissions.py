@@ -1,6 +1,6 @@
 """Permissions related logic."""
 
-from backend_tools import utils
+from tools import utils
 
 from typing import Optional
 from sqlalchemy.orm import joinedload

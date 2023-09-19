@@ -1,7 +1,7 @@
 "Update methods for DB Entities"
 
 from database import model
-from backend_tools import utils
+from tools import utils
 
 from typing import Optional
 from datetime import datetime
