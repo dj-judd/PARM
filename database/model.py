@@ -663,6 +663,8 @@ class Reservation(AuditableBase):
     checkin_time = db.Column(db.DateTime, nullable=True)
     is_indefinite = db.Column(db.Boolean, nullable=False, default=False)
 
+    area = db.relationship('Area', backref='reservations')
+
     __table_args__ = (
         Index('idx_area_id', 'area_id'),
         Index('idx_reserved_for', 'reserved_for'),
@@ -795,7 +797,7 @@ class Category(AuditableBase):
 
 
 
-class s(AuditableBase):
+class Color(AuditableBase):
     """Custom property / field to be added ale-cart to assets."""
 
     __tablename__ = "colors"
@@ -880,7 +882,7 @@ class Asset(AuditableBase):
     
     manufacturer = db.relationship('Manufacturer', backref= 'assets')
     category = db.relationship('Category', backref= 'assets')
-    area = db.relationship('Area', backref= 'assets')
+    storage_area = db.relationship('Area', backref= 'assets')
     purchase_price_entry = db.relationship('FinancialEntry', foreign_keys=[purchase_price_id], backref='purchase_price_assets')
     msrp_entry = db.relationship('FinancialEntry', foreign_keys=[msrp_id], backref='msrp_assets')
     residual_value_entry = db.relationship('FinancialEntry', foreign_keys=[residual_value_id], backref='residual_value_assets')
@@ -901,7 +903,7 @@ class Asset(AuditableBase):
 
 
 
-class s(AuditableBase):
+class Manufacturer(AuditableBase):
     """Brand/Manufacturer/Company"""
 
     __tablename__ = "manufacturers"

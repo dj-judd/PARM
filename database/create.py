@@ -267,7 +267,7 @@ def color(name: str,
           commit: bool = True):
     """Create and return a Color entry."""
 
-    color = model.s(name=name,
+    color = model.Color(name=name,
                         hex_value=hex_value)
 
     # Always add to the session
@@ -886,7 +886,7 @@ def manufacturer(name: str,
                  commit: bool = True):
     """Create and return a Manufacturer entry."""
 
-    manufacturer = model.s(name=name,
+    manufacturer = model.Manufacturer(name=name,
                                       manufacturer_area_id=manufacturer_area_id,
                                       website=website)
     

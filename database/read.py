@@ -8,7 +8,7 @@ from backend_tools import utils
 
 from typing import Optional, List
 from sqlalchemy import desc
-from sqlalchemy.orm import aliased
+from sqlalchemy.orm import joinedload, aliased
 
 
 class GlobalSettings:
@@ -96,6 +96,9 @@ class Reservation:
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
                                                                 model.Reservation,
                                                                 model.AuditableEntityTypes.RESERVATION.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('area'))
 
         # Further filter the query by reservation ID and sort it by the latest audit entry.
         query = query.filter_by(id=reservation_id).order_by(latest_audit.created_at.desc()).first()
@@ -126,6 +129,9 @@ class Reservation:
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
                                                                 model.Reservation, 
                                                                 model.AuditableEntityTypes.RESERVATION.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('area'))
 
         # Further filter the query by a list of reservation IDs and make it distinct by Reservation ID.
         query = query.filter(model.Reservation.id.in_(reservation_ids)).distinct(model.Reservation.id)
@@ -165,6 +171,9 @@ class Reservation:
                                                                 model.Reservation,
                                                                 model.AuditableEntityTypes.RESERVATION.value)
         
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('area'))
+        
         # Further filter the query by user ID
         query = query.filter(model.Reservation.user_id == user_id)
 
@@ -196,6 +205,9 @@ class Reservation:
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
                                                                 model.Reservation,
                                                                 model.AuditableEntityTypes.RESERVATION.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('area'))
 
         # Use the utility function to filter the query based on the archived status flags.
         query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
@@ -218,19 +230,33 @@ class ReservationAsset:
                           reservation_id: int,
                           include_archived: bool = False):
         """Fetch and return all ReservationAsset entries that match the given reservation ID, or none if empty."""
-
+        
+        # Initialize the query with a join to the audit table
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.ReservationAsset,
-                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
+                                                                model.ReservationAsset,
+                                                                model.AuditableEntityTypes.RESERVATION_ASSET.value)
+        
+        # Add joins for Asset and Reservation relationships to pull related data in one SQL call
+        query = query.options(joinedload('asset'), joinedload('reservation'))
+        
+        # Filter the query to only include records that match the specified reservation ID
         query = query.filter_by(reservation_id=reservation_id)
-
+        
+        # Check permissions to view archived assets and reservations
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            query = query if include_archived or latest_audit.is_archived == False else None
+            # If "include_archived" is False, filter out archived records
+            if not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
-            query = query if latest_audit.is_archived == False else None
+            # If user doesn't have permissions, filter out archived records by default
+            query = query.filter(latest_audit.is_archived == False)
 
+        # Execute the query and fetch all results
         reservation_assets = query.all()
+        
+        # Return the results if available, otherwise return None
         return reservation_assets if reservation_assets else None
+
 
     @staticmethod
     def by_asset_id(requesting_user_id: int, 
@@ -239,37 +265,44 @@ class ReservationAsset:
         """Retrieve all ReservationAsset entries that match the given asset ID, or none if empty."""
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                   model.ReservationAsset,
-                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
+                                                                model.ReservationAsset,
+                                                                model.AuditableEntityTypes.RESERVATION_ASSET.value)
+        
+        query = query.options(joinedload('asset'), joinedload('reservation'))
+
         query = query.filter_by(asset_id=asset_id)
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            query = query if include_archived or latest_audit.is_archived == False else None
+            if not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
-            query = query if latest_audit.is_archived == False else None
+            query = query.filter(latest_audit.is_archived == False)
 
         reservation_assets = query.all()
         return reservation_assets if reservation_assets else None
 
+
     @staticmethod
     def by_ids(requesting_user_id: int, 
-               reservation_ids: List[int], 
-               asset_ids: List[int], 
-               include_archived: bool = False):
-        """Retrieve all ReservationAsset entries that match the given list of reservation IDs and asset IDs"""
-
+            reservation_ids: List[int], 
+            asset_ids: List[int], 
+            include_archived: bool = False):
+        """Retrieve all ReservationAsset entries that match the given list of reservation IDs and asset IDs, or none if empty."""
+        
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
                                                                    model.ReservationAsset,
                                                                    model.AuditableEntityTypes.RESERVATION_ASSET.value)
-        query = query.filter(
-            model.ReservationAsset.reservation_id.in_(reservation_ids),
-            model.ReservationAsset.asset_id.in_(asset_ids)
-        )
+        
+        query = query.options(joinedload('asset'), joinedload('reservation'))
+
+        query = query.filter(model.ReservationAsset.reservation_id.in_(reservation_ids),
+                             model.ReservationAsset.asset_id.in_(asset_ids))
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            query = query if include_archived or latest_audit.is_archived == False else None
+            if not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
-            query = query if latest_audit.is_archived == False else None
+            query = query.filter(latest_audit.is_archived == False)
 
         reservation_assets = query.all()
         return reservation_assets if reservation_assets else None
@@ -334,32 +367,32 @@ class Color:
     def by_id(color_id: int) -> Optional[object]:
         """Fetch and return a Color by its ID, or None if no match is found."""
 
-        return model.db.session.query(model.Manufacturer).filter_by(id=color_id).first()
+        return model.db.session.query(model.Color).filter_by(id=color_id).first()
 
     @staticmethod
     def by_ids(color_ids: List[int]) -> Optional[List[object]]:
         """Fetch and return a list of Colors by their IDs, or None if no match is found."""
 
-        query = model.db.session.query(model.Manufacturer).filter(model.Manufacturer.id.in_(color_ids)).all()
+        query = model.db.session.query(model.Color).filter(model.Color.id.in_(color_ids)).all()
         return query if query else None
 
     @staticmethod
     def by_name(color_name: str) -> Optional[object]:
         """Fetch and return a Color by its name, or None if no match is found."""
 
-        return model.db.session.query(model.Manufacturer).filter_by(name=color_name).first()
+        return model.db.session.query(model.Color).filter_by(name=color_name).first()
 
     @staticmethod
     def by_hex_value(hex_value: str) -> Optional[object]:
         """Fetch and return a Color by its hex value, or None if no match is found."""
 
-        return model.db.session.query(model.Manufacturer).filter_by(hex_value=hex_value).first()
+        return model.db.session.query(model.Color).filter_by(hex_value=hex_value).first()
 
     @staticmethod
     def all() -> Optional[List[object]]:
         """Fetch and return all entries from the Color table, or None if the table is empty."""
 
-        query = model.db.session.query(model.Manufacturer).all()
+        query = model.db.session.query(model.Color).all()
         return query if query else None
 
 
@@ -383,6 +416,15 @@ class Asset:
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
                                                                 model.Asset,
                                                                 model.AuditableEntityTypes.ASSET.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('manufacturer'),
+                              joinedload('category'),
+                              joinedload('storage_area'),
+                              joinedload('purchase_price_entry'),
+                              joinedload('msrp_entry'),
+                              joinedload('residual_value_entry'))
+
         query = query.filter_by(id=asset_id).order_by(latest_audit.created_at.desc()).first()
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
@@ -399,10 +441,20 @@ class Asset:
 
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
+        
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
                                                                 model.Asset, 
                                                                 model.AuditableEntityTypes.ASSET.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('manufacturer'),
+                              joinedload('category'),
+                              joinedload('storage_area'),
+                              joinedload('purchase_price_entry'),
+                              joinedload('msrp_entry'),
+                              joinedload('residual_value_entry'))
+                
         query = query.filter(model.Asset.id.in_(asset_ids)).distinct(model.Asset.id)
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
@@ -429,6 +481,14 @@ class Asset:
                                                                    model.Asset,
                                                                    model.AuditableEntityTypes.ASSET.value)
         
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('manufacturer'),
+                              joinedload('category'),
+                              joinedload('storage_area'),
+                              joinedload('purchase_price_entry'),
+                              joinedload('msrp_entry'),
+                              joinedload('residual_value_entry'))
+        
         query = query.filter(model.Asset.category_id.in_(category_ids))
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
@@ -454,6 +514,15 @@ class Asset:
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
                                                                 model.Asset,
                                                                 model.AuditableEntityTypes.ASSET.value)
+        
+        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query = query.options(joinedload('manufacturer'),
+                              joinedload('category'),
+                              joinedload('storage_area'),
+                              joinedload('purchase_price_entry'),
+                              joinedload('msrp_entry'),
+                              joinedload('residual_value_entry'))
+
         query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
 
         if not has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and just_archived:
@@ -513,7 +582,34 @@ class Currency:
 
 
 class FinancialEntry:
-    pass
+    
+    @staticmethod
+    def by_id(entry_id: int) -> Optional[object]:
+        """Fetch and return a FinancialEntry by its ID, or None if no match is found."""
+        return model.db.session.query(model.FinancialEntry).filter_by(id=entry_id).first()
+
+    @staticmethod
+    def by_ids(entry_ids: List[int]) -> Optional[List[object]]:
+        """Fetch and return a list of FinancialEntries by their IDs, or None if no match is found."""
+        query = model.db.session.query(model.FinancialEntry).filter(model.FinancialEntry.id.in_(entry_ids)).all()
+        return query if query else None
+
+    @staticmethod
+    def by_currency_id(currency_id: int) -> Optional[List[object]]:
+        """Fetch and return a list of FinancialEntries by currency ID, or None if no match is found."""
+        return model.db.session.query(model.FinancialEntry).filter_by(currency_id=currency_id).all()
+
+    @staticmethod
+    def by_amount_range(min_amount: float, max_amount: float) -> Optional[List[object]]:
+        """Fetch and return a list of FinancialEntries within a specific amount range, or None if no match is found."""
+        query = model.db.session.query(model.FinancialEntry).filter(model.FinancialEntry.amount.between(min_amount, max_amount)).all()
+        return query if query else None
+
+    @staticmethod
+    def all() -> Optional[List[object]]:
+        """Fetch and return all entries from the FinancialEntry table, or None if the table is empty."""
+        query = model.db.session.query(model.FinancialEntry).all()
+        return query if query else None
 
 
 
