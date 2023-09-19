@@ -88,28 +88,23 @@ class Reservation:
     def by_id(requesting_user_id: int,
               reservation_id: int,
               include_archived: bool = False):
-        """
-        Fetch and return a reservation by ID, or None if no match is found.
-        """
+        """Fetch and return a reservation by ID, or None if no match is found."""
 
-        # Use the utility function to create a query with an outer join on the AuditEntry table.
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.Reservation,
-                                                                model.AuditableEntityTypes.RESERVATION.value)
+                                                                   model.Reservation,
+                                                                   model.AuditableEntityTypes.RESERVATION.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('area'))
 
-        # Further filter the query by reservation ID and sort it by the latest audit entry.
-        query = query.filter_by(id=reservation_id).order_by(latest_audit.created_at.desc()).first()
-
-        # Check if the user has permission to view archived reservations.
+        query = query.filter_by(id=reservation_id)
+        
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            # Return the query result if either "include_archived" is True or the reservation is not archived.
-            return query if include_archived or latest_audit.is_archived == False else None
+            if not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
+        else:
+            query = query.filter(latest_audit.is_archived == False)
 
-        # Return the query result only if the reservation is not archived.
-        return query if latest_audit.is_archived == False else None
+        return query.first()
 
 
     @staticmethod
@@ -117,39 +112,28 @@ class Reservation:
                reservation_ids: List[int], 
                include_archived: bool = False, 
                just_archived: bool = False):
-        """
-        Fetch and return reservations by a list of IDs, or None if no match is found.
-        """
-
-        # Raise error if both flags are True
+        """Fetch and return reservations by a list of IDs, or None if no match is found."""
+        
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
 
-        # Use the utility function to create a query with an outer join on the AuditEntry table.
-        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session, 
-                                                                model.Reservation, 
-                                                                model.AuditableEntityTypes.RESERVATION.value)
-        
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                   model.Reservation,
+                                                                   model.AuditableEntityTypes.RESERVATION.value)
         query = query.options(joinedload('area'))
-
-        # Further filter the query by a list of reservation IDs and make it distinct by Reservation ID.
-        query = query.filter(model.Reservation.id.in_(reservation_ids)).distinct(model.Reservation.id)
+        query = query.filter(model.Reservation.id.in_(reservation_ids))
         
-        # Check if the user has permission to view archived reservations.
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            # Use the utility function to filter the query based on the archived status flags.
-            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
-            # User does not have permission to view archived, so ensure only non-archived are shown
             if just_archived:
                 return None
             query = query.filter(latest_audit.is_archived == False)
-        
-        # Execute the query and fetch all the results.
-        reservations = query.all()
 
-        # Return the query results or None if the result is empty.
+        reservations = query.all()
         return reservations if reservations else None
     
 
@@ -158,36 +142,30 @@ class Reservation:
                    user_id: int,
                    include_archived: bool = False,
                    just_archived: bool = False):
-        """
-        Fetch and return reservations by a user ID, or None if no match is found.
-        """
+        """Fetch and return reservations by a user ID, or None if no match is found."""
 
-        # Raise error if both flags are True
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
-
-        # Use the utility function to create a query with an outer join on the AuditEntry table.
+            
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.Reservation,
-                                                                model.AuditableEntityTypes.RESERVATION.value)
+                                                                   model.Reservation,
+                                                                   model.AuditableEntityTypes.RESERVATION.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('area'))
-        
-        # Further filter the query by user ID
-        query = query.filter(model.Reservation.user_id == user_id)
 
-        # Check if the user has permission to view archived reservations.
+        query = query.filter(model.Reservation.user_id == user_id)
+        
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
-            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
         else:
             if just_archived:
                 return None
             query = query.filter(latest_audit.is_archived == False)
-
+        
         reservations = query.all()
-
-        # Return the query results or None if the result is empty.
         return reservations if reservations else None
 
 
@@ -197,28 +175,26 @@ class Reservation:
             just_archived: bool = False):
         """Fetch and return all entries from the Reservation table, or None if the table is empty."""
 
-        # Raise error if both flags are True
         if include_archived and just_archived:
             raise ValueError("Both flags cannot be True.")
-
-        # Use the utility function to create a query with an outer join on the AuditEntry table.
+            
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
-                                                                model.Reservation,
-                                                                model.AuditableEntityTypes.RESERVATION.value)
+                                                                   model.Reservation,
+                                                                   model.AuditableEntityTypes.RESERVATION.value)
         
-        # Basically a SQL JOIN operation to pull the values automatically in 1 DB call.
         query = query.options(joinedload('area'))
 
-        # Use the utility function to filter the query based on the archived status flags.
-        query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
-
-        # Check permissions and execute query
-        if not has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value) and just_archived:
-            return None  # No permission to view only archived
-
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            if just_archived:
+                query = query.filter(latest_audit.is_archived == True)
+            elif not include_archived:
+                query = query.filter(latest_audit.is_archived == False)
+        else:
+            if just_archived:
+                return None
+            query = query.filter(latest_audit.is_archived == False)
+        
         reservations = query.all()
-
-        # Return results or None if empty
         return reservations if reservations else None
 
 
