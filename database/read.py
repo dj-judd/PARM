@@ -608,7 +608,50 @@ class AssetLocationLog:
 
 
 class FileAttachment:
-    pass
+    
+    @staticmethod
+    def image_size_for_entity_id(entity_id: int, attachable_entity_type: model.AttachableEntityTypes, image_size: model.ImageSize) -> Optional[object]:
+        """Fetch and return a FileAttachment by its entity ID, attachable entity type, and image size, or None if not found."""
+        
+        query = model.db.session.query(model.FileAttachment).filter_by(entity_id=entity_id, attachable_entity_type=attachable_entity_type, image_size=image_size).first()
+        return query if query else None
+
+
+    @staticmethod
+    def all_for_entity_id(entity_id: int, attachable_entity_type: model.AttachableEntityTypes) -> Optional[List[object]]:
+        """Fetch and return all FileAttachments for a given entity ID and attachable entity type, or None if not found."""
+        
+        query = model.db.session.query(model.FileAttachment).filter_by(entity_id=entity_id, attachable_entity_type=attachable_entity_type).all()
+        return query if query else None
+    
+
+
+
+    # @staticmethod
+    # def by_entity_type(entity_type: model.AttachableEntityTypes) -> Optional[List[object]]:
+    #     """Fetch and return FileAttachments based on their attachable entity type, or None if not found."""
+
+    #     query = model.db.session.query(model.FileAttachment).filter_by(attachable_entity_type=entity_type).all()
+    #     return query if query else None
+
+
+    # @staticmethod
+    # def by_file_type(file_type: model.FileType) -> Optional[List[object]]:
+    #     """Fetch and return FileAttachments based on their file type, or None if not found."""
+
+    #     query = model.db.session.query(model.FileAttachment).filter_by(file_type=file_type).all()
+    #     return query if query else None
+
+
+    # @staticmethod
+    # def by_file_category(file_category: model.FileCategory) -> Optional[List[object]]:
+    #     """Fetch and return FileAttachments based on their file category, or None if not found."""
+
+    #     query = model.db.session.query(model.FileAttachment).filter_by(file_category=file_category).all()
+    #     return query if query else None
+    
+
+
 
 
 
@@ -628,7 +671,11 @@ class UiTheme:
 
 
 class UserSettings:
-    pass
+
+    @staticmethod
+    def by_id(entry_id: int) -> Optional[object]:
+        """Fetch and return a UserSettings by its ID, or None if no match is found."""
+        return model.db.session.query(model.UserSettings).filter_by(id=entry_id).first()
 
 
 
