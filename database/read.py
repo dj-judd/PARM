@@ -145,6 +145,41 @@ class Reservation:
 
         # Return the query results or None if the result is empty.
         return reservations if reservations else None
+    
+
+    @staticmethod
+    def by_user_id(requesting_user_id: int,
+                   user_id: int,
+                   include_archived: bool = False,
+                   just_archived: bool = False):
+        """
+        Fetch and return reservations by a user ID, or None if no match is found.
+        """
+
+        # Raise error if both flags are True
+        if include_archived and just_archived:
+            raise ValueError("Both flags cannot be True.")
+
+        # Use the utility function to create a query with an outer join on the AuditEntry table.
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                model.Reservation,
+                                                                model.AuditableEntityTypes.RESERVATION.value)
+        
+        # Further filter the query by user ID
+        query = query.filter(model.Reservation.user_id == user_id)
+
+        # Check if the user has permission to view archived reservations.
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            query = crud.Utils.filter_by_archived_status(query, latest_audit, include_archived, just_archived)
+        else:
+            if just_archived:
+                return None
+            query = query.filter(latest_audit.is_archived == False)
+
+        reservations = query.all()
+
+        # Return the query results or None if the result is empty.
+        return reservations if reservations else None
 
 
     @staticmethod
@@ -177,7 +212,67 @@ class Reservation:
 
 
 class ReservationAsset:
-    pass
+
+    @staticmethod
+    def by_reservation_id(requesting_user_id: int, 
+                          reservation_id: int,
+                          include_archived: bool = False):
+        """Fetch and return all ReservationAsset entries that match the given reservation ID, or none if empty."""
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                   model.ReservationAsset,
+                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
+        query = query.filter_by(reservation_id=reservation_id)
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            query = query if include_archived or latest_audit.is_archived == False else None
+        else:
+            query = query if latest_audit.is_archived == False else None
+
+        reservation_assets = query.all()
+        return reservation_assets if reservation_assets else None
+
+    @staticmethod
+    def by_asset_id(requesting_user_id: int, 
+                    asset_id: int,
+                    include_archived: bool = False):
+        """Retrieve all ReservationAsset entries that match the given asset ID, or none if empty."""
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                   model.ReservationAsset,
+                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
+        query = query.filter_by(asset_id=asset_id)
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            query = query if include_archived or latest_audit.is_archived == False else None
+        else:
+            query = query if latest_audit.is_archived == False else None
+
+        reservation_assets = query.all()
+        return reservation_assets if reservation_assets else None
+
+    @staticmethod
+    def by_ids(requesting_user_id: int, 
+               reservation_ids: List[int], 
+               asset_ids: List[int], 
+               include_archived: bool = False):
+        """Retrieve all ReservationAsset entries that match the given list of reservation IDs and asset IDs"""
+
+        query, latest_audit = crud.Utils.get_query_with_audit_join(model.db.session,
+                                                                   model.ReservationAsset,
+                                                                   model.AuditableEntityTypes.RESERVATION_ASSET.value)
+        query = query.filter(
+            model.ReservationAsset.reservation_id.in_(reservation_ids),
+            model.ReservationAsset.asset_id.in_(asset_ids)
+        )
+
+        if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value) and has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_RESERVATIONS.value):
+            query = query if include_archived or latest_audit.is_archived == False else None
+        else:
+            query = query if latest_audit.is_archived == False else None
+
+        reservation_assets = query.all()
+        return reservation_assets if reservation_assets else None
 
 
 
@@ -197,12 +292,75 @@ class Reaction:
 
 
 class Category:
-    pass
+    
+    @staticmethod
+    def by_id(category_id: int) -> Optional[object]:
+        """Fetch and return a Category by its ID, or None if no match is found."""
+
+        return model.db.session.query(model.Category).filter_by(id=category_id).first()
+
+    @staticmethod
+    def by_ids(category_ids: List[int]) -> Optional[List[object]]:
+        """Fetch and return a list of Categories by their IDs, or None if no match is found."""
+
+        query = model.db.session.query(model.Category).filter(model.Category.id.in_(category_ids)).all()
+        return query if query else None
+
+    @staticmethod
+    def by_name(category_name: str) -> Optional[object]:
+        """Fetch and return a Category by its name, or None if no match is found."""
+        
+        return model.db.session.query(model.Category).filter_by(name=category_name).first()
+
+    @staticmethod
+    def by_parent_id(parent_id: int) -> Optional[List[object]]:
+        """Fetch and return all subcategories of a parent category by its ID, or None if no match is found."""
+
+        query = model.db.session.query(model.Category).filter_by(parent_category_id=parent_id).all()
+        return query if query else None
+
+    @staticmethod
+    def all() -> Optional[List[object]]:
+        """Fetch and return all entries from the Category table, or None if the table is empty."""
+
+        query = model.db.session.query(model.Category).all()
+        return query if query else None
 
 
 
 class Color:
-    pass
+    
+    @staticmethod
+    def by_id(color_id: int) -> Optional[object]:
+        """Fetch and return a Color by its ID, or None if no match is found."""
+
+        return model.db.session.query(model.Manufacturer).filter_by(id=color_id).first()
+
+    @staticmethod
+    def by_ids(color_ids: List[int]) -> Optional[List[object]]:
+        """Fetch and return a list of Colors by their IDs, or None if no match is found."""
+
+        query = model.db.session.query(model.Manufacturer).filter(model.Manufacturer.id.in_(color_ids)).all()
+        return query if query else None
+
+    @staticmethod
+    def by_name(color_name: str) -> Optional[object]:
+        """Fetch and return a Color by its name, or None if no match is found."""
+
+        return model.db.session.query(model.Manufacturer).filter_by(name=color_name).first()
+
+    @staticmethod
+    def by_hex_value(hex_value: str) -> Optional[object]:
+        """Fetch and return a Color by its hex value, or None if no match is found."""
+
+        return model.db.session.query(model.Manufacturer).filter_by(hex_value=hex_value).first()
+
+    @staticmethod
+    def all() -> Optional[List[object]]:
+        """Fetch and return all entries from the Color table, or None if the table is empty."""
+
+        query = model.db.session.query(model.Manufacturer).all()
+        return query if query else None
 
 
 
@@ -284,7 +442,7 @@ class Asset:
 
         return assets_by_category if assets_by_category else None
     
-    
+
     @staticmethod
     def all(requesting_user_id: int,
             include_archived: bool = False,
@@ -308,11 +466,34 @@ class Asset:
 class Manufacturer:
 
     @staticmethod
-    def by_name(name: str):
+    def by_id(manufacturer_id: int) -> Optional[object]:
+        """Fetch and return a Manufacturer by its ID, or None if no match is found."""
+
+        return model.db.session.query(model.Manufacturer).filter_by(id=manufacturer_id).first()
+
+
+    @staticmethod
+    def by_ids(manufacturer_id: List[int]) -> Optional[List[object]]:
+        """Fetch and return a list of Manufacturers by their IDs, or None if no match is found."""
+
+        query = model.db.session.query(model.Manufacturer).filter(model.Manufacturer.id.in_(manufacturer_id)).all()
+        return query if query else None
+
+
+    @staticmethod
+    def by_name(manufacturer_name: str) -> Optional[object]:
         """Fetch and return a Manufacturer by its name, or None if no matching entry is found."""
         
-        manufacturer = model.db.session.query(model.Manufacturer).filter_by(name=name).first()
+        manufacturer = model.db.session.query(model.Manufacturer).filter_by(name=manufacturer_name).first()
         return manufacturer if manufacturer else None
+
+
+    @staticmethod
+    def all() -> Optional[List[object]]:
+        """Fetch and return all entries from the Manufacturer table, or None if the table is empty."""
+        
+        query = model.db.session.query(model.Manufacturer).all()
+        return query if query else None
     
 
 

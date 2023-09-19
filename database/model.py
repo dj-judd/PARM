@@ -795,7 +795,7 @@ class Category(AuditableBase):
 
 
 
-class Color(AuditableBase):
+class s(AuditableBase):
     """Custom property / field to be added ale-cart to assets."""
 
     __tablename__ = "colors"
@@ -901,7 +901,7 @@ class Asset(AuditableBase):
 
 
 
-class Manufacturer(AuditableBase):
+class s(AuditableBase):
     """Brand/Manufacturer/Company"""
 
     __tablename__ = "manufacturers"
