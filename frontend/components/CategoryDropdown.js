@@ -14,12 +14,18 @@ function CategoryDropdown(props) {
         </React.Fragment>
       ));
     }
-    
+
+    function handleCategoryChange(event) {
+      const selectedCategoryId = event.target.value;
+      props.onCategoryChange(selectedCategoryId);
+    }
+  
     return (
-      <select className="form-control">
+      <select className="form-control" onChange={handleCategoryChange}>
         <option>Select Category</option>
         {renderOptions(categories)}
       </select>
     );
+    
   }
   

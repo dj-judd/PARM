@@ -4,6 +4,7 @@ import inspect
 import json
 import re
 import shutil
+import hashlib
 
 from typing import Optional
 from PIL import Image
@@ -101,6 +102,49 @@ def sanitize_name(name):
     
     return name
 
+
+class Hashing:
+
+    @staticmethod
+    def entire_file(file_path, hash_type='sha256'):
+        hasher = hashlib.new(hash_type)
+        with open(file_path, 'rb') as f:
+            while chunk := f.read(4096):
+                hasher.update(chunk)
+        return hasher.hexdigest()
+
+    @staticmethod
+    def partial_chunks(file_path, hash_type='sha256', num_chunks=10):
+        hasher = hashlib.new(hash_type)
+        chunk_size = 4096
+
+        file_size = os.path.getsize(file_path)
+        total_chunks = file_size // chunk_size
+
+        # Determine actual chunks to read, considering the file size
+        chunks_to_read = min(num_chunks, total_chunks)
+
+        with open(file_path, 'rb') as f:
+            # Hash the first few chunks
+            for _ in range(chunks_to_read):
+                chunk = f.read(chunk_size)
+                hasher.update(chunk)
+
+            # If the file is large enough, hash the last few chunks
+            if total_chunks >= 2 * chunks_to_read:
+                f.seek(-chunk_size * chunks_to_read, 2)
+                for _ in range(chunks_to_read):
+                    chunk = f.read(chunk_size)
+                    hasher.update(chunk)
+            # If the file is too small, just read what's remaining
+            else:
+                f.seek(0, 0)
+                chunk = f.read()
+                hasher.update(chunk)
+
+        return hasher.hexdigest()
+    
+    
 
 class ImageURLScaping:
 

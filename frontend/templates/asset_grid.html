@@ -25,7 +25,7 @@
             color: {{ secondary_color }};
         }
 
-        .grid-square p {
+        .col-md-2 p {
             margin: 0;
         }
         
@@ -44,14 +44,12 @@
             </div>
             <div class="row">
                 {% for asset in assets %}
-                    <div class="col-md-1 grid-square">
+                    <div class="col-md-2 grid-square mb-2" data-category-id="{{ asset.category.id }}">
+
+
                         <p>{{ asset.model_name }}</p>
                         <p>{{ asset.manufacturer.name }}</p>
-                        <!-- Include category attributes if available -->
-                        {% if asset.category %}
-                            <p>Category ID: {{ asset.category.id }}</p>
-                            <p>Category Name: {{ asset.category.name }}</p>
-                        {% endif %}
+                        
                     </div>
                 {% endfor %}
             </div>
@@ -68,14 +66,27 @@
     <!-- Include your React component and initialize it -->
     <script type="text/babel" src="/components/CategoryDropdown.js"></script>
 
+    <script>
+        function filterGridByCategory(selectedCategoryId) {
+          const allGridSquares = document.querySelectorAll(".grid-square");
+          allGridSquares.forEach((square) => {
+            const categoryId = square.getAttribute("data-category-id");
+            if (selectedCategoryId === "Select Category" || categoryId === selectedCategoryId) {
+              square.style.display = "";
+            } else {
+              square.style.display = "none";
+            }
+          });
+        }
+    </script>
+
     <script type="text/babel">
         // Fetch hierarchical categories from the server using Flask's template
         const categories = {{ categories|tojson|safe }};
         
         
-        // Initialize the CategoryDropdown component
         ReactDOM.render(
-            <CategoryDropdown categories={categories} />,
+            <CategoryDropdown categories={categories} onCategoryChange={filterGridByCategory} />,
             document.getElementById('category-dropdown')
         );
     </script>
