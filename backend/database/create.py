@@ -621,41 +621,67 @@ def email_address(emailable_entity_type: model.EmailableEntityTypes,
 
 def file_attachment(attachable_entity_type: model.AttachableEntityTypes,
                     entity_id: int,
-                    file_path: str, 
+                    file_path: str,
+                    file_hash: str,
                     file_type: model.FileType,
                     file_category: model.FileCategory,
                     created_by_user_id: int,
                     audit_details: Optional[str] = None,
-                    image_size: model.ImageSize = None,
                     commit: bool = True):
     """Create and return a File Attachment entry."""
-    
-    file_attachment = model.FileAttachment(attachable_entity_type=attachable_entity_type,
-                                           entity_id=entity_id,
-                                           file_path=file_path,
-                                           file_type=file_type,
-                                           file_category=file_category,
-                                           image_size=image_size)
 
-    # Add file_attachment to the session for flush
+    # Create a new FileAttachment
+    file_attachment = model.FileAttachment(
+        file_path=file_path,
+        file_hash=file_hash,
+        file_type=file_type,
+        file_category=file_category
+    )
+
+    # Add to session and flush to get ID
     model.db.session.add(file_attachment)
-    # Flush to get id for this entity for the AuditEntry
     model.db.session.flush()
 
-    file_attachment_audit_entry = audit_entry(operation_type=model.OperationType.CREATE.value,
-                                              auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachment'],
-                                              related_entity_id=file_attachment.id,
-                                              created_by_user_id=created_by_user_id,
-                                              audit_details=audit_details)
+    # Create FileAttachmentAssociation
+    file_attachment_association = model.FileAttachmentAssociations(
+        file_attachment_id=file_attachment.id,
+        attachable_entity_type=attachable_entity_type,
+        entity_id=entity_id
+    )
 
-    # Add the user_audit_entry to the session
+    # Add to session
+    model.db.session.add(file_attachment_association)
+    model.db.session.flush()  # Flush to get ID if needed
+
+    # Audit entry for FileAttachment
+    file_attachment_audit_entry = audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachment'],
+        related_entity_id=file_attachment.id,
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add to session
     model.db.session.add(file_attachment_audit_entry)
 
-    # Commit only if commit=True
+    # Audit entry for FileAttachmentAssociation
+    file_attachment_association_audit_entry = audit_entry(
+        operation_type=model.OperationType.CREATE.value,
+        auditable_entity_type=model.CLASS_TO_ENUM_MAP['FileAttachmentAssociation'],
+        related_entity_id=file_attachment_association.file_attachment_id,  # Assuming you want to relate it to the file_attachment_id
+        created_by_user_id=created_by_user_id,
+        audit_details=audit_details
+    )
+
+    # Add to session
+    model.db.session.add(file_attachment_association_audit_entry)
+
+    # Commit if specified
     if commit:
         model.db.session.commit()
 
-    return file_attachment, file_attachment_audit_entry
+    return file_attachment, file_attachment_association, file_attachment_audit_entry, file_attachment_association_audit_entry
 
 
 

@@ -49,6 +49,7 @@ class AuditableEntityTypes(PyEnum):  # Using the PyEnum alias here
     FINANCIAL_ENTRY =        "FINANCIAL_ENTRY"
     ASSET_LOCATION_LOG =     "ASSET_LOCATION_LOG"
     FILE_ATTACHMENT =        "FILE_ATTACHMENT"
+    FILE_ATTACHMENT_ASSOCIATION = "FILE_ATTACHMENT_ASSOCIATION"
     EMAIL_ADDRESS =          "EMAIL_ADDRESS"
     PHONE_NUMBER =           "PHONE_NUMBER"
     USER_SETTINGS =          "USER_SETTINGS"
@@ -567,6 +568,7 @@ CLASS_TO_ENUM_MAP = {
     'FinancialEntry': 'FINANCIAL_ENTRY',
     'AssetLocationLog': 'ASSET_LOCATION_LOG',
     'FileAttachment': 'FILE_ATTACHMENT',
+    'FileAttachmentAssociation': 'FILE_ATTACHMENT_ASSOCIATION',
     'EmailAddress': 'EMAIL_ADDRESS',
     'PhoneNumber': 'PHONE_NUMBER',
     'UserSettings': 'USER_SETTINGS',
@@ -1032,33 +1034,35 @@ class AssetLocationLog(AuditableBase):
       
     def __repr__(self):
         return f'<AssetLocationLog id={self.id} asset_id={self.asset_id} lat={self.latitude} long={self.longitude}>'
-
+    
 
 
 class FileAttachment(AuditableBase):
-    """Files. Can be images, video, or documents."""
+    __tablename__ = 'file_attachments'
 
-    __tablename__ = "file_attachments"
-
-    id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
-    attachable_entity_type = db.Column(attachable_entity_types_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    entity_id = db.Column(db.Integer, nullable=False)
-
-    file_path = db.Column(db.String, unique=True, nullable=False)  # Path or URL to the actual file
-    file_type = db.Column(file_type_enum, nullable=False)
-    file_category = db.Column(file_category_enum, nullable=False)
-    image_size = db.Column(image_size_enum, nullable=True)
+    id = Column(Integer, primary_key=True, autoincrement=True, nullable=False)
+    file_path = Column(String, unique=True, nullable=False)
+    file_hash = Column(String(64), unique=True, nullable=False)
+    file_type = Column(file_type_enum, nullable=False)
+    file_category = Column(file_category_enum, nullable=False)
 
     __table_args__ = (
-        Index('idx_attachable_entity_type', 'attachable_entity_type'),
-        Index('idx_related_entity_id', 'entity_id'),
-        Index('idx_attachable_entity_type_id', 'attachable_entity_type', 'entity_id'),
-        Index('idx_file_type', 'file_type'),  # New index
-        Index('idx_file_category', 'file_category')  # New index
+        Index('idx_file_attachments_file_type', 'file_type'),
+        Index('idx_file_attachments_file_category', 'file_category'),
     )
-    
-    def __repr__(self):
-        return f"<FileAttachment id={self.id} file_type={self.file_type} attachable_entity_type={self.attachable_entity_type} related_entity_id={self.related_entity_id}>"
+
+class FileAttachmentAssociations(AuditableBase):
+    __tablename__ = 'file_attachment_associations'
+
+    file_attachment_id = Column(Integer, ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
+    attachable_entity_type = Column(attachable_entity_types_enum, primary_key=True, nullable=False)
+    entity_id = Column(Integer, primary_key=True, nullable=False)
+
+    __table_args__ = (
+        Index('idx_file_attachments_attachable_entity_type', 'attachable_entity_type'),
+        Index('idx_file_attachments_related_entity_id', 'entity_id'),
+        Index('idx_file_attachments_attachable_entity_type_id', 'attachable_entity_type', 'entity_id'),
+    )
 
 
 
