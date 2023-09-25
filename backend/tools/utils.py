@@ -93,7 +93,7 @@ def sanitize_name(name):
     name = name.replace('"', 'in')
     
     # Remove invalid characters
-    name = re.sub(r'[\\/*?:<>|]', '_', name)  
+    name = re.sub(r'[\\/*?:<>&|,.\'"]', '_', name)
     
     # Replace spaces with underscores
     name = name.replace(' ', '_')
@@ -341,26 +341,43 @@ class ImageProcessing:
         output_filename = f"{sanitized_base_name}_{label}.jpg"
 
         output_path = os.path.join(output_dir, output_filename)
+        original_output_path = os.path.join(original_output_dir, output_filename)
 
         if label == "0-original":
-            converted_input_image = input_image.convert("RGB")  # Ensure the image is in RGB mode
-            converted_input_image.save(output_path, "JPEG", quality=95)
-            return converted_input_image, output_path
+
+            output_original_image = input_image
+
+            if input_image.mode == "RGBA":
+
+                converted_input_image = input_image.convert("RGB")  # Ensure the image is in RGB mode
+                converted_input_image.save(original_output_path, "JPEG", quality=95)
+
+                return converted_input_image, original_output_path
+            
+            else:
+
+                output_original_image.save(original_output_path, "JPEG", quality=95)
+
+                return output_original_image, original_output_path
         
         else:
 
             width, height = input_image.size
+
             if width > height:
+
                 new_width = max_size
                 new_height = int((height / width) * max_size)
+
             else:
+
                 new_height = max_size
                 new_width = int((width / height) * max_size)
 
             resized_img = input_image.resize((new_width, new_height), Image.LANCZOS)
-            resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
+            output_resized_img = resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
             
-            return resized_img, output_path
+            return output_resized_img, output_path
 
 
     @staticmethod

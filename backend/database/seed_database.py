@@ -797,6 +797,8 @@ def populate_assets(created_by_user_id: int = 0,
                 if existing_file_hashes:
                     downloaded_image_hashes.update(existing_file_hashes)
 
+                print(f"\n\n\n\n\nDownloaded Image Hashes:\n\n\n\n{downloaded_image_hashes}\n\n\n\n\n\n\n\n\n\n\n")
+
                 # Get the image from the JSON entry
                 image_to_downloaded = item.get("Image Url")
 
@@ -813,7 +815,7 @@ def populate_assets(created_by_user_id: int = 0,
                         original_image_hash = utils.Hashing.entire_file(image)
 
                         # Base directory
-                        base_dir = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/file_attachments"
+                        base_dir = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend/database/data/file_attachments"
 
                         # Sanitize names for directory and filename use
                         sanitized_manufacturer_name = utils.sanitize_name(manufacturer_name)
@@ -856,7 +858,7 @@ def populate_assets(created_by_user_id: int = 0,
                                 print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
 
 
-                            # Loop through image_size_map
+                            # Loop through image_size_map to create variations
                             for label, max_size in utils.ImageProcessing.image_size_map.items():
                                 image_variation, output_path = utils.ImageProcessing.generate_single_image_variation(image,
                                                                                                                      raw_dir,
@@ -867,15 +869,31 @@ def populate_assets(created_by_user_id: int = 0,
                                 
                                 processed_image_hash_value = utils.Hashing.entire_file(image_variation)
 
-                                file_attachment, _, _, _ = crud.create.file_attachment_with_association(attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
-                                                                                                        entity_id=asset_id,
-                                                                                                        file_path=output_path,
-                                                                                                        file_hash=processed_image_hash_value,
-                                                                                                        file_type=model.FileType.JPEG.value,
-                                                                                                        file_category=model.FileCategory.IMAGE.value,
-                                                                                                        created_by_user_id=created_by_user_id,
-                                                                                                        audit_details=db_init_message,
-                                                                                                        commit=False)
+                                if processed_image_hash_value in downloaded_image_hashes:
+                                    
+                                    print(f"{utils.YELLOW_BOLD}Duplicate image variation found{utils.RESET} for {utils.UNDERLINED}{model_name}-{label}{utils.RESET}!")
+
+                                    existing_file_attachment_id = downloaded_image_hashes.get(processed_image_hash_value)
+
+                                    crud.create.file_attachment_association(file_attachment_id=existing_file_attachment_id,
+                                                                            attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
+                                                                            entity_id=asset_id,
+                                                                            created_by_user_id=created_by_user_id,
+                                                                            audit_details="Duplicate image found; reusing existing FileAttachment",
+                                                                            commit=False)
+
+
+                                else:
+
+                                    file_attachment, _, _, _ = crud.create.file_attachment_with_association(attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
+                                                                                                            entity_id=asset_id,
+                                                                                                            file_path=output_path,
+                                                                                                            file_hash=processed_image_hash_value,
+                                                                                                            file_type=model.FileType.JPEG.value,
+                                                                                                            file_category=model.FileCategory.IMAGE.value,
+                                                                                                            created_by_user_id=created_by_user_id,
+                                                                                                            audit_details=db_init_message,
+                                                                                                            commit=False)
                                 
                                 model.db.session.flush()
                                 
