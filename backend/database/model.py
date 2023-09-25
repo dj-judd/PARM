@@ -106,7 +106,7 @@ class CountryName(PyEnum):
 # PostgreSQL ENUMs:
 country_names_enum = ENUM(
     *[e.value for e in CountryName],   # Use the PythonEnum(PyEnum) values to define the PostgreSQL ENUM
-    name='country_iso_code'
+    name='country_name'
 )
 
 
@@ -636,14 +636,14 @@ class AuditEntry(db.Model):
     edited_by_user = db.relationship('User', foreign_keys=[last_edited_by])
 
     __table_args__ = (
-        Index('idx_related_entity_type', 'auditable_entity_type'),
-        Index('idx_related_entity_id', 'related_entity_id'),
-        Index('idx_related_entity_hash', 'related_entity_hash'),
-        Index('idx_related_composite_id', 'related_composite_id'),
-        Index('idx_related_entity_type_id', 'auditable_entity_type', 'related_entity_id'),
-        Index('idx_related_entity_type_composite_id', 'auditable_entity_type', 'related_composite_id'),
-        Index('idx_created_by', 'created_by'),
-        Index('idx_is_archived', 'is_archived')
+        Index('idx_audit_entries_related_entity_type', 'auditable_entity_type'),
+        Index('idx_audit_entries_related_entity_id', 'related_entity_id'),
+        Index('idx_audit_entries_related_entity_hash', 'related_entity_hash'),
+        Index('idx_audit_entries_related_composite_id', 'related_composite_id'),
+        Index('idx_audit_entries_related_entity_type_id', 'auditable_entity_type', 'related_entity_id'),
+        Index('idx_audit_entries_related_entity_type_composite_id', 'auditable_entity_type', 'related_composite_id'),
+        Index('idx_audit_entries_created_by', 'created_by'),
+        Index('idx_audit_entries_is_archived', 'is_archived')
     )
 
     def __repr__(self):
@@ -668,10 +668,10 @@ class Reservation(AuditableBase):
     area = db.relationship('Area', backref='reservations')
 
     __table_args__ = (
-        Index('idx_area_id', 'area_id'),
-        Index('idx_reserved_for', 'reserved_for'),
-        Index('idx_planned_checkout_time', 'planned_checkout_time'),
-        Index('idx_planned_checkin_time', 'planned_checkin_time'),
+        Index('idx_reservations_area_id', 'area_id'),
+        Index('idx_reservations_reserved_for', 'reserved_for'),
+        Index('idx_reservations_planned_checkout_time', 'planned_checkout_time'),
+        Index('idx_reservations_planned_checkin_time', 'planned_checkin_time'),
     )
 
     def __repr__(self):
@@ -691,9 +691,9 @@ class ReservationAsset(AuditableBase):
     asset = db.relationship('Asset', backref='reservation_relationships')
 
     __table_args__ = (
-        Index('idx_reservation_id', 'reservation_id'),
-        Index('idx_asset_id', 'asset_id'),
-        Index('idx_reservation_asset', 'reservation_id', 'asset_id'),
+        Index('idx_reservation_assets_reservation_id', 'reservation_id'),
+        Index('idx_reservation_assets_asset_id', 'asset_id'),
+        Index('idx_reservation_assets_reservation_asset', 'reservation_id', 'asset_id'),
     )
     
     def __repr__(self):
@@ -714,9 +714,9 @@ class AssetTag(AuditableBase):
     asset = db.relationship('Asset', backref='tags')
 
     __table_args__ = (
-        Index('idx_asset_id', 'asset_id'),
-        Index('idx_code_type', 'code_type'),
-        Index('idx_asset_id_code_type', 'asset_id', 'code_type'),
+        Index('idx_asset_tags_asset_id', 'asset_id'),
+        Index('idx_asset_tags_code_type', 'code_type'),
+        Index('idx_asset_tags_asset_id_code_type', 'asset_id', 'code_type'),
     )
 
     def __repr__(self):
@@ -739,11 +739,11 @@ class Comment(AuditableBase):
     parent = db.relationship('Comment', remote_side=[id], backref=db.backref('nested_comments', lazy='dynamic'))
 
     __table_args__ = (
-        Index('idx_commentable_entity_types', 'commentable_entity_type'),
-        Index('idx_related_entity_id', 'entity_id'),
-        Index('idx_commentable_entity_type_id', 'commentable_entity_type', 'entity_id'),
-        Index('idx_parent_comment_id', 'parent_comment_id'),
-        Index('idx_parent_comment_id_id', 'parent_comment_id', 'id')
+        Index('idx_comments_commentable_entity_types', 'commentable_entity_type'),
+        Index('idx_comments_related_entity_id', 'entity_id'),
+        Index('idx_comments_commentable_entity_type_id', 'commentable_entity_type', 'entity_id'),
+        Index('idx_comments_parent_comment_id', 'parent_comment_id'),
+        Index('idx_comments_parent_comment_id_id', 'parent_comment_id', 'id')
     )
     
     def __repr__(self):
@@ -765,9 +765,9 @@ class Reaction(AuditableBase):
     comment = db.relationship('Comment', backref='reactions')
 
     __table_args__ = (
-        Index('idx_user_id', 'user_id'),
-        Index('idx_comment_id', 'comment_id'),
-        Index('idx_user_comment_reaction', 'user_id', 'comment_id', 'reaction_type')
+        Index('idx_reactions_user_id', 'user_id'),
+        Index('idx_reactions_comment_id', 'comment_id'),
+        Index('idx_reactions_user_comment_reaction', 'user_id', 'comment_id', 'reaction_type')
     )
 
     def __repr__(self):
@@ -789,9 +789,9 @@ class Category(AuditableBase):
     parent = db.relationship('Category', remote_side=[id], backref=db.backref('subcategories', lazy='dynamic'))
 
     __table_args__ = (
-        Index('idx_parent_category_id', 'parent_category_id'),
-        Index('idx_name', 'name'),
-        Index('idx_parent_category_name', 'parent_category_id', 'name')
+        Index('idx_categories_parent_category_id', 'parent_category_id'),
+        Index('idx_categories_category_name', 'name'),
+        Index('idx_categories_parent_category_name', 'parent_category_id', 'name')
     )
 
     def __repr__(self):
@@ -825,7 +825,7 @@ class CustomProperty(AuditableBase):
     data_type = db.Column(custom_property_data_type_enum, nullable=False)
 
     __table_args__ = (
-        Index('idx_data_type', 'data_type'),
+        Index('idx_custom_properties_data_type', 'data_type'),
     )
 
     def __repr__(self):
@@ -846,9 +846,9 @@ class AssetCustomProperty(AuditableBase):
     custom_property = db.relationship('CustomProperty', backref='associated_assets')
 
     __table_args__ = (
-        Index('idx_asset_id', 'asset_id'),
-        Index('idx_custom_property_id', 'custom_property_id'),
-        Index('idx_asset_custom_property', 'asset_id', 'custom_property_id')
+        Index('idx_asset_custom_properties_asset_id', 'asset_id'),
+        Index('idx_asset_custom_properties_custom_property_id', 'custom_property_id'),
+        Index('idx_asset_custom_properties_asset_custom_property', 'asset_id', 'custom_property_id')
     )
 
     def __repr__(self):
@@ -890,14 +890,14 @@ class Asset(AuditableBase):
     residual_value_entry = db.relationship('FinancialEntry', foreign_keys=[residual_value_id], backref='residual_value_assets')
 
     __table_args__ = (
-        Index('idx_manufacturer_id', 'manufacturer_id'),
-        Index('idx_category_id', 'category_id'),
-        Index('idx_storage_area_id', 'storage_area_id'),  # New index
-        Index('idx_parent_asset_id', 'parent_asset_id'),  # New index
-        Index('idx_is_kit_root', 'is_kit_root'),  # New index
-        Index('idx_is_attachment', 'is_attachment'),  # New index
-        Index('idx_is_available', 'is_available'),  # New index
-        Index('idx_inventory_number', 'inventory_number'),  # New index
+        Index('idx_assets_manufacturer_id', 'manufacturer_id'),
+        Index('idx_assets_category_id', 'category_id'),
+        Index('idx_assets_storage_area_id', 'storage_area_id'),
+        Index('idx_assets_parent_asset_id', 'parent_asset_id'),
+        Index('idx_assets_is_kit_root', 'is_kit_root'),
+        Index('idx_assets_is_attachment', 'is_attachment'),
+        Index('idx_assets_is_available', 'is_available'),
+        Index('idx_assets_inventory_number', 'inventory_number'),
     )
     
     def __repr__(self):
@@ -910,14 +910,14 @@ class Manufacturer(AuditableBase):
 
     __tablename__ = "manufacturers"
 
-    id = db.Column(db.SmallInteger, autoincrement=True, primary_key=True, nullable=False)  # Changed to SmallInteger
+    id = db.Column(db.SmallInteger, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
     manufacturer_area_id = db.Column(db.Integer, db.ForeignKey('areas.id'), nullable=True)
     website = db.Column(db.String(512), nullable=True)
 
     __table_args__ = (
-        Index('idx_manufacturer_area_id', 'manufacturer_area_id'),
-        Index('idx_website', 'website'),
+        Index('idx_manufacturers_area_id', 'manufacturer_area_id'),
+        Index('idx_manufacturers_website', 'website'),
     )
 
     area = db.relationship('Area', backref='manufacturers')
@@ -936,7 +936,7 @@ class AssetFlag(AuditableBase):
     flag_id = db.Column(db.Integer, db.ForeignKey('flags.id'), primary_key=True, nullable=False)
 
     __table_args__ = (
-        Index('idx_asset_flag', 'asset_id', 'flag_id'),
+        Index('idx_asset_flags_asset_flag', 'asset_id', 'flag_id'),
     )
 
     asset = db.relationship('Asset', backref='associated_flags')
@@ -955,14 +955,14 @@ class Flag(AuditableBase):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     name = db.Column(db.String(64), nullable=False, unique=True)
-    description = db.Column(db.String(512), nullable=True)  # Changed to nullable=True
+    description = db.Column(db.String(512), nullable=True)
     color_id = db.Column(db.Integer, db.ForeignKey('colors.id'), nullable=False)
     makes_unavailable = db.Column(db.Boolean, nullable=False, default=False)
 
     __table_args__ = (
-        Index('idx_color_id', 'color_id'),
-        Index('idx_makes_unavailable', 'makes_unavailable'),
-        Index('idx_name', 'name'),
+        Index('idx_flags_color_id', 'color_id'),
+        Index('idx_flags_makes_unavailable', 'makes_unavailable'),
+        Index('idx_flags_flag_name', 'name'),
     )
 
     color = db.relationship('Color', backref='flags')
@@ -984,9 +984,9 @@ class Currency(AuditableBase):
     exchange_rate = db.Column(db.Numeric( 10, 5 ), nullable=False)
 
     __table_args__ = (
-        Index('idx_name', 'name'),
-        Index('idx_symbol', 'symbol'),
-        Index('idx_iso_code', 'iso_code'),
+        Index('idx_currencies_currency_name', 'name'),
+        Index('idx_currencies_currency_symbol', 'symbol'),
+        Index('idx_currencies_currency_iso_code', 'iso_code'),
     )
 
     def __repr__(self):
@@ -1004,8 +1004,8 @@ class FinancialEntry(AuditableBase):
     amount = db.Column(db.Numeric( 10, 2 ), nullable=False)
 
     __table_args__ = (
-        Index('idx_currency_id', 'currency_id'),
-        Index('idx_amount', 'amount'),
+        Index('idx_financial_entries_currency_id', 'currency_id'),
+        Index('idx_financial_entries_amount', 'amount'),
     )
     
     currency = db.relationship('Currency', backref='financial_entries')
@@ -1026,8 +1026,8 @@ class AssetLocationLog(AuditableBase):
     longitude = db.Column(db.Numeric(9, 6), nullable=True)
 
     __table_args__ = (
-        Index('idx_asset_id', 'asset_id'),
-        Index('idx_lat_long', 'latitude', 'longitude'),
+        Index('idx_asset_location_logs_asset_id', 'asset_id'),
+        Index('idx_asset_location_logs_lat_long', 'latitude', 'longitude'),
     )
     
     asset = db.relationship('Asset', backref='location_logs')
@@ -1082,11 +1082,11 @@ class EmailAddress(AuditableBase):
     is_shared = db.Column(db.Boolean, nullable=True)
 
     __table_args__ = (
-        Index('idx_email_owner_type', 'emailable_entity_type'),
-        Index('idx_related_owner_id', 'entity_id'),
-        Index('idx_email_owner_type_id', 'email_type', 'entity_id'),
-        Index('idx_is_verified', 'is_verified'),
-        Index('idx_email_address', 'email_address')  # New index
+        Index('idx_email_addresses_owner_type', 'emailable_entity_type'),
+        Index('idx_email_addresses_related_owner_id', 'entity_id'),
+        Index('idx_email_addresses_owner_type_id', 'email_type', 'entity_id'),
+        Index('idx_email_addresses_is_verified', 'is_verified'),
+        Index('idx_email_addresses_address', 'email_address')
     )
     
     def __repr__(self):
@@ -1113,11 +1113,11 @@ class PhoneNumber(AuditableBase):
     is_primary = db.Column(db.Boolean, nullable=False)
 
     __table_args__ = (
-        Index('idx_phone_owner_type', 'phone_type'),
-        Index('idx_related_owner_id', 'entity_id'),
-        Index('idx_phone_owner_type_id', 'phone_type', 'entity_id'),
-        Index('idx_is_verified', 'is_verified'),
-        Index('idx_phone_number', 'phone_number')
+        Index('idx_phone_numbers_owner_type', 'phone_type'),
+        Index('idx_phone_numbers_number_related_owner_id', 'entity_id'),
+        Index('idx_phone_numbers_owner_type_id', 'phone_type', 'entity_id'),
+        Index('idx_phone_numbers_is_verified', 'is_verified'),
+        Index('idx_phone_numbers_number', 'phone_number')
     )
     
     def __repr__(self):
@@ -1143,8 +1143,8 @@ class UiTheme(AuditableBase):
     secondary_color_relation = db.relationship('Color', foreign_keys=[secondary_color_id], backref='ui_theme_secondary')
 
     __table_args__ = (
-        Index('idx_primary_color_id', 'primary_color_id'),
-        Index('idx_secondary_color_id', 'secondary_color_id')
+        Index('idx_ui_themes_primary_color_id', 'primary_color_id'),
+        Index('idx_ui_themes_secondary_color_id', 'secondary_color_id')
     )
     
     def __repr__(self):
@@ -1194,7 +1194,7 @@ class User(AuditableBase):
 
     # Indexes
     __table_args__ = (
-        Index('idx_last_login', 'last_login'),
+        Index('idx_users_last_login', 'last_login'),
     )
 
     def __repr__(self):
@@ -1216,8 +1216,8 @@ class UserRole(AuditableBase):
 
     # Indexes
     __table_args__ = (
-        Index('idx_user_id', 'user_id'),
-        Index('idx_role_id', 'role_id'),
+        Index('idx_user_roles_user_id', 'user_id'),
+        Index('idx_user_roles_role_id', 'role_id'),
     )
 
     def __repr__(self):
@@ -1267,8 +1267,8 @@ class RolePermission(AuditableBase):
 
     # Indexes
     __table_args__ = (
-        Index('idx_role_id', 'role_id'),
-        Index('idx_permission_id', 'permission_id'),
+        Index('idx_role_permissions_role_id', 'role_id'),
+        Index('idx_role_permissions_permission_id', 'permission_id'),
     )
 
     def __repr__(self):
@@ -1294,9 +1294,9 @@ class Area(AuditableBase):
 
     # Indexes
     __table_args__ = (
-        Index('idx_parent_area_id', 'parent_area_id'),
-        Index('idx_name', 'name'),
-        Index('idx_address_id', 'address_id'),
+        Index('idx_areas_parent_area_id', 'parent_area_id'),
+        Index('idx_areas_name', 'name'),
+        Index('idx_areas_address_id', 'address_id'),
     )
 
     def __repr__(self):
@@ -1324,9 +1324,9 @@ class Address(AuditableBase):
 
     # Indexes
     __table_args__ = (
-        Index('idx_state_id', 'state_id'),
-        Index('idx_country_id', 'country_id'),
-        Index('idx_type', 'type'),
+        Index('idx_address_state_id', 'state_id'),
+        Index('idx_address_country_id', 'country_id'),
+        Index('idx_address_type', 'type'),
     )
 
     def __repr__(self):
@@ -1341,13 +1341,13 @@ class Country(db.Model):
 
     id = db.Column(db.Integer, autoincrement=True, primary_key=True, nullable=False)
     code = db.Column(country_iso_code_enum, nullable=False)  # Using the PostgreSQL ENUM type
-    name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
     intl_phone_code = db.Column(db.SmallInteger, nullable=False)  # You'll have to implement length restrictions in the app
+    name = db.Column(country_names_enum, nullable=False)  # Using the PostgreSQL ENUM type
 
     # Indexes
     __table_args__ = (
-        Index('idx_code', 'code'),
-        Index('idx_intl_phone_code', 'intl_phone_code'),
+        Index('idx_countries_country_code', 'code'),
+        Index('idx_countries_intl_phone_code', 'intl_phone_code'),
     )
 
     def __repr__(self):
@@ -1368,8 +1368,8 @@ class Timezone(db.Model):
 
     # Indexes
     __table_args__ = (
-        Index('idx_identifier', 'identifier'),
-        Index('idx_abbreviation', 'abbreviation'),
+        Index('idx_timezones_identifier', 'identifier'),
+        Index('idx_timezones_abbreviation', 'abbreviation'),
     )
 
     def __repr__(self):
@@ -1394,10 +1394,10 @@ class State(db.Model):
 
     # Indexes
     __table_args__ = (
-        Index('idx_timezone_id', 'timezone_id'),
-        Index('idx_country_id', 'country_id'),
-        Index('idx_code', 'code'),
-        Index('idx_name', 'name'),
+        Index('idx_states_timezone_id', 'timezone_id'),
+        Index('idx_states_country_id', 'country_id'),
+        Index('idx_states_code', 'code'),
+        Index('idx_states_name', 'name'),
     )
 
     def __repr__(self):

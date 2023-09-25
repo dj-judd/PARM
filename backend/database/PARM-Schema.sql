@@ -717,11 +717,11 @@ CREATE INDEX "idx_email_addresses_email_address" ON "email_addresses" ("email_ad
 
 CREATE INDEX "idx_phone_numbers_phone_owner_type" ON "phone_numbers" ("phone_type");
 
-CREATE INDEX "idx_phone_numbers_related_owner_id" ON "phone_numbers" ("entity_id");
+CREATE INDEX IF NOT EXISTS "idx_phone_numbers_related_owner_id" ON "phone_numbers" ("entity_id");
 
 CREATE INDEX "idx_phone_numbers_phone_owner_type_id" ON "phone_numbers" ("phone_type", "entity_id");
 
-CREATE INDEX "idx_phone_numbers_is_verified" ON "phone_numbers" ("is_verified");
+CREATE INDEX IF NOT EXISTS "idx_phone_numbers_is_verified" ON "phone_numbers" ("is_verified");
 
 CREATE INDEX "idx_phone_numbers_phone_number" ON "phone_numbers" ("phone_number");
 

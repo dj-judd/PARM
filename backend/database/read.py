@@ -645,6 +645,21 @@ class FileAttachment:
         return query if query else None
     
 
+    @staticmethod
+    def all_file_hash_list() -> Optional[List[str]]:
+        """Fetch and return all unique file hashes from the FileAttachments table, or None if not found."""
+        
+        query = model.db.session.query(model.FileAttachment.file_hash).distinct().all()
+        return [record.file_hash for record in query] if query else None
+    
+
+    @staticmethod
+    def all_file_hash_dict() -> Optional[Dict[str, int]]:
+        """Fetch and return a dictionary mapping file hashes to their IDs, or None if not found."""
+        
+        query = model.db.session.query(model.FileAttachment.file_hash, model.FileAttachment.id).all()
+        return {record.file_hash: record.id for record in query} if query else None
+
 
 
     # @staticmethod

@@ -5,6 +5,7 @@ import json
 import re
 import shutil
 import hashlib
+import io
 
 from typing import Optional
 from PIL import Image
@@ -103,21 +104,29 @@ def sanitize_name(name):
     return name
 
 
-def create_and_check_dir(directory):
+def create_directory(directory):
     if not os.path.exists(directory):
         os.makedirs(directory)
-        return False
-    return True
+
+def check_directory_exists(directory):
+    return os.path.exists(directory)
 
 
 class Hashing:
 
     @staticmethod
-    def entire_file(file_path, hash_type='sha256'):
+    def entire_file(file_path_or_obj, hash_type='sha256'):
         hasher = hashlib.new(hash_type)
-        with open(file_path, 'rb') as f:
-            while chunk := f.read(4096):
-                hasher.update(chunk)
+
+        if isinstance(file_path_or_obj, str):  # file path
+            with open(file_path_or_obj, 'rb') as f:
+                while chunk := f.read(4096):
+                    hasher.update(chunk)
+        elif isinstance(file_path_or_obj, Image.Image):  # PIL Image object
+            with io.BytesIO() as output:
+                file_path_or_obj.save(output, format='JPEG')
+                hasher.update(output.getvalue())
+        
         return hasher.hexdigest()
 
     @staticmethod
@@ -313,7 +322,7 @@ class ImageProcessing:
 
     
     @staticmethod
-    def generate_single_image_variation(img: Image.Image,
+    def generate_single_image_variation(input_image: Image.Image,
                                         original_output_dir: str,
                                         output_dir: str,
                                         base_name: str,
@@ -321,39 +330,37 @@ class ImageProcessing:
                                         max_size: int):
         """Generates and saves a single resized variation of a given image object."""
 
-        # Ensure the output directory exists
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
+        # # Ensure the output directory exists
+        # if not os.path.exists(output_dir):
+        #     os.makedirs(output_dir)
 
-        if not os.path.exists(original_output_dir):
-            os.makedirs(original_output_dir)
+        # if not os.path.exists(original_output_dir):
+        #     os.makedirs(original_output_dir)
 
         sanitized_base_name = sanitize_name(base_name)
         output_filename = f"{sanitized_base_name}_{label}.jpg"
 
-        if label == "0-original":
-            output_path = os.path.join(original_output_dir, output_filename)
-
-            # img.convert("RGB").save(output_path, "JPEG", quality=95)
-
-            img.save(output_path)
-
-            return img, output_path
-
         output_path = os.path.join(output_dir, output_filename)
 
-        width, height = img.size
-        if width > height:
-            new_width = max_size
-            new_height = int((height / width) * max_size)
-        else:
-            new_height = max_size
-            new_width = int((width / height) * max_size)
-
-        resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-        resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
+        if label == "0-original":
+            converted_input_image = input_image.convert("RGB")  # Ensure the image is in RGB mode
+            converted_input_image.save(output_path, "JPEG", quality=95)
+            return converted_input_image, output_path
         
-        return img, output_path
+        else:
+
+            width, height = input_image.size
+            if width > height:
+                new_width = max_size
+                new_height = int((height / width) * max_size)
+            else:
+                new_height = max_size
+                new_width = int((width / height) * max_size)
+
+            resized_img = input_image.resize((new_width, new_height), Image.LANCZOS)
+            resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
+            
+            return resized_img, output_path
 
 
     @staticmethod

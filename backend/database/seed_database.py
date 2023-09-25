@@ -2,27 +2,30 @@
 
 import os
 import sys
-import csv
-import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+import csv
+import argparse
 import hashlib
 import json
 import random
+
 from random import choice, randint
 from datetime import datetime
 from sqlalchemy import text
 from itertools import product
 
-import crud
-import model
+from . import crud, model
+
+# import crud
+# import model
+import server
 
 from tools import utils
-import backend.server as server
 
 
-version_number = 0.4
+version_number = 0.5
 program_name = "PARM Database Seeder 3,000,000"
 
 db_init_message = "Generated automatically upon database creation."
@@ -34,8 +37,9 @@ os.system('dropdb parm')
 os.system('createdb parm')
 
 
+### APPARENTLY NOT NEEDED BECAUSE THE ORM DOES THIS ALREADY WITH THE model.db.create_all() DOWN BELOW
 # Execute SQL script on the database
-os.system('psql -d parm < PARM-Schema.sql')
+# os.system('psql -d parm < PARM-Schema.sql')
 
 model.connect_to_db(server.app)
 model.db.create_all()
@@ -301,7 +305,7 @@ def populate_bootstrap_audit_entries(p_color_01_id,
 def populate_timezones():
     try:
         # Open and load the JSON file
-        with open('data/timezones.json', 'r') as file:
+        with open('database/data/timezones.json', 'r') as file:
             timezones = json.load(file)
         
         # Iterate over each timezone in the JSON file
@@ -327,7 +331,7 @@ def populate_timezones():
 def populate_countries():
     try:
         # Open and load the JSON file
-        with open('data/countries.json', 'r') as file:
+        with open('database/data/countries.json', 'r') as file:
             countries = json.load(file)
 
         
@@ -352,7 +356,7 @@ def populate_countries():
 
 def populate_states():
     # Read the JSON data
-    with open('data/states.json', 'r') as file:
+    with open('database/data/states.json', 'r') as file:
         states_data = json.load(file)
 
     try:
@@ -378,7 +382,7 @@ def populate_states():
 def populate_currencies():
     try:
         # Open and load the JSON file
-        with open('data/currencies.json', 'r') as file:
+        with open('database/data/currencies.json', 'r') as file:
             currencies = json.load(file)
         
         # Iterate over each currency in the JSON file
@@ -416,7 +420,7 @@ def generate_deployment_fingerprint(input_data=None):
 def populate_permissions(created_by_user_id=0):
     try:
         # Open and load the default_permissions.json file
-        with open('data/default_permissions.json', 'r') as file:
+        with open('database/data/default_permissions.json', 'r') as file:
             permissions_data = json.load(file)["default_permissions"]
 
             print(f"{utils.YELLOW_BOLD}Permissions Data: {utils.RESET}{permissions_data}\n")  #DEBUG
@@ -458,7 +462,7 @@ def populate_roles(created_by_user_id=0,
                    permission_id_mapping={}):
     try:
         # Open and load the default_roles.json file
-        with open('data/default_roles.json', 'r') as file:
+        with open('database/data/default_roles.json', 'r') as file:
             roles_data = json.load(file)["default_roles"]
         
         # role_id_mapping dictionary to store role name and its corresponding ID
@@ -615,7 +619,7 @@ def populate_users(number_of_users_to_generate):
 
 def populate_categories(created_by_user_id: int = 0):
     try:
-        with open('data/default_categories.json', 'r') as file:
+        with open('database/data/default_categories.json', 'r') as file:
             data = json.load(file)["Default Categories"]
         
         color_id_mapping = {}
@@ -684,7 +688,7 @@ def populate_assets(created_by_user_id: int = 0,
         model.db.session.flush()
         unknown_manufacturer_id = unknown_manufacturer.id
 
-        with open('data/Cheqroom_Item_Export-2023-08-12 21_06_57.json', 'r') as file:
+        with open('database/data/Cheqroom_Item_Export-2023-08-12 21_06_57.json', 'r') as file:
             data = json.load(file)
 
         downloaded_images = set()
@@ -693,7 +697,7 @@ def populate_assets(created_by_user_id: int = 0,
         for item in data:
             # Create Manufacturer and Flush to get ID
             manufacturer_name = item.get("Manufacturer") or item.get("Brand")
-            existing_manufacturer = crud.read.Manufacturer.by_name(name=manufacturer_name)
+            existing_manufacturer = crud.read.Manufacturer.by_name(manufacturer_name=manufacturer_name)
 
             if existing_manufacturer:
                 manufacturer_id = existing_manufacturer.id
@@ -786,6 +790,13 @@ def populate_assets(created_by_user_id: int = 0,
                 model.db.session.flush()
                 asset_id = asset.id
 
+                # Check if there are already hashed images in DB
+                existing_file_hashes = crud.read.FileAttachment.all_file_hash_dict()
+
+                # Merge dictionaries if so
+                if existing_file_hashes:
+                    downloaded_image_hashes.update(existing_file_hashes)
+
                 # Get the image from the JSON entry
                 image_to_downloaded = item.get("Image Url")
 
@@ -814,7 +825,7 @@ def populate_assets(created_by_user_id: int = 0,
 
 
                         if original_image_hash in downloaded_image_hashes:
-                            
+
                             print(f"{utils.YELLOW_BOLD}Duplicate image found{utils.RESET} for {utils.UNDERLINED}{model_name}{utils.RESET}!")
 
                             existing_file_attachment_id = downloaded_image_hashes.get(original_image_hash)
@@ -828,28 +839,33 @@ def populate_assets(created_by_user_id: int = 0,
 
                         else:
 
-                            # Create directories and check if they existed
-                            if not utils.create_and_check_dir(raw_dir):
-                                print(f"Directory {utils.UNDERLINED}{raw_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
-                            else:
+                            # Check directories. If they don't exist, create them
+                            if utils.check_directory_exists(raw_dir):
                                 print(f"Directory {utils.UNDERLINED}{raw_dir}{utils.RESET} already exists.")
 
-                            if not utils.create_and_check_dir(processed_dir):
-                                print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
                             else:
+                                utils.create_directory(raw_dir)
+                                print(f"Directory {utils.UNDERLINED}{raw_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
+
+
+                            if utils.check_directory_exists(processed_dir):
                                 print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} already exists.")
+
+                            else:
+                                utils.create_directory(processed_dir)
+                                print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
 
 
                             # Loop through image_size_map
                             for label, max_size in utils.ImageProcessing.image_size_map.items():
-                                img, output_path = utils.ImageProcessing.generate_single_image_variation(image,
-                                                                                                        raw_dir,
-                                                                                                        processed_dir,
-                                                                                                        model_name,
-                                                                                                        label,
-                                                                                                        max_size)
+                                image_variation, output_path = utils.ImageProcessing.generate_single_image_variation(image,
+                                                                                                                     raw_dir,
+                                                                                                                     processed_dir,
+                                                                                                                     model_name,
+                                                                                                                     label,
+                                                                                                                     max_size)
                                 
-                                processed_image_hash_value = utils.Hashing.entire_file(img)
+                                processed_image_hash_value = utils.Hashing.entire_file(image_variation)
 
                                 file_attachment, _, _, _ = crud.create.file_attachment_with_association(attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
                                                                                                         entity_id=asset_id,
@@ -866,7 +882,7 @@ def populate_assets(created_by_user_id: int = 0,
                                 downloaded_image_hashes[processed_image_hash_value] = file_attachment.id
             
                             print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
-                            downloaded_images.add(manufacturer_name, model_name)
+                            downloaded_images.add((manufacturer_name, model_name))
 
                     else:
                         print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")

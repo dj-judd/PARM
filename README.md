@@ -28,7 +28,13 @@ git clone https://github.com/yourusername/PARM.git
 pip install -r requirements.txt
 ```
 
-3. Run the Flask server in `/backend`
+3. Popluate Database
+```
+python3 -m database.seed_database
+```
+from "~/src/PARM-Production_Asset_Reservation_Manager/backend$"
+
+4. Run the Flask server in `/backend`
 ```bash
 python server.py
 ```

@@ -20,6 +20,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://parm_server:{db_password}
 
 model.db.init_app(app)
 
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Replace this with routes and view functions!
 
@@ -37,8 +38,7 @@ def index():
 def asset_grid():
     assets = crud.read.Asset.all(requesting_user_id=1, include_archived=False)
     
-    # Assuming you have a theme_id variable with the ID of the UiTheme you want to retrieve
-    theme_id = 2  # Replace with the actual theme ID you want to use
+    theme_id = 2  # Replace with the actual theme ID
     
     theme_colors = crud.read.UiTheme.colors_by_id(theme_id)  # Get the theme colors
 
