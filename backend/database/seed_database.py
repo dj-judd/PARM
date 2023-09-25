@@ -828,7 +828,7 @@ def populate_assets(created_by_user_id: int = 0,
 
                         if original_image_hash in downloaded_image_hashes:
 
-                            print(f"{utils.YELLOW_BOLD}Duplicate image found{utils.RESET} for {utils.UNDERLINED}{model_name}{utils.RESET}!")
+                            print(f"{utils.YELLOW_BOLD}Duplicate original image found{utils.RESET} for {utils.UNDERLINED}{model_name}{utils.RESET}!")
 
                             existing_file_attachment_id = downloaded_image_hashes.get(original_image_hash)
 
@@ -838,6 +838,10 @@ def populate_assets(created_by_user_id: int = 0,
                                                                     created_by_user_id=created_by_user_id,
                                                                     audit_details="Duplicate image found; reusing existing FileAttachment",
                                                                     commit=False)
+                            
+                            print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET} were already {utils.GREEN_BOLD}created{utils.RESET}.")
+                            downloaded_images.add((manufacturer_name, model_name))
+                            downloaded_image_hashes[original_image_hash] = existing_file_attachment_id
 
                         else:
 
