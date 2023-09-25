@@ -103,6 +103,13 @@ def sanitize_name(name):
     return name
 
 
+def create_and_check_dir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        return False
+    return True
+
+
 class Hashing:
 
     @staticmethod
@@ -326,8 +333,12 @@ class ImageProcessing:
 
         if label == "0-original":
             output_path = os.path.join(original_output_dir, output_filename)
-            img.convert("RGB").save(output_path, "JPEG", quality=90)
-            return output_path, label
+
+            # img.convert("RGB").save(output_path, "JPEG", quality=95)
+
+            img.save(output_path)
+
+            return img, output_path
 
         output_path = os.path.join(output_dir, output_filename)
 
@@ -340,9 +351,9 @@ class ImageProcessing:
             new_width = int((width / height) * max_size)
 
         resized_img = img.resize((new_width, new_height), Image.LANCZOS)
-        resized_img.convert("RGB").save(output_path, "JPEG", quality=90)
+        resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
         
-        return output_path, label
+        return img, output_path
 
 
     @staticmethod

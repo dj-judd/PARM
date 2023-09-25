@@ -688,10 +688,11 @@ def populate_assets(created_by_user_id: int = 0,
             data = json.load(file)
 
         downloaded_images = set()
+        downloaded_image_hashes = {}
 
         for item in data:
             # Create Manufacturer and Flush to get ID
-            manufacturer_name = utils.sanitize_name(item.get("Manufacturer") or item.get("Brand"))
+            manufacturer_name = item.get("Manufacturer") or item.get("Brand")
             existing_manufacturer = crud.read.Manufacturer.by_name(name=manufacturer_name)
 
             if existing_manufacturer:
@@ -792,35 +793,80 @@ def populate_assets(created_by_user_id: int = 0,
                 if image_to_downloaded:
 
                     # Check if it's already been downloaded
-                    if model_name not in downloaded_images:
+                    if (manufacturer_name, model_name) not in downloaded_images:
+                        
                         image = utils.ImageURLScaping.download_image(image_to_downloaded)
                         print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
 
-                        raw_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/raw_images"
-                        processed_image_output = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/processed_images"
+                        # Generate image hash for dupe checking
+                        original_image_hash = utils.Hashing.entire_file(image)
+
+                        # Base directory
+                        base_dir = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/database/data/file_attachments"
+
+                        # Sanitize names for directory and filename use
+                        sanitized_manufacturer_name = utils.sanitize_name(manufacturer_name)
+                        sanitized_model_name = utils.sanitize_name(model_name)
+
+                        # Specific directories
+                        raw_dir = os.path.join(base_dir, sanitized_manufacturer_name, sanitized_model_name, "raw_images")
+                        processed_dir = os.path.join(base_dir, sanitized_manufacturer_name, sanitized_model_name)
 
 
-                        # Loop through image_size_map
-                        for label, max_size in utils.ImageProcessing.image_size_map.items():
-                            output_path, image_size = utils.ImageProcessing.generate_single_image_variation(image,
-                                                                                                            raw_image_output,
-                                                                                                            processed_image_output,
-                                                                                                            model_name,
-                                                                                                            label,
-                                                                                                            max_size)
+                        if original_image_hash in downloaded_image_hashes:
+                            
+                            print(f"{utils.YELLOW_BOLD}Duplicate image found{utils.RESET} for {utils.UNDERLINED}{model_name}{utils.RESET}!")
 
-                            crud.create.file_attachment(model.AttachableEntityTypes.ASSET.value,
-                                                        asset_id,
-                                                        output_path,
-                                                        model.FileType.JPEG.value,
-                                                        model.FileCategory.IMAGE.value,
-                                                        created_by_user_id,
-                                                        db_init_message,
-                                                        image_size = image_size,
-                                                        commit=False)
-        
-                        print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
-                        downloaded_images.add(model_name)
+                            existing_file_attachment_id = downloaded_image_hashes.get(original_image_hash)
+
+                            crud.create.file_attachment_association(file_attachment_id=existing_file_attachment_id,
+                                                                    attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
+                                                                    entity_id=asset_id,
+                                                                    created_by_user_id=created_by_user_id,
+                                                                    audit_details="Duplicate image found; reusing existing FileAttachment",
+                                                                    commit=False)
+
+                        else:
+
+                            # Create directories and check if they existed
+                            if not utils.create_and_check_dir(raw_dir):
+                                print(f"Directory {utils.UNDERLINED}{raw_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
+                            else:
+                                print(f"Directory {utils.UNDERLINED}{raw_dir}{utils.RESET} already exists.")
+
+                            if not utils.create_and_check_dir(processed_dir):
+                                print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} has been {utils.GREEN_BOLD}created{utils.RESET}.")
+                            else:
+                                print(f"Directory {utils.UNDERLINED}{processed_dir}{utils.RESET} already exists.")
+
+
+                            # Loop through image_size_map
+                            for label, max_size in utils.ImageProcessing.image_size_map.items():
+                                img, output_path = utils.ImageProcessing.generate_single_image_variation(image,
+                                                                                                        raw_dir,
+                                                                                                        processed_dir,
+                                                                                                        model_name,
+                                                                                                        label,
+                                                                                                        max_size)
+                                
+                                processed_image_hash_value = utils.Hashing.entire_file(img)
+
+                                file_attachment, _, _, _ = crud.create.file_attachment_with_association(attachable_entity_type=model.AttachableEntityTypes.ASSET.value,
+                                                                                                        entity_id=asset_id,
+                                                                                                        file_path=output_path,
+                                                                                                        file_hash=processed_image_hash_value,
+                                                                                                        file_type=model.FileType.JPEG.value,
+                                                                                                        file_category=model.FileCategory.IMAGE.value,
+                                                                                                        created_by_user_id=created_by_user_id,
+                                                                                                        audit_details=db_init_message,
+                                                                                                        commit=False)
+                                
+                                model.db.session.flush()
+                                
+                                downloaded_image_hashes[processed_image_hash_value] = file_attachment.id
+            
+                            print(f"Images for {utils.UNDERLINED}{model_name}{utils.RESET}'s sizes have been {utils.GREEN_BOLD}created{utils.RESET}.")
+                            downloaded_images.add(manufacturer_name, model_name)
 
                     else:
                         print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been already been downloaded and is being {utils.YELLOW_BOLD}skipped{utils.RESET}.")
