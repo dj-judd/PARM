@@ -797,7 +797,7 @@ def populate_assets(created_by_user_id: int = 0,
                 if existing_file_hashes:
                     downloaded_image_hashes.update(existing_file_hashes)
 
-                print(f"\n\n\n\n\nDownloaded Image Hashes:\n\n\n\n{downloaded_image_hashes}\n\n\n\n\n\n\n\n\n\n\n")
+                # print(f"\n\n\n\n\nDownloaded Image Hashes:\n\n\n\n{downloaded_image_hashes}\n\n\n\n\n\n\n\n\n\n\n")
 
                 # Get the image from the JSON entry
                 image_to_downloaded = item.get("Image Url")
@@ -810,9 +810,11 @@ def populate_assets(created_by_user_id: int = 0,
                         
                         image = utils.ImageURLScaping.download_image(image_to_downloaded)
                         print(f"Image for {utils.UNDERLINED}{model_name}{utils.RESET} has been {utils.GREEN_BOLD}downloaded{utils.RESET}.")
+                        print(f"At this address: {utils.GREEN_BOLD}{image_to_downloaded}{utils.RESET}")
 
                         # Generate image hash for dupe checking
                         original_image_hash = utils.Hashing.entire_file(image)
+                        print(f"\n\n{utils.UNDERLINED}Original Image Hash:{utils.RESET} {original_image_hash}\n\n\n")
 
                         # Base directory
                         base_dir = "/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend/database/data/file_attachments"
@@ -864,14 +866,15 @@ def populate_assets(created_by_user_id: int = 0,
 
                             # Loop through image_size_map to create variations
                             for label, max_size in utils.ImageProcessing.image_size_map.items():
-                                image_variation, output_path = utils.ImageProcessing.generate_single_image_variation(image,
-                                                                                                                     raw_dir,
-                                                                                                                     processed_dir,
-                                                                                                                     model_name,
-                                                                                                                     label,
-                                                                                                                     max_size)
+                                output_path = utils.ImageProcessing.generate_single_image_variation(image,
+                                                                                                    raw_dir,
+                                                                                                    processed_dir,
+                                                                                                    model_name,
+                                                                                                    label,
+                                                                                                    max_size)
                                 
-                                processed_image_hash_value = utils.Hashing.entire_file(image_variation)
+                                processed_image_hash_value = utils.Hashing.entire_file(output_path)
+                                print(f"\n\n{utils.UNDERLINED}Processed Image Hash{utils.RESET} for {label}: {processed_image_hash_value}\n\n\n")
 
                                 if processed_image_hash_value in downloaded_image_hashes:
                                     

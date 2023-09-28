@@ -321,6 +321,111 @@ class ImageProcessing:
 
 
     
+    # @staticmethod
+    # def generate_single_image_variation(input_image: Image.Image,
+    #                                     original_output_dir: str,
+    #                                     output_dir: str,
+    #                                     base_name: str,
+    #                                     label: str,
+    #                                     max_size: int):
+    #     """Generates and saves a single resized variation of a given image object."""
+
+    #     # # Ensure the output directory exists
+    #     # if not os.path.exists(output_dir):
+    #     #     os.makedirs(output_dir)
+
+    #     # if not os.path.exists(original_output_dir):
+    #     #     os.makedirs(original_output_dir)
+
+    #     sanitized_base_name = sanitize_name(base_name)
+    #     output_filename = f"{sanitized_base_name}_{label}.jpg"
+
+    #     output_path = os.path.join(output_dir, output_filename)
+    #     original_output_path = os.path.join(original_output_dir, output_filename)
+
+    #     if label == "0-original":
+
+    #         output_original_image = input_image
+
+    #         if input_image.mode == "RGBA":
+
+    #             input_image = input_image.convert("RGB")  # Convert to RGB
+    #             print(f"\nImage Mode: {input_image.mode}\n")
+    #             input_image.save(original_output_path, "JPEG", quality=95)
+
+    #             return original_output_path
+            
+    #         else:
+
+    #             print(f"\nImage Mode: {output_original_image.mode}\n")
+    #             output_original_image.save(original_output_path, "JPEG", quality=95)
+
+    #             return original_output_path
+        
+    #     else:
+
+    #         width, height = input_image.size
+
+    #         if width > height:
+
+    #             new_width = max_size
+    #             new_height = int((height / width) * max_size)
+
+    #         else:
+
+    #             new_height = max_size
+    #             new_width = int((width / height) * max_size)
+
+    #         resized_img = input_image.resize((new_width, new_height), Image.LANCZOS)
+    #         resized_img = resized_img.convert("RGB")
+    #         print(f"\nImage Mode: {resized_img.mode}\n")
+    #         resized_img.save(output_path, "JPEG", quality=95)
+            
+    #         return output_path
+    #         # return output_resized_img, output_path
+
+
+    # @staticmethod
+    # def generate_single_image_variation(input_image: Image.Image,
+    #                                     original_output_dir: str,
+    #                                     output_dir: str,
+    #                                     base_name: str,
+    #                                     label: str,
+    #                                     max_size: int):
+    #     """Generates and saves a single resized variation of a given image object."""
+
+    #     # Convert to RGB if not already in that mode
+    #     if input_image.mode != "RGB":
+    #         input_image = input_image.convert("RGB")
+
+    #     sanitized_base_name = sanitize_name(base_name)
+    #     output_filename = f"{sanitized_base_name}_{label}.jpg"
+
+    #     output_path = os.path.join(output_dir, output_filename)
+    #     original_output_path = os.path.join(original_output_dir, output_filename)
+
+    #     if label == "0-original":
+    #         input_image.save(original_output_path, "JPEG", quality=95)
+    #         print(f"Mode before save: {input_image.mode}")
+    #         return original_output_path
+
+    #     else:
+    #         width, height = input_image.size
+
+    #         if width > height:
+    #             new_width = max_size
+    #             new_height = int((height / width) * max_size)
+    #         else:
+    #             new_height = max_size
+    #             new_width = int((width / height) * max_size)
+
+    #         resized_img = input_image.resize((new_width, new_height), Image.LANCZOS)
+    #         print(f"Mode before save: {resized_img.mode}")
+    #         resized_img.save(output_path, "JPEG", quality=95)
+
+    #         return output_path
+
+
     @staticmethod
     def generate_single_image_variation(input_image: Image.Image,
                                         original_output_dir: str,
@@ -330,12 +435,9 @@ class ImageProcessing:
                                         max_size: int):
         """Generates and saves a single resized variation of a given image object."""
 
-        # # Ensure the output directory exists
-        # if not os.path.exists(output_dir):
-        #     os.makedirs(output_dir)
-
-        # if not os.path.exists(original_output_dir):
-        #     os.makedirs(original_output_dir)
+        # Convert to RGB if not already in that mode
+        if input_image.mode != "RGB":
+            input_image = input_image.convert("RGB")
 
         sanitized_base_name = sanitize_name(base_name)
         output_filename = f"{sanitized_base_name}_{label}.jpg"
@@ -344,40 +446,25 @@ class ImageProcessing:
         original_output_path = os.path.join(original_output_dir, output_filename)
 
         if label == "0-original":
+            input_image.save(original_output_path, "JPEG", quality=95)
+            print(f"Mode before save: {input_image.mode}")
+            return original_output_path
 
-            output_original_image = input_image
-
-            if input_image.mode == "RGBA":
-
-                converted_input_image = input_image.convert("RGB")  # Ensure the image is in RGB mode
-                converted_input_image.save(original_output_path, "JPEG", quality=95)
-
-                return converted_input_image, original_output_path
-            
-            else:
-
-                output_original_image.save(original_output_path, "JPEG", quality=95)
-
-                return output_original_image, original_output_path
-        
         else:
-
             width, height = input_image.size
 
             if width > height:
-
                 new_width = max_size
                 new_height = int((height / width) * max_size)
-
             else:
-
                 new_height = max_size
                 new_width = int((width / height) * max_size)
 
             resized_img = input_image.resize((new_width, new_height), Image.LANCZOS)
-            output_resized_img = resized_img.convert("RGB").save(output_path, "JPEG", quality=95)
-            
-            return output_resized_img, output_path
+            print(f"Mode before save: {resized_img.mode}")
+            resized_img.save(output_path, "JPEG", quality=95)
+
+            return output_path
 
 
     @staticmethod
