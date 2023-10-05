@@ -744,7 +744,31 @@ class UserSettings:
 
 
 class User:
-    pass
+    
+
+    @staticmethod
+    def by_email(email_address: str):
+        """Fetch and return a User entry that matches the given email address, or None if not found."""
+
+        # Initialize the query
+        query = model.db.session.query(model.User)
+
+        # Join EmailAddress table to fetch related email information
+        query = query.join(
+            model.EmailAddress,
+            model.User.id == model.EmailAddress.entity_id
+        ).filter(
+            model.EmailAddress.email_address == email_address,
+            model.EmailAddress.emailable_entity_type == 'USER'  # Replace 'User' with whatever enum or string you use to identify users in email_addresses
+        )
+
+        # Execute the query and fetch first result
+        user = query.first()
+
+        # Return the result if available, otherwise return None
+        return user if user else None
+
+
 
 
 

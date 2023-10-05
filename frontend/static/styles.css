@@ -1,0 +1,53 @@
+body, h1, h2, p {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: #f4f4f4;
+    font-family: Arial, sans-serif;
+}
+
+h1, h2 {
+    color: #333;
+}
+
+h1 a {
+    text-decoration: none;
+    color: inherit;
+}
+
+
+p {
+    font-size: 16px;
+    line-height: 1.5;
+    color: #666;
+}
+
+.container {
+    padding: 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
+
+.container h1 {
+    margin-bottom: 20px;
+}
+
+form div {
+    text-align: left;
+    margin-bottom: 10px;
+}
+
+label, input[type="text"], input[type="password"] {
+    width: 200px; /* Fixed width */
+    display: inline-block;
+}
+
+input[type="submit"] {
+    margin-top: 10px;
+}

@@ -1,0 +1,17 @@
+.App {
+    text-align: center;
+  }
+  
+  .App-header {
+    /* Header styles */
+  }
+  
+  .App-main {
+    display: flex;
+  }
+  
+  .App-window {
+    flex: 1;
+    overflow-y: auto;
+  }
+  
