@@ -12,23 +12,37 @@
         <label for="password">Password:</label>
         <input type="password" id="password" name="password">
       </div>
-      <div>
+      <div class="checkbox-container">
         <input type="checkbox" id="rememberMe" name="rememberMe">
         <label for="rememberMe">Remember Me</label>
       </div>
-  
-      <input type="submit" value="Login">
+      <input type="submit" value="Login" class="button-link">
+      <button type="button" class="button-link disabled-button">Create Account</button>
     </form>
   </div>
   
   <script>
-    // JavaScript to handle form submission
+    // JavaScript to handle form submission and cookie logic
     document.addEventListener('DOMContentLoaded', function() {
+
+      // Check if cookies exist and populate fields
+      const emailCookie = getCookie('email');
+      const passwordCookie = getCookie('password');
+      const rememberMeCookie = getCookie('rememberMe');
+      
+      if (emailCookie && passwordCookie && rememberMeCookie === 'true') {
+        document.getElementById('email_address').value = emailCookie;
+        document.getElementById('password').value = passwordCookie;
+        document.getElementById('rememberMe').checked = true;
+      }
+
       const form = document.getElementById('login-form');
       form.addEventListener('submit', function(event) {
         event.preventDefault();
         const email_address = document.getElementById('email_address').value;
         const password = document.getElementById('password').value;
+        const rememberMe = document.getElementById('rememberMe').checked;
+        
         fetch('http://localhost:5000/login', {
           method: 'POST',
           headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -39,19 +53,29 @@
           }
           return response.json();
         }).then(data => {
-          // Handle server response here
-          const rememberMe = document.getElementById('rememberMe').checked;
           if (rememberMe) {
-              document.cookie = `email=${email_address}; path=/`;
-              document.cookie = `password=${password}; path=/`;
+            document.cookie = `email=${email_address}; path=/`;
+            document.cookie = `password=${password}; path=/`;
+            document.cookie = `rememberMe=true; path=/`;
+          } else {
+            document.cookie = "email=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "password=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+            document.cookie = "rememberMe=false; path=/;";
           }
-          alert("Login successful!");  // Show a success message
-          window.location.href = "/app";  // Navigate to the next page
+          alert("Login successful!");
+          window.location.href = "{{ url_for('serve_app') }}";
         }).catch(error => {
           console.error('Fetch error:', error);
         });
       });
     });
+
+    // Function to get a cookie by name
+    function getCookie(name) {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop().split(';').shift();
+    }
   </script>
   
 {% endblock %}

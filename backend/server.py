@@ -13,7 +13,7 @@ load_dotenv()
 
 db_password = os.getenv("DATABASE_PASSWORD")
 
-app = Flask(__name__, template_folder='../frontend/templates', static_folder='../backend/database/data/file_attachments')
+app = Flask(__name__, template_folder='../frontend/templates', static_folder='/home/dj/src/PARM-Production_Asset_Reservation_Manager/frontend/static')
 
 # configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://parm_server:{db_password}@localhost/parm'
@@ -42,20 +42,39 @@ def landing():
     return render_template('landing.html')
 
 
+#OLD METHOD (BUT WASN"T ABLE TO DO A SERVER SIDE REDIRECT)
+
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         email_address = request.form.get('email_address')
+#         user = crud.read.User.by_email(email_address)
+#         password = user.password_hash
+        
+#         if user:
+#             # User authenticated successfully
+#             # Set session or token here
+#             return redirect(url_for('serve_app'))
+#         else:
+#             # Authentication failed
+#             return "Invalid credentials", 401
+
+#     return render_template('login.html')
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         email_address = request.form.get('email_address')
         user = crud.read.User.by_email(email_address)
-        password = user.password_hash
         
         if user:
             # User authenticated successfully
             # Set session or token here
-            return redirect(url_for('serve_app'))
+            return jsonify({"status": "success"}), 200
         else:
             # Authentication failed
-            return "Invalid credentials", 401
+            return jsonify({"status": "failure", "message": "Invalid credentials"}), 401
 
     return render_template('login.html')
 
@@ -63,7 +82,7 @@ def login():
 # def index():
 #     return redirect(url_for('asset_grid'))
 
-@app.route('/asset-grid')
+@app.route('/app')
 def asset_grid():
     assets = crud.read.Asset.all(requesting_user_id=1, include_archived=False)
     
@@ -75,7 +94,7 @@ def asset_grid():
     secondary_color = "#000000"  # Default black
 
     categories = crud.read.Category.all_ordered()
-    return render_template('asset_grid.html', assets=assets, primary_color=primary_color, secondary_color=secondary_color, categories=categories)
+    return render_template('app.html', assets=assets, primary_color=primary_color, secondary_color=secondary_color, categories=categories)
 
 
 @app.route('/app', defaults={'path': ''})
@@ -85,7 +104,6 @@ def serve_app(path):
     password_cookie = request.cookies.get('password')
 
     if email_cookie and password_cookie:
-        # Validate credentials (you should implement this)
         if path != "" and os.path.exists(f"../frontend/build/{path}"):
             return send_from_directory('../frontend/build', path)
         else:
