@@ -3,7 +3,7 @@ const { React, ReactDOM } = window;
 
 const App = () => {
   return (
-    React.createElement('div', { id: 'app-root' },
+    React.createElement('div', { id: 'app' },
       [
         React.createElement(LeftPanel, null, null),
         React.createElement(RightPanel, null, null)

@@ -1,5 +1,10 @@
 const SearchBar = () => {
-  return React.createElement('input', { type: 'text', placeholder: 'Search...' }, null);
+  return React.createElement('input', { 
+    type: 'text', 
+    className: 'search-bar',
+    placeholder: 'Search...'
+  }, null);
 };
+
 
 window.SearchBar = SearchBar;
