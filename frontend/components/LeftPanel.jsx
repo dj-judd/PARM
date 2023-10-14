@@ -1,10 +1,11 @@
 const LeftPanel = (props) => {
-  const [selectedCategory, setSelectedCategory] = React.useState(null);
+  const { assets, categories, onAssetClick, selectedAsset, selectedCategory, setSelectedCategory } = props;
+  
   return (
     React.createElement('div', { id: 'left-panel'},
       [
-        React.createElement(UpperNavigation, { setSelectedCategory, categories: props.categories }, null),
-        React.createElement(AssetGridContainer, { selectedCategory, assets: props.assets }, null)
+        React.createElement(UpperNavigation, { setSelectedCategory, categories }, null),
+        React.createElement(AssetGridContainer, { selectedCategory, assets, onAssetClick, selectedAsset }, null)
       ]
     )
   );

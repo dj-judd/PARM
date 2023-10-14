@@ -1,8 +1,16 @@
 const AssetBox = (props) => {
-  const { asset } = props;
-  const manufacturerName = asset.manufacturer_name || 'Unknown'; // Use the manufacturer_name from the asset object
+  const { asset, selected, onClick } = props;
+  const manufacturerName = asset.manufacturer_name || 'Unknown';
 
-  return React.createElement('div', { className: 'asset-box', style: {backgroundImage: `url(${asset.online_item_page})`}}, [
+  const assetBoxClass = selected ? 'asset-box selected' : 'asset-box';
+  
+  const handleClick = () => {
+    if (typeof onClick === 'function') {
+      onClick(asset);
+    }
+  };
+
+  return React.createElement('div', { className: assetBoxClass, onClick: handleClick, style: {backgroundImage: `url(${asset.online_item_page})`}}, [
     React.createElement('p', null, asset.model_name),
     // React.createElement('p', null, manufacturerName)
   ]);

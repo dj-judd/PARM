@@ -1,21 +1,24 @@
 const AssetGridContainer = (props) => {
-  const filteredAssets = (!props.selectedCategory || props.selectedCategory === "") 
-    ? props.assets 
-    : props.assets.filter(asset => asset.category_id === Number(props.selectedCategory));
-
-
-
-  console.log('Selected Category: ', props.selectedCategory)
-  console.log('Selected Category: ',filteredAssets)
+  const { selectedCategory, assets, onAssetClick, selectedAsset } = props;
+  
+  const filteredAssets = (!selectedCategory || selectedCategory === "") 
+    ? assets 
+    : assets.filter(asset => asset.category_id === Number(selectedCategory));
 
   return React.createElement('div', { className: 'grid-container' },
     filteredAssets.map((asset, index) => 
-      React.createElement(AssetBox, { key: index, asset }, null)
+      React.createElement(AssetBox, { 
+        key: index, 
+        asset, 
+        onClick: onAssetClick, 
+        selected: asset === selectedAsset 
+      }, null)
     )
   );
 };
 
 window.AssetGridContainer = AssetGridContainer;
+
 
 
 // Debuggin VERSION

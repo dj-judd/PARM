@@ -214,6 +214,11 @@ body {
   background-repeat: no-repeat;
 }
 
+.selected {
+  border: 2px solid blue;
+}
+
+
 
 
 #right-panel {
@@ -223,4 +228,41 @@ body {
   top: 0;  /* Align it to the top */
   height: 100vh;
   overflow-y: auto;
+}
+
+
+#info-panel {
+  height: 40vh;
+  background-color: #ffffffcc;
+  margin-top: 0;
+  padding-top: 25px;
+}
+
+#info-panel .asset-box {
+  width: 300px;
+  height: 300px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+
+#info-text {
+  font-family: 'Open Sans', sans-serif;
+  color: #000000;
+}
+
+#model-name {
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  margin-left: 15px;
+}
+
+#manufacturer-name {
+  font-size: 15px;
+  margin-top: 6px;
+  margin-bottom: 15px;
+  margin-left: 15px;
 }
