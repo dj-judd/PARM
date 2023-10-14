@@ -107,8 +107,14 @@ def serve_app(path):
     email_cookie = request.cookies.get('email')
     password_cookie = request.cookies.get('password')
 
+    assets = crud.read.Asset.all(requesting_user_id=1, include_archived=False)
+    assets = [asset.to_dict() for asset in assets] if assets else None
+
+    categories = crud.read.Category.all_ordered()
+
+
     if email_cookie and password_cookie:
-        return render_template('app.html')  # Your React app will take it from here.
+        return render_template('app.html', assets=assets, categories=categories)
     else:
         return redirect('/login')
 

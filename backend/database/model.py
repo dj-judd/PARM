@@ -794,6 +794,15 @@ class Category(AuditableBase):
         Index('idx_categories_parent_category_name', 'parent_category_id', 'name')
     )
 
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'parent_category_id': self.parent_category_id,
+            'name': self.name,
+            'color_id': self.color_id
+        }
+
     def __repr__(self):
         return f'<Category id={self.id} name={self.name}>'
 
@@ -899,6 +908,31 @@ class Asset(AuditableBase):
         Index('idx_assets_is_available', 'is_available'),
         Index('idx_assets_inventory_number', 'inventory_number'),
     )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'manufacturer_id': self.manufacturer_id,
+            'manufacturer_name': self.manufacturer.name if self.manufacturer else None,  # Include manufacturer name
+            'model_number': self.model_number,
+            'model_name': self.model_name,
+            'category_id': self.category_id,
+            'storage_area_id': self.storage_area_id,
+            'purchase_date': self.purchase_date.isoformat() if self.purchase_date else None,
+            'purchase_price_id': self.purchase_price_id,
+            'msrp_id': self.msrp_id,
+            'residual_value_id': self.residual_value_id,
+            'parent_asset_id': self.parent_asset_id,
+            'is_kit_root': self.is_kit_root,
+            'is_attachment': self.is_attachment,
+            'serial_number': self.serial_number,
+            'inventory_number': self.inventory_number,
+            'description': self.description,
+            'is_available': self.is_available,
+            'online_item_page': self.online_item_page,
+            'warranty_starts': self.warranty_starts.isoformat() if self.warranty_starts else None,
+            'warranty_ends': self.warranty_ends.isoformat() if self.warranty_ends else None,
+        }
     
     def __repr__(self):
         return f'<Asset id={self.id} model_name={self.model_name}>'

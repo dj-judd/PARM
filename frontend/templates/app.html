@@ -13,10 +13,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 
+    <script>
+        var assets = {{ assets|tojson|safe }};
+        var categories = {{ categories|tojson|safe }};
+    </script>
+  
+
+    <script type="text/babel" src="../components/CategoryDropdown.jsx"></script>
     <script type="text/babel" src="../components/SearchBar.jsx"></script>
     <script type="text/babel" src="../components/CategoryStrip.jsx"></script>
     <script type="text/babel" src="../components/AssetBox.jsx"></script>
-    <script type="text/babel" src="../components/AssetBoxContainer.jsx"></script>
+    <script type="text/babel" src="../components/AssetGridContainer.jsx"></script>
     <script type="text/babel" src="../components/UpperNavigation.jsx"></script>
     <script type="text/babel" src="../components/LeftPanel.jsx"></script>
 

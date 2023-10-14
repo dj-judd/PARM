@@ -341,16 +341,17 @@ class Category:
             
             for item in query_result:
                 id = item.id
-                name = item.name
-                parent_id = item.parent_category_id
-                node = {'name': name, 'children': []}
+                node = item.to_dict()
+                node['children'] = []
                 lookup[id] = node
-                if parent_id is None:
+                if item.parent_category_id is None:
                     tree[id] = node
                 else:
-                    lookup[parent_id]['children'].append(node)
+                    lookup[item.parent_category_id]['children'].append(node)
             
             return tree
+
+
 
         query = model.db.session.query(model.Category).all()
 
