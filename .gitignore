@@ -4,3 +4,4 @@ backend/database/data/images_original/*
 backend/database/data/images_processed/*
 backend/database/data/file_attachments/*
 .env
+.gitignore

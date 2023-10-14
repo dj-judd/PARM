@@ -1,5 +1,5 @@
+const { React, ReactDOM } = window;
 
-const { React } = window;
 
 const App = () => {
   return (
@@ -13,3 +13,9 @@ const App = () => {
 };
 
 window.App = App;
+
+
+ReactDOM.render(
+  React.createElement(App, null, null),
+  document.getElementById('root')
+);

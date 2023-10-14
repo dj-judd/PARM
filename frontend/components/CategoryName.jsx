@@ -1,6 +1,3 @@
-
-const { React } = window;
-
 const CategoryName = () => {
   return React.createElement('div', { id: 'category-name' }, 'Category Name');
 };

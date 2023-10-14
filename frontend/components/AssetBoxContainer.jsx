@@ -1,6 +1,3 @@
-
-const { React } = window;
-
 const AssetBoxContainer = () => {
   return (
     React.createElement('div', { id: 'asset-box-container' },

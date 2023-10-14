@@ -1,18 +1,28 @@
 {% extends "base.html" %}
 
-{% block head %}
+{% block content %}
+  <!-- <div class="container">
+    <h1>Welcome to THE APPPPPP</h1>
+  </div> -->
+  <div id="root"></div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 
-{% endblock head %}
-
-{% block content %}
-  <div class="container">
-    <h1>Welcome to PARM</h1>
-    <p>Your go-to platform for asset management.</p>
-    <div>
-        <a href="{{ url_for('login') }}">Login</a> | <a href="{{ url_for('serve_app') }}">Go to App</a>
-    </div>
-  </div>
+  <script type="text/babel" src="../components/SearchBar.jsx"></script>
+  <script type="text/babel" src="../components/CategoryStrip.jsx"></script>
+  <script type="text/babel" src="../components/AssetBox.jsx"></script>
+  <script type="text/babel" src="../components/AssetBoxContainer.jsx"></script>
+  <script type="text/babel" src="../components/LeftPanel.jsx"></script>
+  
+  <script type="text/babel" src="../components/Navigation.jsx"></script>
+  <script type="text/babel" src="../components/CategoryName.jsx"></script>
+  <script type="text/babel" src="../components/InfoPanel.jsx"></script>
+  <script type="text/babel" src="../components/Flags.jsx"></script>
+  <script type="text/babel" src="../components/Reservations.jsx"></script>
+  <script type="text/babel" src="../components/RightPanel.jsx"></script>
+  
+  <script type="text/babel" src="../components/App.jsx"></script>
+  
 {% endblock %}

@@ -1,6 +1,3 @@
-
-const { React } = window;
-
 const RightPanel = () => {
   return (
     React.createElement('div', { id: 'right-panel', style: { overflowY: 'auto' } },

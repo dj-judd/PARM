@@ -13,7 +13,7 @@ load_dotenv()
 
 db_password = os.getenv("DATABASE_PASSWORD")
 
-app = Flask(__name__, template_folder='../frontend/templates', static_folder='/home/dj/src/PARM-Production_Asset_Reservation_Manager/frontend/static')
+app = Flask(__name__, template_folder='../frontend/templates', static_folder='../frontend/static')
 
 # configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f'postgresql://parm_server:{db_password}@localhost/parm'
@@ -29,8 +29,12 @@ model.db.init_app(app)
 
 
 @app.route('/custom_static/<path:filename>')
-def serve_js(filename):
+def serve_static(filename):
     return send_from_directory('../frontend/static', filename)
+
+@app.route('/components/<path:filename>')
+def serve_components(filename):
+    return send_from_directory('../frontend/components', filename)
 
 @app.route('/file_attachments/<path:filename>', methods=['GET'])
 def serve_attachment(filename):
@@ -82,7 +86,7 @@ def login():
 # def index():
 #     return redirect(url_for('asset_grid'))
 
-@app.route('/app')
+@app.route('/asset_grid')
 def asset_grid():
     assets = crud.read.Asset.all(requesting_user_id=1, include_archived=False)
     
@@ -104,10 +108,7 @@ def serve_app(path):
     password_cookie = request.cookies.get('password')
 
     if email_cookie and password_cookie:
-        if path != "" and os.path.exists(f"../frontend/build/{path}"):
-            return send_from_directory('../frontend/build', path)
-        else:
-            return send_from_directory('../frontend/build', 'index.html')
+        return render_template('app.html')  # Your React app will take it from here.
     else:
         return redirect('/login')
 
