@@ -929,7 +929,7 @@ class Asset(AuditableBase):
             'inventory_number': self.inventory_number,
             'description': self.description,
             'is_available': self.is_available,
-            'online_item_page': self.online_item_page,
+            # 'online_item_page': self.online_item_page,
             'warranty_starts': self.warranty_starts.isoformat() if self.warranty_starts else None,
             'warranty_ends': self.warranty_ends.isoformat() if self.warranty_ends else None,
         }

@@ -1,12 +1,11 @@
 const RightPanel = (props) => {
-  const { selectedAsset } = props;
+  const { assetClicked, selectedAsset } = props;
   
   return (
     React.createElement('div', { id: 'right-panel'},
       [
         React.createElement(InfoPanel, { asset: selectedAsset }, null),
-        React.createElement(Flags, null, null),
-        React.createElement(Reservations, null, null)
+        React.createElement(Reservation, { assetClicked }, null),
       ]
     )
   );
