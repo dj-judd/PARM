@@ -16,7 +16,7 @@ function CategoryDropdown(props) {
     }
 
     function handleCategoryChange(event) {
-      const selectedCategoryId = event.target.value;
+      const selectedCategoryId = Number(event.target.value);
       // console.log('Type of selectedCategoryId:', typeof selectedCategoryId);
       // console.log('Value of selectedCategoryId:', selectedCategoryId);
       props.setSelectedCategory(selectedCategoryId);
