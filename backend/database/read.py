@@ -7,7 +7,7 @@ from tools import utils
 
 from typing import Optional, List, Dict
 from sqlalchemy import desc
-from sqlalchemy.orm import joinedload, aliased
+from sqlalchemy.orm import joinedload, aliased, contains_eager
 
 
 class GlobalSettings:
@@ -519,13 +519,21 @@ class Asset:
             raise ValueError("Both flags cannot be True.")
 
         query, latest_audit = crud.Utils.get_query_with_audit_join(model.Asset,
-                                                                   model.AuditableEntityTypes.ASSET.value)
-        query = query.options(joinedload('manufacturer'),
-                            joinedload('category'),
-                            joinedload('storage_area'),
-                            joinedload('purchase_price_entry'),
-                            joinedload('msrp_entry'),
-                            joinedload('residual_value_entry'))
+                                                                model.AuditableEntityTypes.ASSET.value)
+
+        # Alias for joined loading
+        fa_alias = aliased(model.FileAttachment)
+
+        query = query.options(
+            joinedload('manufacturer'),
+            joinedload('category'),
+            joinedload('storage_area'),
+            joinedload('purchase_price_entry'),
+            joinedload('msrp_entry'),
+            joinedload('residual_value_entry'),
+            # Add joinedload for file_attachment_associations and file_attachment
+            joinedload('file_attachment_associations').joinedload('file_attachment')
+        )
 
         if has_permission(requesting_user_id, PermissionsType.CAN_VIEW_ARCHIVED_ASSETS.value):
             if just_archived:
@@ -538,6 +546,13 @@ class Asset:
             query = query.filter(latest_audit.is_archived == False)
 
         assets = query.all()
+
+        # Additional step to filter the image paths for 'small' and 'medium'
+        for asset in assets:
+            asset.small_image_path = next((fa.file_attachment.file_path for fa in asset.file_attachment_associations if '2-small' in fa.file_attachment.file_path), None)
+            asset.large_image_path = next((fa.file_attachment.file_path for fa in asset.file_attachment_associations if '4-large' in fa.file_attachment.file_path), None)
+            print(f"Asset ID: {asset.id}, Small Image Path: {asset.small_image_path}, Large Image Path: {asset.large_image_path}")
+
         return assets if assets else None
     
 

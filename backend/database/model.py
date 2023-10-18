@@ -898,6 +898,12 @@ class Asset(AuditableBase):
     msrp_entry = db.relationship('FinancialEntry', foreign_keys=[msrp_id], backref='msrp_assets')
     residual_value_entry = db.relationship('FinancialEntry', foreign_keys=[residual_value_id], backref='residual_value_assets')
 
+    file_attachment_associations = db.relationship(
+        'FileAttachmentAssociations', 
+        primaryjoin='and_(Asset.id==foreign(FileAttachmentAssociations.entity_id), FileAttachmentAssociations.attachable_entity_type=="ASSET")',
+        backref='assets'
+    )
+
     __table_args__ = (
         Index('idx_assets_manufacturer_id', 'manufacturer_id'),
         Index('idx_assets_category_id', 'category_id'),
@@ -913,7 +919,7 @@ class Asset(AuditableBase):
         return {
             'id': self.id,
             'manufacturer_id': self.manufacturer_id,
-            'manufacturer_name': self.manufacturer.name if self.manufacturer else None,  # Include manufacturer name
+            'manufacturer_name': self.manufacturer.name if self.manufacturer else None,
             'model_number': self.model_number,
             'model_name': self.model_name,
             'category_id': self.category_id,
@@ -929,9 +935,10 @@ class Asset(AuditableBase):
             'inventory_number': self.inventory_number,
             'description': self.description,
             'is_available': self.is_available,
-            # 'online_item_page': self.online_item_page,
             'warranty_starts': self.warranty_starts.isoformat() if self.warranty_starts else None,
             'warranty_ends': self.warranty_ends.isoformat() if self.warranty_ends else None,
+            'small_image_path': self.small_image_path if hasattr(self, 'small_image_path') else None,
+            'large_image_path': self.large_image_path if hasattr(self, 'large_image_path') else None,
         }
     
     def __repr__(self):
@@ -1091,6 +1098,8 @@ class FileAttachmentAssociations(AuditableBase):
     file_attachment_id = Column(Integer, ForeignKey('file_attachments.id'), primary_key=True, nullable=False)
     attachable_entity_type = Column(attachable_entity_types_enum, primary_key=True, nullable=False)
     entity_id = Column(Integer, primary_key=True, nullable=False)
+
+    file_attachment = db.relationship('FileAttachment', backref='file_attachment_associations')  # New line
 
     __table_args__ = (
         Index('idx_file_attachments_attachable_entity_type', 'attachable_entity_type'),

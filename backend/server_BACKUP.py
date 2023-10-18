@@ -117,13 +117,6 @@ def serve_app(path):
         return render_template('app.html', assets=assets, categories=categories)
     else:
         return redirect('/login')
-    
-
-
-@app.route('/images/<path:filename>', methods=['GET'])
-def serve_image(filename):
-    image_root = os.path.abspath('/home/dj/src/PARM-Production_Asset_Reservation_Manager/backend/database/data/file_attachments/')
-    return send_from_directory(image_root, filename)
 
 
 if __name__ == "__main__":
